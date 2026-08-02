@@ -1,0 +1,85 @@
+from fastapi import APIRouter, Depends
+
+from sqlalchemy.orm import Session
+
+from app.database.dependencies import get_db
+
+from app.schema.teacher import (TeacherCreate,   TeacherResponse)
+
+from app.services.user.teacher_service import (create_teacher,   get_teachers)
+from app.security.auth import get_current_user
+from app.database.models import User
+from app.services.user.teacher_service import (
+    create_teacher,
+    get_teachers,
+    get_teacher_classrooms
+)
+from app.schema.teacher import (TeacherClassroomResponse)
+router = APIRouter(
+    prefix="/teachers",
+    tags=["Teachers"]
+)
+
+
+@router.post(
+    "",
+    response_model=TeacherResponse
+)
+def register_teacher(
+
+    teacher: TeacherCreate,
+
+    db: Session = Depends(get_db)
+
+):
+
+    return create_teacher(db, teacher)
+
+
+@router.get(
+    "",
+    response_model=list[TeacherResponse]
+)
+def list_teachers(
+
+    db: Session = Depends(get_db)
+
+):
+
+    return get_teachers(db)
+
+@router.get(
+    "/me/classrooms",
+    response_model=list[TeacherClassroomResponse]
+)
+def my_classrooms(
+
+    current_user: User = Depends(get_current_user),
+
+    db: Session = Depends(get_db)
+
+):
+
+    teacher = (
+
+        db.query(teacher)
+
+        .filter(
+            teacher.user_id == current_user.id
+        )
+
+        .first()
+
+    )
+
+    if teacher is None:
+
+        return []
+
+    return get_teacher_classrooms(
+
+        db,
+
+        teacher.id
+
+    )
