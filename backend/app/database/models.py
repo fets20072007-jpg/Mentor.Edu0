@@ -378,24 +378,24 @@ class Teacher(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        unique=True,
+        nullable=False
+    )
+
+    user = relationship("User")
+
     nome = Column(String, nullable=False)
-
     email = Column(String, unique=True, nullable=False)
-
     cpf = Column(String, unique=True, nullable=False)
-
     matricula = Column(String, unique=True, nullable=False)
-
     telefone = Column(String)
-
     especialidade = Column(String, nullable=False)
-
     carga_horaria = Column(Integer, default=40)
-
     ativo = Column(Boolean, default=True)
-
     criado_em = Column(DateTime, default=datetime.utcnow)
-
     subjects = relationship(
         "Subject",
         back_populates="teacher",
@@ -416,7 +416,7 @@ class Teacher(Base):
     "Attendance",
     back_populates="teacher"
     )
-
+    user = relationship("User")
    
 
    
