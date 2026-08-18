@@ -288,21 +288,37 @@ class Question(Base):
 
     enunciado = Column(String, nullable=False)
 
-    alternativa_a = Column(String, nullable=False)
-    alternativa_b = Column(String, nullable=False)
-    alternativa_c = Column(String, nullable=False)
-    alternativa_d = Column(String, nullable=False)
+    alternativa_a = Column(String, nullable=True)
+    alternativa_b = Column(String, nullable=True)
+    alternativa_c = Column(String, nullable=True)
+    alternativa_d = Column(String, nullable=True)
 
-    resposta_correta = Column(String, nullable=False)
+    resposta_correta = Column(String, nullable=True)
 
     explicacao = Column(String)
 
     dificuldade = Column(String, default="Médio")
 
+    peso = Column(Float, default=1.0)
+
+    categoria = Column(String, nullable=True)
+
+    criterio_0 = Column(String, nullable=True)
+    criterio_25 = Column(String, nullable=True)
+    criterio_50 = Column(String, nullable=True)
+    criterio_75 = Column(String, nullable=True)
+    criterio_100 = Column(String, nullable=True)
+
     chapter_id = Column(
         Integer,
         ForeignKey("chapters.id"),
-        nullable=False
+        nullable=True
+    )
+
+    assessment_id = Column(
+        Integer,
+        ForeignKey("assessments.id"),
+        nullable=True
     )
 
     chapter = relationship(
@@ -310,43 +326,15 @@ class Question(Base):
         back_populates="questions"
     )
 
+    assessment = relationship(
+        "Assessment",
+        back_populates="questions"
+    )
+
     answers = relationship(
         "StudentAnswer",
         back_populates="question",
         cascade="all, delete-orphan"
-    )
-
-class StudentAnswer(Base):
-    __tablename__ = "student_answers"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    resposta = Column(String, nullable=False)
-
-    correta = Column(Boolean, default=False)
-
-    tempo_resposta = Column(Integer)
-
-    question_id = Column(
-        Integer,
-        ForeignKey("questions.id"),
-        nullable=False
-    )
-
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id"),
-        nullable=False
-    )
-
-    question = relationship(
-        "Question",
-        back_populates="answers"
-    )
-
-    user = relationship(
-        "User",
-        back_populates="answers"
     )
 
 class LearningHistory(Base):
@@ -625,16 +613,17 @@ class Assessment(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     titulo = Column(String, nullable=False)
-
     descricao = Column(String, nullable=True)
-
     tipo = Column(String, nullable=False)
 
     data = Column(DateTime)
 
-    valor = Column(Integer, default=10)
+    valor = Column(Float, default=10)
 
     ativa = Column(Boolean, default=True)
+
+    semestre = Column(Integer, nullable=True)
+    ano_letivo = Column(Integer, nullable=True)
 
     teacher_id = Column(
         Integer,
@@ -655,8 +644,8 @@ class Assessment(Base):
     )
 
     teacher = relationship(
-    "Teacher",
-    back_populates="assessments"
+        "Teacher",
+        back_populates="assessments"
     )
 
     classroom = relationship(
@@ -674,7 +663,11 @@ class Assessment(Base):
         back_populates="assessment"
     )
 
-    
+    questions = relationship(
+        "Question",
+        back_populates="assessment",
+        cascade="all, delete-orphan"
+    )
 
 class Grade(Base):
     __tablename__ = "grades"
@@ -703,3 +696,48 @@ class Grade(Base):
     )
 
     student = relationship("User")
+
+class StudentAnswer(Base):
+    __tablename__ = "student_answers"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    resposta = Column(String, nullable=False)
+
+    tempo_resposta = Column(Integer)
+
+    percentual_ia = Column(Float, nullable=True)
+
+    justificativa_ia = Column(String, nullable=True)
+
+    percentual_professor = Column(Float, nullable=True)
+
+    percentual_final = Column(Float, nullable=True)
+
+    pontuacao_obtida = Column(Float, nullable=True)
+
+    corrigida_ia = Column(Boolean, default=False)
+
+    revisada_professor = Column(Boolean, default=False)
+
+    question_id = Column(
+        Integer,
+        ForeignKey("questions.id"),
+        nullable=False
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    question = relationship(
+        "Question",
+        back_populates="answers"
+    )
+
+    user = relationship(
+        "User",
+        back_populates="answers"
+    )

@@ -18,7 +18,6 @@ from app.router.ai.chat import router as chat_router
 from app.router.ai.smart_recomendations import router as smart_router
 from app.router.ai.study_plan import router as study_plan_router
 from app.router.ai.study_sessions import router as study_sessions_router
-
 from app.router.education.books import router as books_router
 from app.router.education.chapters import router as chapters_router
 from app.router.education.exercises import router as exercises_router

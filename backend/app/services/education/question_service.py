@@ -4,16 +4,14 @@ from app.database.models import Question
 
 
 def create_question(
-
     db: Session,
-
     chapter_id: int,
-
     data
-
 ):
 
     question = Question(
+
+        tipo=data.tipo,
 
         enunciado=data.enunciado,
 
@@ -28,7 +26,19 @@ def create_question(
 
         dificuldade=data.dificuldade,
 
-        chapter_id=chapter_id
+        peso=data.peso,
+
+        categoria=data.categoria,
+
+        criterio_0=data.criterio_0,
+        criterio_25=data.criterio_25,
+        criterio_50=data.criterio_50,
+        criterio_75=data.criterio_75,
+        criterio_100=data.criterio_100,
+
+        chapter_id=chapter_id,
+
+        assessment_id=data.assessment_id
 
     )
 
