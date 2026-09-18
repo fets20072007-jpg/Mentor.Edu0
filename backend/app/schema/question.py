@@ -69,3 +69,22 @@ class QuestionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class QuestionUpdate(BaseModel):
+    tipo: Optional[str] = None
+    enunciado: Optional[str] = None
+    alternativa_a: Optional[str] = None
+    alternativa_b: Optional[str] = None
+    alternativa_c: Optional[str] = None
+    alternativa_d: Optional[str] = None
+    resposta_correta: Optional[str] = None
+    explicacao: Optional[str] = None
+    dificuldade: Optional[str] = None
+    peso: Optional[float] = None
+    categoria: Optional[str] = None
+
+    criterio_0: Optional[str] = None
+    criterio_25: Optional[str] = None
+    criterio_50: Optional[str] = None
+    criterio_75: Optional[str] = None
+    criterio_100: Optional[str] = None

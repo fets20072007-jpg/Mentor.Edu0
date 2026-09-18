@@ -22,15 +22,21 @@ router = APIRouter(
 )
 
 
+
 @router.post(
     "",
     response_model=TeacherResponse
 )
 def register_teacher(
     teacher: TeacherCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return create_teacher(db, teacher)
+    return create_teacher(
+        db,
+        current_user.id,
+        teacher
+    )
 
 
 @router.get(

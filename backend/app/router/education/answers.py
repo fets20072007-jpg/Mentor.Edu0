@@ -2,12 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
-from app.security.auth import get_current_user
-
-from app.database.models import (
-    User,
-    StudentAnswer
-)
+from app.database.models import User, StudentAnswer
 
 from app.schema.answer import (
     StudentAnswerCreate,
@@ -20,6 +15,10 @@ from app.services.education.answer_service import (
     review_answer
 )
 
+from app.core.permissions import (
+    require_student,
+    require_teacher
+)
 
 
 router = APIRouter(
@@ -35,7 +34,7 @@ router = APIRouter(
 def answer_question(
     question_id: int,
     answer: StudentAnswerCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
     db: Session = Depends(get_db)
 ):
     return register_answer(
@@ -51,7 +50,7 @@ def answer_question(
     response_model=list[StudentAnswerResponse]
 )
 def my_answers(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
     db: Session = Depends(get_db)
 ):
     return (
@@ -62,6 +61,7 @@ def my_answers(
         .all()
     )
 
+
 @router.patch(
     "/{answer_id}/review",
     response_model=StudentAnswerResponse
@@ -69,10 +69,9 @@ def my_answers(
 def review_student_answer(
     answer_id: int,
     data: StudentAnswerUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: Session = Depends(get_db)
 ):
-
     return review_answer(
         db,
         answer_id,

@@ -20,7 +20,8 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     senha = Column(String)
 
-    tipo = Column(String)
+    tipo = Column(String, nullable=False)
+    cargo_administrativo = Column(String, nullable=True)
 
     bio = Column(String, nullable=True)
     escola = Column(String, nullable=True)

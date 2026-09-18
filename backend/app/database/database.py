@@ -1,8 +1,15 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import declarative_base
+from pathlib import Path
 
-DATABASE_URL = "sqlite:///./mentor.db"
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+
+
+BASE_DIR = Path(__file__).resolve().parent
+
+DB_PATH = BASE_DIR / "mentor.db"
+
+DATABASE_URL = f"sqlite:///{DB_PATH}"
+
 
 engine = create_engine(
     DATABASE_URL,
@@ -16,14 +23,3 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
-
-def get_db():
-
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
-
