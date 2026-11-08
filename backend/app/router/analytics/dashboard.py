@@ -15,7 +15,7 @@ from app.database.models import (
 
 )
 
-from app.security.auth import get_current_user
+from app.core.permissions import require_student
 
 from app.schema.dashboard import StudentDashboard
 
@@ -39,9 +39,7 @@ router = APIRouter(
 def dashboard(
 
     current_user: User = Depends(
-
-        get_current_user
-
+    require_student
     ),
 
     db: Session = Depends(get_db)
@@ -65,14 +63,10 @@ def dashboard(
     total = len(respostas)
 
     acertos = sum(
-
-        1
-
-        for r in respostas
-
-        if r.correta
-
-    )
+    1
+    for r in respostas
+    if r.percentual_final == 100
+)
 
     erros = total - acertos
 

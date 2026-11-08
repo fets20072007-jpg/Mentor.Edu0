@@ -1,3 +1,10 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import CORS_ORIGINS
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.docs import get_swagger_ui_html
+
 from app.router.user.users import router as users_router
 from app.router.auth.auth import router as auth_router
 
@@ -22,21 +29,115 @@ from app.router.education.books import router as books_router
 from app.router.education.chapters import router as chapters_router
 from app.router.education.exercises import router as exercises_router
 from app.router.education.answers import router as answers_router
-from app.router.education.questions import router as questions_router
+
+# LEGADO - NÃO USAR
+# from app.router.education.questions import router as questions_router
+
 from app.router.education.library import router as library_router
+
+from app.router.education.library_questions import (
+    router as library_questions_router
+)
+
 from app.router.education.pdf import router as pdf_router
 from app.router.education.learning_history import router as history_router
-#from app.router.education.lesson_plan import router as lesson_plan_router
 from app.router.education.practical_examples import router as practical_examples_router
 from app.router.education.videos import router as videos_router
 from app.router.user.teacher import router as teacher_router
-from fastapi import FastAPI
 
-app = FastAPI(
-    title="Mentor Edu API",
-    version="1.0.0"
+# LEGADO:
+# questões da biblioteca agora usam LibraryQuestion / question-bank
+#from app.router.education.library_questions import (router as library_questions_router)
+
+
+from app.router.academic.admin import (
+    router as admin_router
 )
 
+from app.router.system.ticket import (
+    router as ticket_router
+)
+
+from app.router.system.notification import (
+    router as notification_router
+)
+
+from app.router.education.class_schedule import (
+    router as class_schedule_router
+)
+
+from app.router.academic.assessment_access import (
+    router as assessment_access_router
+)
+
+from app.router.academic.attendance_edit import (
+    router as attendance_edit_router
+)
+
+app = FastAPI(
+    title="Mentor.Edu API",
+    description="""
+    API do Mentor.Edu.
+
+    Plataforma educacional para acompanhamento de alunos,
+    professores, avaliações, desempenho e ensino personalizado.
+    """,
+    version="1.0.0",
+
+    # Desliga o Swagger padrão porque criaremos o nosso.
+    docs_url=None
+)
+
+# =========================================================
+# ARQUIVOS ESTÁTICOS
+# =========================================================
+
+app.mount(
+    "/static",
+    StaticFiles(directory="app/static"),
+    name="static"
+)
+
+
+# =========================================================
+# SWAGGER PERSONALIZADO - MENTOR.EDU
+# =========================================================
+
+@app.get(
+    "/docs",
+    include_in_schema=False
+)
+def custom_swagger_ui():
+
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+
+        title="Mentor.Edu - Documentação da API",
+
+        swagger_css_url=(
+            "/static/swagger-custom.css"
+        ),
+
+        swagger_ui_parameters={
+            "defaultModelsExpandDepth": -1,
+
+            "displayRequestDuration": True,
+
+            "filter": True,
+
+            "persistAuthorization": True,
+
+            "docExpansion": "none"
+        }
+    )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
@@ -54,7 +155,8 @@ app.include_router(exercises_router)
 app.include_router(videos_router)
 app.include_router(pdf_router)
 app.include_router(practical_examples_router)
-app.include_router(questions_router)
+# LEGADO:
+# app.include_router(questions_router)
 app.include_router(answers_router)
 app.include_router(performance_router)
 app.include_router(smart_router)
@@ -69,4 +171,11 @@ app.include_router(grade_router)
 app.include_router(academic_record_router)
 app.include_router(analytics_router)
 app.include_router(history_router)
+app.include_router(admin_router)
 #app.include_router(lesson_plan_router)
+app.include_router(library_questions_router)
+app.include_router(ticket_router)
+app.include_router(notification_router)
+app.include_router(class_schedule_router)
+app.include_router(assessment_access_router)
+app.include_router(attendance_edit_router)

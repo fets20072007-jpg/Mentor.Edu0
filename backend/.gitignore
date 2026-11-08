@@ -1,0 +1,33 @@
+# =========================================================
+# MENTOR.EDU
+# =========================================================
+
+# Segredos
+.env
+
+# Ambiente virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+
+# Banco local / backups
+app/database/*.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db

@@ -14,7 +14,7 @@ from app.database.models import (
     Book
 )
 
-from app.security.auth import get_current_user
+from app.core.permissions import require_student
 
 from app.schema.learning_history import (
     LearningHistoryResponse
@@ -33,7 +33,7 @@ router = APIRouter(
 @router.post("/generate")
 def generate_history(
 
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
 
     db: Session = Depends(get_db)
 
@@ -91,10 +91,10 @@ def generate_history(
         total = len(lista)
 
         acertos = sum(
-            1
-            for r in lista
-            if r.correta
-        )
+                    1
+                    for r in lista
+                    if r.correta
+                )
 
         percentual = int(
             acertos * 100 / total
@@ -145,7 +145,7 @@ def generate_history(
 )
 def history(
 
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
 
     db: Session = Depends(get_db)
 

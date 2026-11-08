@@ -13,7 +13,7 @@ from app.database.models import (
 
 )
 
-from app.security.auth import get_current_user
+from app.core.permissions import require_student
 
 from app.services.education.recommendation_engine import (
 
@@ -47,9 +47,7 @@ router = APIRouter(
 def smart_recommendation(
 
     current_user: User = Depends(
-
-        get_current_user
-
+    require_student
     ),
 
     db: Session = Depends(get_db)

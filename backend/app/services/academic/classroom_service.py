@@ -2,7 +2,9 @@ from sqlalchemy.orm import Session
 
 from app.database.models import Classroom
 
-from app.schema.classroom import ClassroomCreate
+from app.schema.classroom import (
+    ClassroomCreate
+)
 
 
 def create_classroom(
@@ -12,20 +14,20 @@ def create_classroom(
 
     nova = Classroom(
 
-        nome=classroom.nome,
+        nome=classroom.nome.strip(),
 
-        serie=classroom.serie,
+        serie=classroom.serie.strip(),
 
-        turno=classroom.turno,
+        turno=classroom.turno.strip(),
 
-        sala=classroom.sala,
+        sala=classroom.sala.strip(),
 
         ano=classroom.ano,
 
         capacidade=classroom.capacidade,
 
-        teacher_id=classroom.teacher_id
-
+        # DT só é escolhido posteriormente.
+        teacher_id=None
     )
 
     db.add(nova)
@@ -37,6 +39,15 @@ def create_classroom(
     return nova
 
 
-def get_classrooms(db: Session):
+def get_classrooms(
+    db: Session
+):
 
-    return db.query(Classroom).all()
+    return (
+        db.query(Classroom)
+        .order_by(
+            Classroom.ano.desc(),
+            Classroom.nome.asc()
+        )
+        .all()
+    )

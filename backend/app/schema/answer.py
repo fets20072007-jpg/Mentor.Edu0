@@ -8,8 +8,27 @@ class StudentAnswerCreate(BaseModel):
 
 
 class StudentAnswerUpdate(BaseModel):
-    percentual_professor: Optional[float] = None
+    percentual_professor: float
 
+
+# =========================================================
+# RETORNO SEGURO PARA O ALUNO
+# =========================================================
+
+class StudentAnswerSafeResponse(BaseModel):
+    id: int
+    resposta: str
+    tempo_resposta: Optional[int] = None
+
+    question_id: int
+
+    class Config:
+        from_attributes = True
+
+
+# =========================================================
+# RETORNO COMPLETO PARA PROFESSOR
+# =========================================================
 
 class StudentAnswerResponse(BaseModel):
     id: int

@@ -1,76 +1,52 @@
 from fastapi import HTTPException
+
 from sqlalchemy.orm import Session
 
-from app.database.models import Teacher, User
+from app.database.models import (
+    Teacher,
+    Classroom,
+    Subject,
+    Enrollment,
+    User
+)
 
 
-def create_teacher(
-    db: Session,
-    user_id: int,
-    teacher
+# =========================================================
+# LISTAR PROFESSORES
+# =========================================================
+
+def get_teachers(
+    db: Session
 ):
-    user = (
-        db.query(User)
-        .filter(User.id == user_id)
-        .first()
-    )
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado."
-        )
-
-    if user.tipo != "Professor":
-        raise HTTPException(
-            status_code=403,
-            detail="Apenas usuários do tipo Professor podem criar perfil de professor."
-        )
-
-    existing_teacher = (
+    return (
         db.query(Teacher)
-        .filter(Teacher.user_id == user_id)
-        .first()
-    )
-
-    if existing_teacher:
-        raise HTTPException(
-            status_code=400,
-            detail="Este usuário já possui perfil de professor."
+        .order_by(
+            Teacher.nome.asc()
         )
-
-    novo_professor = Teacher(
-        user_id=user_id,
-        nome=teacher.nome,
-        email=teacher.email,
-        cpf=teacher.cpf,
-        matricula=teacher.matricula,
-        telefone=teacher.telefone,
-        especialidade=teacher.especialidade,
-        carga_horaria=teacher.carga_horaria,
-        ativo=True
+        .all()
     )
 
-    db.add(novo_professor)
-    db.commit()
-    db.refresh(novo_professor)
 
-    return novo_professor
-
-def get_teachers(db: Session):
-    return db.query(Teacher).all()
+# =========================================================
+# PROFESSOR POR ID
+# =========================================================
 
 def get_teacher_by_id(
     db: Session,
     teacher_id: int
 ):
+
     teacher = (
         db.query(Teacher)
-        .filter(Teacher.id == teacher_id)
+        .filter(
+            Teacher.id == teacher_id
+        )
         .first()
     )
 
     if not teacher:
+
         raise HTTPException(
             status_code=404,
             detail="Professor não encontrado."
@@ -78,20 +54,231 @@ def get_teacher_by_id(
 
     return teacher
 
+
+# =========================================================
+# TURMAS EM QUE O PROFESSOR LECIONA
+#
+# Subject.teacher_id:
+# define atuação pedagógica.
+#
+# Classroom.teacher_id:
+# define somente a função DT.
+# =========================================================
+
 def get_teacher_classrooms(
     db: Session,
     teacher_id: int
 ):
-    teacher = (
-        db.query(Teacher)
-        .filter(Teacher.id == teacher_id)
+
+    teacher = get_teacher_by_id(
+        db,
+        teacher_id
+    )
+
+    subjects = (
+        db.query(Subject)
+        .filter(
+            Subject.teacher_id == teacher.id,
+            Subject.ativa == True
+        )
+        .all()
+    )
+
+    classroom_ids = {
+        subject.classroom_id
+        for subject in subjects
+    }
+
+    results = []
+
+    for classroom_id in classroom_ids:
+
+        classroom = (
+            db.query(Classroom)
+            .filter(
+                Classroom.id == classroom_id
+            )
+            .first()
+        )
+
+        if not classroom:
+            continue
+
+        teacher_subjects = [
+            subject.nome
+            for subject in subjects
+            if (
+                subject.classroom_id
+                == classroom.id
+            )
+        ]
+
+        enrollments = (
+            db.query(Enrollment)
+            .filter(
+                Enrollment.classroom_id
+                == classroom.id,
+
+                Enrollment.ativo
+                == True
+            )
+            .all()
+        )
+
+        alunos = []
+
+        for enrollment in enrollments:
+
+            student = (
+                db.query(User)
+                .filter(
+                    User.id
+                    == enrollment.user_id
+                )
+                .first()
+            )
+
+            if not student:
+                continue
+
+            tipo = (
+                student.tipo
+                or ""
+            ).strip().lower()
+
+            if tipo != "aluno":
+                continue
+
+            alunos.append({
+                "id": student.id,
+                "nome": student.nome
+            })
+
+        results.append({
+
+            "classroom_id":
+                classroom.id,
+
+            "turma":
+                classroom.nome,
+
+            "serie":
+                classroom.serie,
+
+            "turno":
+                classroom.turno,
+
+            "ano":
+                classroom.ano,
+
+            "is_dt":
+                classroom.teacher_id
+                == teacher.id,
+
+            "disciplinas":
+                teacher_subjects,
+
+            "alunos":
+                alunos
+        })
+
+    results.sort(
+        key=lambda item: (
+            item["ano"],
+            item["turma"]
+        )
+    )
+
+    return results
+
+
+# =========================================================
+# PROFESSORES QUE ATUAM EM UMA TURMA
+# =========================================================
+
+def get_classroom_teachers(
+    db: Session,
+    classroom_id: int
+):
+
+    classroom = (
+        db.query(Classroom)
+        .filter(
+            Classroom.id == classroom_id
+        )
         .first()
     )
 
-    if not teacher:
+    if not classroom:
+
         raise HTTPException(
             status_code=404,
-            detail="Professor não encontrado."
+            detail="Turma não encontrada."
         )
 
-    return teacher.classrooms
+    subjects = (
+        db.query(Subject)
+        .filter(
+            Subject.classroom_id
+            == classroom.id,
+
+            Subject.ativa
+            == True
+        )
+        .all()
+    )
+
+    teacher_ids = {
+        subject.teacher_id
+        for subject in subjects
+    }
+
+    results = []
+
+    for teacher_id in teacher_ids:
+
+        teacher = (
+            db.query(Teacher)
+            .filter(
+                Teacher.id == teacher_id
+            )
+            .first()
+        )
+
+        if not teacher:
+            continue
+
+        teacher_subjects = [
+            subject.nome
+            for subject in subjects
+            if (
+                subject.teacher_id
+                == teacher.id
+            )
+        ]
+
+        results.append({
+
+            "teacher_id":
+                teacher.id,
+
+            "nome":
+                teacher.nome,
+
+            "especialidade":
+                teacher.especialidade,
+
+            "is_dt":
+                classroom.teacher_id
+                == teacher.id,
+
+            "disciplinas":
+                teacher_subjects
+        })
+
+    results.sort(
+        key=lambda item:
+            item["nome"].lower()
+    )
+
+    return results

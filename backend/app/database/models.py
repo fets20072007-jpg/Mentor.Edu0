@@ -5,11 +5,13 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     DateTime,
-    Float
+    Float,
+    UniqueConstraint
 )
 from app.database.database import Base
 from datetime import datetime
 from sqlalchemy.orm import relationship
+from sqlalchemy import Time
 
 
 class User(Base):
@@ -32,7 +34,15 @@ class User(Base):
     materias_favoritas = Column(String, nullable=True)
     dificuldades = Column(String, nullable=True)
     horas_estudo = Column(Integer, nullable=True)
-        
+
+
+    # seus campos já existentes...
+
+    classroom_id = Column(
+        Integer,
+        ForeignKey("classrooms.id"),
+        nullable=True
+    )
     enrollments = relationship(
         "Enrollment",
         back_populates="user",
@@ -623,6 +633,42 @@ class Assessment(Base):
 
     ativa = Column(Boolean, default=True)
 
+        # =====================================================
+    # JANELA DE APLICACAO
+    # =====================================================
+
+    data_abertura = Column(
+        DateTime,
+        nullable=True
+    )
+
+    data_encerramento = Column(
+        DateTime,
+        nullable=True
+    )
+
+    # =====================================================
+    # LIBERACAO PARA O ALUNO
+    # =====================================================
+
+    liberar_resultado = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    liberar_prova = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    liberar_gabarito = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+    
     semestre = Column(Integer, nullable=True)
     ano_letivo = Column(Integer, nullable=True)
 
@@ -701,6 +747,14 @@ class Grade(Base):
 class StudentAnswer(Base):
     __tablename__ = "student_answers"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "question_id",
+            name="uq_student_answer_user_question"
+        ),
+    )
+
     id = Column(Integer, primary_key=True, index=True)
 
     resposta = Column(String, nullable=False)
@@ -741,4 +795,255 @@ class StudentAnswer(Base):
     user = relationship(
         "User",
         back_populates="answers"
+    )
+
+class LibraryQuestion(Base):
+    __tablename__ = "library_questions"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id"),
+        nullable=False
+    )
+
+    subject_id = Column(
+        Integer,
+        ForeignKey("subjects.id"),
+        nullable=False
+    )
+
+    tipo = Column(
+        String,
+        default="Objetiva"
+    )
+
+    enunciado = Column(
+        String,
+        nullable=False
+    )
+
+    alternativa_a = Column(String, nullable=True)
+    alternativa_b = Column(String, nullable=True)
+    alternativa_c = Column(String, nullable=True)
+    alternativa_d = Column(String, nullable=True)
+
+    resposta_correta = Column(
+        String,
+        nullable=True
+    )
+
+    explicacao = Column(
+        String,
+        nullable=True
+    )
+
+    dificuldade = Column(
+        String,
+        default="Médio"
+    )
+
+    categoria = Column(
+        String,
+        nullable=True
+    )
+
+    criterio_0 = Column(String, nullable=True)
+    criterio_25 = Column(String, nullable=True)
+    criterio_50 = Column(String, nullable=True)
+    criterio_75 = Column(String, nullable=True)
+    criterio_100 = Column(String, nullable=True)
+
+    compartilhada = Column(
+        Boolean,
+        default=False
+    )
+
+    ativa = Column(
+        Boolean,
+        default=True
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+# =========================================================
+# CHAMADOS
+# =========================================================
+
+class Ticket(Base):
+
+    __tablename__ = "tickets"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    titulo = Column(
+        String,
+        nullable=False
+    )
+
+    descricao = Column(
+        String,
+        nullable=False
+    )
+
+    categoria = Column(
+        String,
+        default="Sistema",
+        nullable=False
+    )
+
+    prioridade = Column(
+        String,
+        default="Media",
+        nullable=False
+    )
+
+    status = Column(
+        String,
+        default="Aberto",
+        nullable=False
+    )
+
+    solucao = Column(
+        String,
+        nullable=True
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    atualizado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    requester_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    assigned_support_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+
+# =========================================================
+# NOTIFICAÇÕES
+# =========================================================
+
+class Notification(Base):
+
+    __tablename__ = "notifications"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    titulo = Column(
+        String,
+        nullable=False
+    )
+
+    mensagem = Column(
+        String,
+        nullable=False
+    )
+
+    tipo = Column(
+        String,
+        default="Sistema",
+        nullable=False
+    )
+
+    link = Column(
+        String,
+        nullable=True
+    )
+
+    lida = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    lida_em = Column(
+        DateTime,
+        nullable=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+
+# =========================================================
+# HORARIOS DE AULA
+# =========================================================
+
+class ClassSchedule(Base):
+
+    __tablename__ = "class_schedules"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    dia_semana = Column(
+        String,
+        nullable=False
+    )
+
+    hora_inicio = Column(
+        Time,
+        nullable=False
+    )
+
+    hora_fim = Column(
+        Time,
+        nullable=False
+    )
+
+    ativo = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    subject_id = Column(
+        Integer,
+        ForeignKey("subjects.id"),
+        nullable=False
+    )
+
+    subject = relationship(
+        "Subject"
     )

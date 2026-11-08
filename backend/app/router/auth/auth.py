@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.database.dependencies import get_db
 from app.database.models import User
-from app.core.security import verify_password, create_access_token
+
+from app.core.security import (
+    verify_password,
+    create_access_token
+)
+
 
 router = APIRouter(
     prefix="/auth",
@@ -17,21 +24,50 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    db_user = db.query(User).filter(
-        User.email == form_data.username
-    ).first()
+
+    # -----------------------------------------------------
+    # NORMALIZA O E-MAIL
+    # -----------------------------------------------------
+
+    email_normalizado = (
+        form_data.username
+        or ""
+    ).strip().lower()
+
+    # -----------------------------------------------------
+    # PROCURA O USUÁRIO
+    # -----------------------------------------------------
+
+    db_user = (
+        db.query(User)
+        .filter(
+            func.lower(User.email) == email_normalizado
+        )
+        .first()
+    )
 
     if not db_user:
         raise HTTPException(
             status_code=401,
-            detail="Email inválido"
+            detail="E-mail inválido."
         )
 
-    if not verify_password(form_data.password, db_user.senha):
+    # -----------------------------------------------------
+    # VERIFICA A SENHA
+    # -----------------------------------------------------
+
+    if not verify_password(
+        form_data.password,
+        db_user.senha
+    ):
         raise HTTPException(
             status_code=401,
-            detail="Senha inválida"
+            detail="Senha inválida."
         )
+
+    # -----------------------------------------------------
+    # CRIA TOKEN
+    # -----------------------------------------------------
 
     token = create_access_token({
         "sub": db_user.email

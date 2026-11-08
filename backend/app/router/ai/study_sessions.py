@@ -8,7 +8,7 @@ from app.schema.study_session import (
     StudySessionUpdate,
     StudySessionResponse
 )
-from app.security.auth import get_current_user
+from app.core.permissions import require_student
 
 router = APIRouter(
     prefix="/study-sessions",
@@ -20,7 +20,7 @@ router = APIRouter(
 def create_study_session(
     session_data: StudySessionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_student)
 ):
     new_session = StudySession(
         materia=session_data.materia,
@@ -43,7 +43,7 @@ def create_study_session(
 @router.get("/", response_model=list[StudySessionResponse])
 def list_my_study_sessions(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_student)
 ):
     sessions = db.query(StudySession).filter(
         StudySession.user_id == current_user.id
@@ -56,7 +56,7 @@ def list_my_study_sessions(
 def get_study_session(
     session_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_student)
 ):
     session = db.query(StudySession).filter(
         StudySession.id == session_id,
@@ -77,7 +77,7 @@ def update_study_session(
     session_id: int,
     session_update: StudySessionUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_student)
 ):
     session = db.query(StudySession).filter(
         StudySession.id == session_id,
@@ -105,7 +105,7 @@ def update_study_session(
 def delete_study_session(
     session_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_student)
 ):
     session = db.query(StudySession).filter(
         StudySession.id == session_id,

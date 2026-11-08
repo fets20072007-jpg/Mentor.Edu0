@@ -1,27 +1,43 @@
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+    timezone
+)
 
 from jose import jwt
 from passlib.context import CryptContext
 
-SECRET_KEY = "mentor_edu_secret_key"
+from app.core.config import (
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 
-ALGORITHM = "HS256"
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+# =========================================================
+# SENHAS
+# =========================================================
 
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
+    schemes=[
+        "bcrypt"
+    ],
     deprecated="auto"
 )
 
-def hash_password(password: str):
 
-    return pwd_context.hash(password)
+def hash_password(
+    password: str
+):
+
+    return pwd_context.hash(
+        password
+    )
 
 
 def verify_password(
-    plain_password,
-    hashed_password
+    plain_password: str,
+    hashed_password: str
 ):
 
     return pwd_context.verify(
@@ -30,22 +46,41 @@ def verify_password(
     )
 
 
-def create_access_token(data: dict):
+# =========================================================
+# JWT
+# =========================================================
 
-    to_encode = data.copy()
+def create_access_token(
+    data: dict
+):
 
-    expire = datetime.utcnow() + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    to_encode = (
+        data.copy()
     )
+
+
+    expire = (
+        datetime.now(
+            timezone.utc
+        )
+        + timedelta(
+            minutes=(
+                ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+        )
+    )
+
 
     to_encode.update({
         "exp": expire
     })
 
-    encoded_jwt = jwt.encode(
+
+    return jwt.encode(
+
         to_encode,
+
         SECRET_KEY,
+
         algorithm=ALGORITHM
     )
-
-    return encoded_jwt

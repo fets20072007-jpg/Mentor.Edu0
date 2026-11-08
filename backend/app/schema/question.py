@@ -70,6 +70,8 @@ class QuestionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+
 class QuestionUpdate(BaseModel):
     tipo: Optional[str] = None
     enunciado: Optional[str] = None

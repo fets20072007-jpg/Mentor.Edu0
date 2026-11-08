@@ -13,8 +13,7 @@ from app.schema.study_plan import (
     StudyPlanUpdate
 )
 
-from app.security.auth import get_current_user
-
+from app.core.permissions import require_student
 
 router = APIRouter(
     prefix="/study-plans",
@@ -28,7 +27,7 @@ router = APIRouter(
 )
 def create_study_plan(
     plan: StudyPlanCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
     db: Session = Depends(get_db)
 ):
     novo_plano = StudyPlan(
@@ -52,7 +51,7 @@ def create_study_plan(
     response_model=list[StudyPlanResponse]
 )
 def get_my_study_plans(
-    current_user: User = Depends(get_current_user),
+   current_user: User = Depends(require_student),
     db: Session = Depends(get_db)
 ):
     planos = db.query(StudyPlan).filter(
@@ -69,7 +68,7 @@ def get_my_study_plans(
 def update_study_plan(
     plan_id: int,
     plan_update: StudyPlanUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
     db: Session = Depends(get_db)
 ):
     plano = db.query(StudyPlan).filter(
@@ -97,7 +96,7 @@ def update_study_plan(
 @router.delete("/{plan_id}")
 def delete_study_plan(
     plan_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_student),
     db: Session = Depends(get_db)
 ):
     plano = db.query(StudyPlan).filter(

@@ -33,3 +33,7 @@ class SubjectResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SubjectTeacherUpdate(BaseModel):
+
+    teacher_id: int

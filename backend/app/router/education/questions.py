@@ -15,6 +15,8 @@ from app.schema.question import (
 from app.services.education.question_service import (
     create_question
 )
+from app.database.models import User
+from app.core.permissions import require_teacher
 
 router = APIRouter(
 
@@ -34,25 +36,18 @@ router = APIRouter(
 )
 
 def register_question(
-
     chapter_id: int,
-
     question: QuestionCreate,
-
+    current_user: User = Depends(require_teacher),
     db: Session = Depends(get_db)
-
 ):
 
     return create_question(
 
         db,
-
         chapter_id,
-
         question
-
     )
-
 
 @router.get(
 
@@ -63,11 +58,9 @@ def register_question(
 )
 
 def list_questions(
-
     chapter_id: int,
-
+    current_user: User = Depends(require_teacher),
     db: Session = Depends(get_db)
-
 ):
 
     return (
@@ -94,9 +87,8 @@ def list_questions(
 )
 
 def get_question(
-
     question_id: int,
-
+    current_user: User = Depends(require_teacher),
     db: Session = Depends(get_db)
 
 ):
@@ -112,5 +104,5 @@ def get_question(
         )
 
         .first()
-
     )
+
