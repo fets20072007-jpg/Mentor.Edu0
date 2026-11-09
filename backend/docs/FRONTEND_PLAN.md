@@ -1,50 +1,50 @@
-# Mentor.Edu ? Plano do Frontend
+# Mentor.Edu — Plano do Frontend
 
-## Decis?o tecnol?gica
+## Decisão tecnológica
 
-O frontend continuar? utilizando:
+O frontend continuará utilizando:
 
 - HTML5
 - CSS3
 - JavaScript ES Modules
 - Fetch API
-- LocalStorage para sess?o local
+- LocalStorage para sessão local
 
-N?o ser? utilizado React ou outro framework nesta etapa.
+Não será utilizado React ou outro framework nesta etapa.
 
 Motivos:
 
-- o frontend atual j? possui autentica??o funcional;
-- n?o existem depend?ncias npm;
-- implanta??o permanece simples;
+- o frontend atual já possui autenticação funcional;
+- não existem dependências npm;
+- implantação permanece simples;
 - boa parte do design atual pode ser reutilizada;
-- JavaScript modular ? suficiente para separar as funcionalidades.
+- JavaScript modular é suficiente para separar as funcionalidades.
 
 ---
 
 # Estado atual
 
-O frontend demonstrativo V3 j? possui:
+O frontend demonstrativo V3 já possui:
 
 - tela de login;
 - POST /auth/login;
 - GET /users/me;
-- identifica??o autom?tica de perfil;
+- identificação automática de perfil;
 - sidebar;
 - topbar;
 - dashboards demonstrativos;
 - telas para os quatro perfis;
-- modo demonstra??o;
+- modo demonstração;
 - CSS responsivo;
-- componentes visuais b?sicos.
+- componentes visuais básicos.
 
-O principal problema atual ? estrutural:
+O principal problema atual é estrutural:
 
 `app.js`
 
-concentra estado, autentica??o, navega??o, componentes e p?ginas.
+concentra estado, autenticação, navegação, componentes e páginas.
 
-A pr?xima etapa ser? modularizar essa estrutura.
+A próxima etapa será modularizar essa estrutura.
 
 ---
 
@@ -146,18 +146,18 @@ frontend/
 
 ---
 
-# Autentica??o
+# Autenticação
 
 Fluxo oficial:
 
 Login
-? POST /auth/login
-? JWT
-? GET /users/me
-? identifica??o de tipo
-? carregamento da interface correspondente
+→ POST /auth/login
+→ JWT
+→ GET /users/me
+→ identificação de tipo
+→ carregamento da interface correspondente
 
-O usu?rio n?o selecionar? perfil.
+O usuário não selecionará perfil.
 
 Perfis reconhecidos:
 
@@ -166,7 +166,7 @@ Perfis reconhecidos:
 - Administracao
 - Suporte
 
-O token continuar? sendo enviado como:
+O token continuará sendo enviado como:
 
 Authorization: Bearer TOKEN
 
@@ -174,11 +174,11 @@ Authorization: Bearer TOKEN
 
 # Cliente da API
 
-Todas as requisi??es ser?o centralizadas em:
+Todas as requisições serão centralizadas em:
 
 `js/api/client.js`
 
-Esse m?dulo ser? respons?vel por:
+Esse módulo será responsável por:
 
 - URL base da API;
 - token JWT;
@@ -187,32 +187,32 @@ Esse m?dulo ser? respons?vel por:
 - respostas JSON;
 - logout em caso de 401.
 
-As p?ginas n?o dever?o chamar `fetch()` diretamente.
+As páginas não deverão chamar `fetch()` diretamente.
 
 ---
 
 # Estado global
 
-`state.js` armazenar?:
+`state.js` armazenará:
 
-- usu?rio atual;
+- usuário atual;
 - perfil;
 - token;
-- p?gina atual;
+- página atual;
 - modo live/demo;
-- informa??es tempor?rias da interface.
+- informações temporárias da interface.
 
 ---
 
-# Navega??o
+# Navegação
 
-A sidebar continuar? sendo gerada conforme o perfil.
+A sidebar continuará sendo gerada conforme o perfil.
 
-O frontend poder? esconder op??es n?o autorizadas.
+O frontend poderá esconder opções não autorizadas.
 
-Por?m:
+Porém:
 
-**a autoriza??o real continuar? sendo responsabilidade do backend.**
+**a autorização real continuará sendo responsabilidade do backend.**
 
 ---
 
@@ -220,20 +220,20 @@ Por?m:
 
 Menu planejado:
 
-- Vis?o geral
+- Visão geral
 - Disciplinas
-- Avalia??es
+- Avaliações
 - Notas
-- Frequ?ncia
-- Hist?rico
+- Frequência
+- Histórico
 - Plano de estudos
 - Biblioteca
-- Hor?rios
-- Notifica??es
+- Horários
+- Notificações
 - Chamados
 - Perfil
 
-Recursos de IA espec?ficos permanecer?o ocultos enquanto a integra??o
+Recursos de IA específicos permanecerão ocultos enquanto a integração
 Gemini estiver pendente.
 
 ---
@@ -242,38 +242,38 @@ Gemini estiver pendente.
 
 Menu planejado:
 
-- Vis?o geral
+- Visão geral
 - Minhas turmas
 - Disciplinas
-- Avalia??es
-- Corre??es
-- Frequ?ncia
+- Avaliações
+- Correções
+- Frequência
 - Notas
-- Banco de quest?es
+- Banco de questões
 - Desempenho
 - Biblioteca
-- Hor?rios
+- Horários
 - Chamados
 - Perfil
 
-DT continuar? sendo uma condi??o do Professor, e n?o um perfil separado.
+DT continuará sendo uma condição do Professor, e não um perfil separado.
 
 ---
 
-# Administra??o
+# Administração
 
 Menu planejado:
 
-- Vis?o geral
-- Usu?rios
+- Visão geral
+- Usuários
 - Professores
 - Alunos
 - Turmas
 - Disciplinas
-- Matr?culas
+- Matrículas
 - Diretores de Turma
-- Hor?rios
-- Avalia??es
+- Horários
+- Avaliações
 - Perfil
 
 ---
@@ -282,14 +282,14 @@ Menu planejado:
 
 Menu planejado:
 
-- Vis?o geral
+- Visão geral
 - Chamados
-- Usu?rios
+- Usuários
 - Professores
 - Estrutura da biblioteca
 - Perfil
 
-O Suporte n?o ter? p?ginas de conte?do pedag?gico.
+O Suporte não terá páginas de conteúdo pedagógico.
 
 ---
 
@@ -297,66 +297,66 @@ O Suporte n?o ter? p?ginas de conte?do pedag?gico.
 
 ## Sidebar
 
-Caracter?sticas:
+Características:
 
 - fixa no desktop;
-- recolh?vel no mobile;
-- ?cones;
-- perfil do usu?rio;
-- badges din?micos;
+- recolhível no mobile;
+- ícones;
+- perfil do usuário;
+- badges dinâmicos;
 - logout.
 
 ## Topbar
 
-Dever? exibir:
+Deverá exibir:
 
-- t?tulo da p?gina;
-- notifica??es;
+- título da página;
+- notificações;
 - avatar;
-- estado da conex?o.
+- estado da conexão.
 
-## Notifica??es
+## Notificações
 
-Badge atrav?s de:
+Badge através de:
 
 `GET /notifications/me/unread-count`
 
 ## Chamados
 
-Suporte poder? possuir badge atrav?s de:
+Suporte poderá possuir badge através de:
 
 `GET /tickets/support/pending-count`
 
 ---
 
-# Dire??o visual
+# Direção visual
 
-A interface continuar?:
+A interface continuará:
 
 - ampla;
 - limpa;
 - com sidebar lateral;
 - cards maiores;
-- tabelas espa?osas;
+- tabelas espaçosas;
 - responsiva;
-- sem excesso de pequenos cart?es;
-- foco em leitura acad?mica.
+- sem excesso de pequenos cartões;
+- foco em leitura acadêmica.
 
-O design atual ser? utilizado como base, n?o descartado.
+O design atual será utilizado como base, não descartado.
 
 ---
 
-# Modo demonstra??o
+# Modo demonstração
 
-Ser? mantido temporariamente.
+Será mantido temporariamente.
 
 Objetivo:
 
-- apresenta??es;
+- apresentações;
 - desenvolvimento visual sem backend;
-- demonstra??o de todos os perfis.
+- demonstração de todos os perfis.
 
-O modo demonstra??o nunca substituir? as permiss?es reais do backend.
+O modo demonstração nunca substituirá as permissões reais do backend.
 
 ---
 
@@ -366,12 +366,12 @@ Status:
 
 PENDENTE.
 
-N?o bloquear? o frontend.
+Não bloqueará o frontend.
 
-Funcionalidades explicitamente dependentes de Gemini dever?o permanecer
-ocultas at? que o m?dulo esteja dispon?vel.
+Funcionalidades explicitamente dependentes de Gemini deverão permanecer
+ocultas até que o módulo esteja disponível.
 
-Recursos determin?sticos j? implementados no backend poder?o continuar
+Recursos determinísticos já implementados no backend poderão continuar
 existindo normalmente.
 
 ---
@@ -384,11 +384,11 @@ Planejamento e arquitetura.
 
 ## Dia 16
 
-Funda??o do frontend:
+Fundação do frontend:
 
-- modulariza??o;
+- modularização;
 - API client;
-- autentica??o;
+- autenticação;
 - state;
 - router;
 - sidebar;
@@ -404,7 +404,7 @@ Frontend do Aluno.
 Frontend de:
 
 - Professor;
-- Administra??o;
+- Administração;
 - Suporte.
 
 ## Dia 19
@@ -417,30 +417,30 @@ Refinamento:
 - erros;
 - estados vazios;
 - acessibilidade;
-- consist?ncia visual.
+- consistência visual.
 
 ## Dia 20
 
-Integra??o final:
+Integração final:
 
 - testes backend/frontend;
-- corre??o de endpoints;
+- correção de endpoints;
 - testes por perfil;
-- prepara??o para release.
+- preparação para release.
 
 ---
 
 # Regra principal
 
-O frontend apresentar? os dados.
+O frontend apresentará os dados.
 
-O backend continuar? sendo a fonte oficial de:
+O backend continuará sendo a fonte oficial de:
 
-- autentica??o;
-- permiss?es;
-- regras acad?micas;
-- valida??es;
-- seguran?a.
+- autenticação;
+- permissões;
+- regras acadêmicas;
+- validações;
+- segurança.
 
 ---
 
@@ -448,6 +448,6 @@ O backend continuar? sendo a fonte oficial de:
 
 Planejamento do frontend definido.
 
-Pr?xima etapa:
+Próxima etapa:
 
-**Dia 16 ? modulariza??o e constru??o da base real do frontend.**
+**Dia 16 — modularização e construção da base real do frontend.**
