@@ -809,13 +809,24 @@ def delete_me(
 
 ):
 
-    db.delete(
-        current_user
-    )
+    if current_user.ativo is False:
+
+        return {
+            "message":
+                "Conta j? est? desativada."
+        }
+
+
+    current_user.ativo = False
 
     db.commit()
 
+    db.refresh(
+        current_user
+    )
+
+
     return {
         "message":
-            "Usuário deletado com sucesso."
+            "Conta desativada com sucesso."
     }

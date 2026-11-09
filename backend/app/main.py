@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import CORS_ORIGINS
+from app.core.config import (
+    CORS_ORIGINS,
+    ENVIRONMENT
+)
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -74,18 +77,32 @@ from app.router.academic.attendance_edit import (
     router as attendance_edit_router
 )
 
+IS_PRODUCTION = (
+    ENVIRONMENT == "production"
+)
+
+
 app = FastAPI(
     title="Mentor.Edu API",
+
     description="""
     API do Mentor.Edu.
 
     Plataforma educacional para acompanhamento de alunos,
-    professores, avaliações, desempenho e ensino personalizado.
+    professores, avalia??es, desempenho e ensino personalizado.
     """,
+
     version="1.0.0",
 
-    # Desliga o Swagger padrão porque criaremos o nosso.
-    docs_url=None
+    docs_url=None,
+
+    redoc_url=None,
+
+    openapi_url=(
+        None
+        if IS_PRODUCTION
+        else "/openapi.json"
+    )
 )
 
 # =========================================================
@@ -103,33 +120,35 @@ app.mount(
 # SWAGGER PERSONALIZADO - MENTOR.EDU
 # =========================================================
 
-@app.get(
-    "/docs",
-    include_in_schema=False
-)
-def custom_swagger_ui():
+if not IS_PRODUCTION:
 
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-
-        title="Mentor.Edu - Documentação da API",
-
-        swagger_css_url=(
-            "/static/swagger-custom.css"
-        ),
-
-        swagger_ui_parameters={
-            "defaultModelsExpandDepth": -1,
-
-            "displayRequestDuration": True,
-
-            "filter": True,
-
-            "persistAuthorization": True,
-
-            "docExpansion": "none"
-        }
+    @app.get(
+        "/docs",
+        include_in_schema=False
     )
+    def custom_swagger_ui():
+
+        return get_swagger_ui_html(
+            openapi_url=app.openapi_url,
+
+            title="Mentor.Edu - Documentação da API",
+
+            swagger_css_url=(
+                "/static/swagger-custom.css"
+            ),
+
+            swagger_ui_parameters={
+                "defaultModelsExpandDepth": -1,
+
+                "displayRequestDuration": True,
+
+                "filter": True,
+
+                "persistAuthorization": True,
+
+                "docExpansion": "none"
+            }
+        )
 
 app.add_middleware(
     CORSMiddleware,

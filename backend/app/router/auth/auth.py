@@ -1,5 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status
+)
+
+from fastapi.security import (
+    OAuth2PasswordRequestForm
+)
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -25,53 +33,78 @@ def login(
     db: Session = Depends(get_db)
 ):
 
-    # -----------------------------------------------------
-    # NORMALIZA O E-MAIL
-    # -----------------------------------------------------
-
     email_normalizado = (
         form_data.username
         or ""
     ).strip().lower()
 
-    # -----------------------------------------------------
-    # PROCURA O USUÁRIO
-    # -----------------------------------------------------
 
     db_user = (
         db.query(User)
         .filter(
-            func.lower(User.email) == email_normalizado
+            func.lower(User.email)
+            == email_normalizado
         )
         .first()
     )
 
+
+    # =====================================================
+    # RESPOSTA GENERICA
+    #
+    # Nao informa se o problema foi
+    # e-mail, senha ou conta desativada.
+    # =====================================================
+
     if not db_user:
+
         raise HTTPException(
-            status_code=401,
-            detail="E-mail inválido."
+            status_code=(
+                status.HTTP_401_UNAUTHORIZED
+            ),
+            detail="Credenciais inválidas.",
+            headers={
+                "WWW-Authenticate":
+                    "Bearer"
+            }
         )
 
-    # -----------------------------------------------------
-    # VERIFICA A SENHA
-    # -----------------------------------------------------
 
     if not verify_password(
         form_data.password,
         db_user.senha
     ):
+
         raise HTTPException(
-            status_code=401,
-            detail="Senha inválida."
+            status_code=(
+                status.HTTP_401_UNAUTHORIZED
+            ),
+            detail="Credenciais inválidas.",
+            headers={
+                "WWW-Authenticate":
+                    "Bearer"
+            }
         )
 
-    # -----------------------------------------------------
-    # CRIA TOKEN
-    # -----------------------------------------------------
+
+    if db_user.ativo is False:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_401_UNAUTHORIZED
+            ),
+            detail="Credenciais inválidas.",
+            headers={
+                "WWW-Authenticate":
+                    "Bearer"
+            }
+        )
+
 
     token = create_access_token({
         "sub": db_user.email
     })
+
 
     return {
         "access_token": token,

@@ -171,9 +171,7 @@ def list_exercises(
 def list_exercises_full(
     chapter_id: int,
 
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(require_library_reader),
 
     db: Session = Depends(get_db)
 ):
@@ -253,9 +251,7 @@ def get_exercise(
 def get_exercise_full(
     exercise_id: int,
 
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(require_library_reader),
 
     db: Session = Depends(get_db)
 ):

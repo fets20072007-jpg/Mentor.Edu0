@@ -103,7 +103,7 @@ from app.services.academic.assessment_access_service import (
     ensure_student_result_released
 )
 
-from app.core.dependencies import get_current_user
+from app.security.auth import get_current_user
 router = APIRouter(
     prefix="/assessments",
     tags=["Assessments"]

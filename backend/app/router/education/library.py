@@ -7,6 +7,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
+from app.core.permissions import require_library_reader
 
 from app.database.models import (
     Book,
@@ -40,7 +41,7 @@ router = APIRouter(
 
 @router.get("/")
 def library_home(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_library_reader)
 ):
 
     return {
@@ -105,9 +106,7 @@ def create_book(
     response_model=list[BookResponse]
 )
 def list_books(
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(require_library_reader),
 
     db: Session = Depends(get_db)
 ):
@@ -130,9 +129,7 @@ def list_books(
 def books_by_subject(
     disciplina: str,
 
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(require_library_reader),
 
     db: Session = Depends(get_db)
 ):
@@ -158,9 +155,7 @@ def books_by_subject(
 def get_book(
     book_id: int,
 
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(require_library_reader),
 
     db: Session = Depends(get_db)
 ):

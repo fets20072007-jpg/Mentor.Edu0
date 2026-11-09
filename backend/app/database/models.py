@@ -23,6 +23,7 @@ class User(Base):
     senha = Column(String)
 
     tipo = Column(String, nullable=False)
+    ativo = Column(Boolean, default=True, nullable=False)
     cargo_administrativo = Column(String, nullable=True)
 
     bio = Column(String, nullable=True)
