@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentor.Edu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="toast-root"></div>
+
+  <section id="auth-screen" class="auth-screen">
+    <div class="auth-grid">
+      <div class="auth-brand-panel">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          <div>
+            <strong>Mentor.Edu</strong>
+            <span>Ensino personalizado</span>
+          </div>
+        </div>
+        <span class="eyebrow">PLATAFORMA EDUCACIONAL</span>
+        <h1>Entre com sua conta e o sistema identifica automaticamente seu perfil.</h1>
+        <p>
+          O login é único. Depois de autenticar, o frontend reconhece se o usuário é
+          <strong>Aluno</strong>, <strong>Professor</strong>, <strong>Administração</strong> ou <strong>Suporte</strong>
+          e abre o dashboard correto sem pedir escolha manual.
+        </p>
+        <div class="feature-list">
+          <div class="feature-pill">Dashboard por perfil</div>
+          <div class="feature-pill">Permissões automáticas</div>
+          <div class="feature-pill">Login via FastAPI</div>
+          <div class="feature-pill">Modo demonstração opcional</div>
+        </div>
+        <div class="preview-card">
+          <div class="preview-top"><span class="status-dot"></span> Fluxo principal</div>
+          <div class="preview-body">
+            <div class="preview-step"><b>1</b><span>Login com e-mail e senha</span></div>
+            <div class="preview-step"><b>2</b><span>Leitura de <code>/users/me</code></span></div>
+            <div class="preview-step"><b>3</b><span>Abertura automática do perfil</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-form-panel">
+        <div class="card auth-card">
+          <div class="card-header-simple">
+            <h2>Entrar</h2>
+            <p>Acesse o Mentor.Edu com sua conta institucional.</p>
+          </div>
+          <form id="login-form" class="auth-form">
+            <label>
+              URL da API
+              <input id="api-url" type="text" value="http://127.0.0.1:8000" />
+            </label>
+            <label>
+              E-mail
+              <input id="login-email" type="email" placeholder="usuario@escola.com" required />
+            </label>
+            <label>
+              Senha
+              <input id="login-password" type="password" placeholder="••••••••" required />
+            </label>
+            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+            <p id="login-error" class="form-error"></p>
+          </form>
+
+          <div class="divider"><span>ou</span></div>
+
+          <button id="open-demo-modal" class="btn btn-secondary btn-full">Abrir modo demonstração</button>
+          <p class="helper-text">
+            O modo demonstração é opcional e serve apenas para apresentar as telas sem depender do backend.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="demo-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-demo></div>
+    <div class="modal-card">
+      <button class="modal-close" data-close-demo>×</button>
+      <h3>Modo demonstração</h3>
+      <p>Escolha um perfil apenas para apresentar a interface. No login real isso não é necessário.</p>
+      <div class="demo-role-grid">
+        <button class="demo-role-btn" data-demo-role="aluno">Aluno</button>
+        <button class="demo-role-btn" data-demo-role="professor">Professor / DT</button>
+        <button class="demo-role-btn" data-demo-role="administracao">Administração</button>
+        <button class="demo-role-btn" data-demo-role="suporte">Suporte</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-shell" class="app-shell hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <div class="brand brand-white">
+          <div class="brand-mark">M</div>
+          <div>
+            <strong>Mentor.Edu</strong>
+            <span>Ensino personalizado</span>
+          </div>
+        </div>
+        <button id="close-sidebar" class="sidebar-close">×</button>
+      </div>
+
+      <div id="sidebar-profile" class="sidebar-profile"></div>
+      <nav id="sidebar-nav" class="sidebar-nav"></nav>
+
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="sidebar-action danger">Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="open-sidebar" class="icon-btn mobile-only">☰</button>
+          <div>
+            <span id="page-kicker" class="eyebrow">VISÃO GERAL</span>
+            <h1 id="page-title">Dashboard</h1>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span id="connection-badge" class="badge muted">Modo demonstração</span>
+          <button class="icon-btn">🔔</button>
+          <div id="top-avatar" class="avatar">ME</div>
+        </div>
+      </header>
+
+      <section id="page-content" class="page-content"></section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
