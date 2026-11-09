@@ -1,4 +1,4 @@
-# Mentor.Edu ? Mapa do Backend
+# Mentor.Edu — Mapa do Backend
 
 ## Status
 
@@ -20,81 +20,81 @@ Mapeamento realizado no Dia 13 do desenvolvimento.
 
 ### Aluno
 
-Possui acesso aos pr?prios dados acad?micos:
+Possui acesso aos próprios dados acadêmicos:
 
-- avalia??es;
+- avaliações;
 - respostas;
 - notas;
-- frequ?ncia;
+- frequência;
 - disciplinas;
-- matr?cula;
-- hor?rios;
-- hist?rico acad?mico;
+- matrícula;
+- horários;
+- histórico acadêmico;
 - biblioteca;
-- notifica??es;
+- notificações;
 - chamados;
 - plano de estudos;
-- sess?es de estudo;
+- sessões de estudo;
 - desempenho;
-- recomenda??es.
+- recomendações.
 
 ### Professor
 
-Respons?vel pelo trabalho pedag?gico:
+Responsável pelo trabalho pedagógico:
 
 - disciplinas em que atua;
-- turmas relacionadas ?s disciplinas;
-- avalia??es;
-- quest?es;
-- corre??es;
+- turmas relacionadas às disciplinas;
+- avaliações;
+- questões;
+- correções;
 - notas;
-- frequ?ncia;
-- an?lise de desempenho;
-- biblioteca pedag?gica;
-- banco de quest?es.
+- frequência;
+- análise de desempenho;
+- biblioteca pedagógica;
+- banco de questões.
 
-### Diretor de Turma ? DT
+### Diretor de Turma — DT
 
-DT n?o ? um perfil separado.
+DT não ? um perfil separado.
 
-? um professor definido em:
+É um professor definido em:
 
 `Classroom.teacher_id`
 
 O DT pode possuir acesso de leitura ampliado aos dados
-acad?micos dos estudantes da pr?pria turma.
+acadêmicos dos estudantes da pr?pria turma.
 
-### Administra??o
+### Administração
 
-Respons?vel pela gest?o institucional:
+Responsável pela gestão institucional:
 
-- usu?rios;
+- usuários;
 - professores;
 - alunos;
 - turmas;
 - disciplinas;
-- matr?culas;
+- matrículas;
 - DT;
-- hor?rios;
-- avalia??es;
-- vis?o acad?mica institucional.
+- horários;
+- avaliações;
+- visão acadêmica institucional.
 
 ### Suporte
 
-Respons?vel por fun??es operacionais:
+Responsável por funções operacionais:
 
-- cria??o institucional de usu?rios;
+- criação institucional de usuários;
 - professores;
 - chamados;
 - estrutura da biblioteca.
 
-O Suporte n?o possui acesso ao conte?do pedag?gico dos alunos.
+O Suporte não possui acesso ao conteúdo pedagógico dos alunos.
 
 ---
 
-# M?dulos ativos
+# Módulos ativos
 
-## Autentica??o
+## Autenticação
 
 Prefixo:
 
@@ -106,21 +106,21 @@ Principal endpoint:
 
 ---
 
-## Usu?rios
+## Usuários
 
 Prefixo:
 
 `/users`
 
-Principais fun??es:
+Principais funções:
 
 - cadastro institucional;
 - listagem;
 - perfil atual;
-- edi??o do perfil;
-- desativa??o l?gica da conta.
+- edição do perfil;
+- desativação lógica da conta.
 
-A exclus?o f?sica do usu?rio n?o ? utilizada.
+A exclusão física do usuário não ? utilizada.
 
 ---
 
@@ -134,7 +134,7 @@ Fun??es:
 
 - listagem;
 - turmas do professor autenticado;
-- turmas de um professor espec?fico.
+- turmas de um professor específico.
 
 ---
 
@@ -148,7 +148,7 @@ Fun??es:
 
 - cadastro;
 - listagem;
-- defini??o de DT;
+- definição de DT;
 - professores da turma.
 
 ---
@@ -159,16 +159,16 @@ Prefixo:
 
 `/subjects`
 
-A disciplina pertence a uma turma e possui um professor respons?vel.
+A disciplina pertence a uma turma e possui um professor responsável.
 
-O aluno n?o seleciona disciplinas individualmente.
+O aluno não seleciona disciplinas individualmente.
 
 Fluxo:
 
 Aluno
-? matr?cula ativa
-? turma
-? disciplinas da turma
+? matrícula ativa
+→ turma
+→ disciplinas da turma
 
 ---
 
@@ -178,13 +178,13 @@ Prefixo:
 
 `/enrollments`
 
-Respons?vel pelo v?nculo:
+Responsável pelo vínculo:
 
 Aluno
-? Turma
+→ Turma
 
-Existe apenas uma matr?cula ativa utilizada como refer?ncia
-acad?mica principal.
+Existe apenas uma matrícula ativa utilizada como refer?ncia
+acadêmica principal.
 
 ---
 
@@ -196,15 +196,15 @@ Prefixo:
 
 Possui:
 
-- lan?amento por professor;
+- lançamento por professor;
 - consulta do aluno;
 - resumo;
-- pend?ncias do professor;
+- pendências do professor;
 - consulta por turma;
 - justificativa;
-- edi??o limitada.
+- edição limitada.
 
-A edi??o realizada pelo professor possui regra temporal de 24 horas.
+A edição realizada pelo professor possui regra temporal de 24 horas.
 
 ---
 
@@ -214,22 +214,22 @@ Prefixo:
 
 `/assessments`
 
-? um dos maiores m?dulos do sistema.
+É um dos maiores módulos do sistema.
 
 Possui:
 
-- cria??o;
-- edi??o;
-- quest?es;
+- criação;
+- edição;
+- questões;
 - resultados;
-- hist?rico;
+- histórico;
 - resumo;
-- evolu??o;
-- an?lise de dificuldade;
+- evolução;
+- análise de dificuldade;
 - desempenho por estudante;
-- configura??o de disponibilidade.
+- configuração de disponibilidade.
 
-Campos de libera??o:
+Campos de liberação:
 
 - `data_abertura`
 - `data_encerramento`
@@ -248,11 +248,11 @@ Prefixo:
 Possui:
 
 - resposta do aluno;
-- hist?rico pr?prio;
-- pend?ncias do professor;
-- revis?o manual.
+- histórico próprio;
+- pendências do professor;
+- revisão manual.
 
-Quest?es subjetivas podem receber avalia??o parcial.
+Questáes subjetivas podem receber avaliação parcial.
 
 ---
 
@@ -266,14 +266,14 @@ Possui:
 
 - registro;
 - notas do aluno;
-- notas por avalia??o;
-- vis?o administrativa;
-- edi??o;
+- notas por avaliação;
+- visão administrativa;
+- edição;
 - consulta individual.
 
 ---
 
-## Hist?rico acad?mico
+## Hist?rico acadêmico
 
 Prefixo:
 
@@ -281,9 +281,9 @@ Prefixo:
 
 Permite:
 
-- aluno consultar o pr?prio hist?rico;
+- aluno consultar o próprio histórico;
 - professor/DT consultar alunos autorizados;
-- Administra??o consultar institucionalmente.
+- Administração consultar institucionalmente.
 
 ---
 
@@ -293,9 +293,9 @@ Prefixo:
 
 `/analytics`
 
-Atualmente possui c?lculo de m?dia acad?mica.
+Atualmente possui cálculo de média acadêmica.
 
-Outros m?dulos relacionados:
+Outros módulos relacionados:
 
 - `/performance`
 - `/dashboard`
@@ -312,25 +312,25 @@ Prefixo:
 Estrutura ativa:
 
 Book
-? Chapter
-? Exercise / Video / PDF / PracticalExample
+→ Chapter
+→ Exercise / Video / PDF / PracticalExample
 
-Tamb?m existe banco de quest?es do professor.
+Também existe banco de questões do professor.
 
-### Permiss?es
+### Permissões
 
-Aluno, Professor e Administra??o:
+Aluno, Professor e Administração:
 
-- leitura pedag?gica.
+- leitura pedagógica.
 
 Professor:
 
-- cria??o de conte?dos pedag?gicos autorizados.
+- criação de conteúdos pedagógicos autorizados.
 
 Suporte:
 
-- administra??o estrutural de livros/cap?tulos;
-- sem acesso ao conte?do pedag?gico protegido.
+- administração estrutural de livros/cap?tulos;
+- sem acesso ao conteúdo pedagógico protegido.
 
 ---
 
@@ -352,7 +352,7 @@ Campos principais:
 - disciplina;
 - ativo.
 
-Possui valida??o de conflito de turma e professor.
+Possui validação de conflito de turma e professor.
 
 ---
 
@@ -364,8 +364,8 @@ Prefixo:
 
 Possui:
 
-- notifica??es do usu?rio;
-- contagem de n?o lidas;
+- notificações do usuário;
+- contagem de não lidas;
 - marcar todas como lidas;
 - marcar individualmente.
 
@@ -377,14 +377,14 @@ Prefixo:
 
 `/tickets`
 
-Usu?rios podem criar chamados.
+Usuários podem criar chamados.
 
 Suporte possui:
 
 - fila de chamados;
 - contagem de pendentes;
 - atualiza??o de status;
-- solu??o.
+- solução.
 
 ---
 
@@ -410,12 +410,12 @@ M?dulo ativo.
 
 Permite registrar:
 
-- mat?ria;
+- matéria;
 - assunto;
-- dura??o;
+- duração;
 - dificuldade percebida;
-- conclus?o;
-- observa??es.
+- conclusão;
+- observações.
 
 ---
 
@@ -429,8 +429,8 @@ M?dulo ativo.
 
 Endpoints registrados:
 
-- gera??o;
-- consulta do pr?prio aluno.
+- geração;
+- consulta do próprio aluno.
 
 ---
 
@@ -438,12 +438,12 @@ Endpoints registrados:
 
 Status:
 
-**PENDENTE ? depend?ncia externa**
+**PENDENTE ? dependência externa**
 
-O m?dulo Gemini/IA ser? retomado quando o componente
-desenvolvido pelo colaborador estiver dispon?vel.
+O módulo Gemini/IA será retomado quando o componente
+desenvolvido pelo colaborador estiver disponível.
 
-A aus?ncia da IA n?o bloqueia o desenvolvimento do frontend.
+A ausência da IA não bloqueia o desenvolvimento do frontend.
 
 ---
 
@@ -492,13 +492,13 @@ Tabela:
 
 `books`
 
-N?o remover sem uma migra??o espec?fica.
+Não remover sem uma migração espec?fica.
 
 ---
 
-# Routers n?o registrados
+# Routers não registrados
 
-Atualmente n?o est?o inclu?dos na aplica??o:
+Atualmente não estão incluídos na aplica??o:
 
 - `app.router.ai.chat`
 - `app.router.education.books`
@@ -508,24 +508,24 @@ Atualmente n?o est?o inclu?dos na aplica??o:
 Eles devem ser tratados como candidatos a c?digo legado ou
 funcionalidade futura.
 
-N?o remover automaticamente.
+Não remover automaticamente.
 
 ---
 
-# Seguran?a
+# Segurança
 
 O backend possui:
 
 - JWT;
-- valida??o de usu?rio ativo;
-- login com mensagem gen?rica;
-- desativa??o l?gica de conta;
-- permiss?es por perfil;
-- bloqueio pedag?gico para Suporte;
-- Swagger/OpenAPI desativados em produ??o;
-- configura??o sens?vel via `.env`.
+- validação de usuário ativo;
+- login com mensagem genérica;
+- desativação lógica de conta;
+- permissões por perfil;
+- bloqueio pedagógico para Suporte;
+- Swagger/OpenAPI desativados em produção;
+- configuração sensível via `.env`.
 
-Auditoria de seguran?a conclu?da no Dia 11.
+Auditoria de segurança conclu?da no Dia 11.
 
 ---
 
@@ -533,8 +533,8 @@ Auditoria de seguran?a conclu?da no Dia 11.
 
 Backend estrutural principal:
 
-**PRONTO PARA INTEGRA??O COM O FRONTEND**
+**PRONTO PARA INTEGRAÇÃO COM O FRONTEND**
 
-Exce??o:
+Exceção:
 
 **IA/Gemini permanece pendente.**

@@ -1,11 +1,11 @@
-# Mentor.Edu ? Guia de Integra??o do Frontend
+# Mentor.Edu — Guia de Integração do Frontend
 
 Este documento relaciona as principais telas do frontend
-aos endpoints j? existentes no backend.
+aos endpoints já existentes no backend.
 
 ---
 
-# Autentica??o
+# Autenticação
 
 ## Tela de Login
 
@@ -13,20 +13,20 @@ Usar:
 
 `POST /auth/login`
 
-Ap?s autentica??o:
+Após autenticação:
 
 `GET /users/me`
 
-O frontend n?o deve solicitar que o usu?rio escolha seu perfil.
+O frontend não deve solicitar que o usuário escolha seu perfil.
 
 O perfil vem do backend.
 
 Fluxo:
 
 Login
-? token JWT
-? `/users/me`
-? redirecionamento conforme `tipo`
+→ token JWT
+→ `/users/me`
+→ redirecionamento conforme `tipo`
 
 ---
 
@@ -48,11 +48,11 @@ Endpoints principais:
 - `GET /subjects/me`
 - `GET /subjects/me/{subject_id}`
 
-O aluno n?o escolhe disciplinas individualmente.
+O aluno não escolhe disciplinas individualmente.
 
 ---
 
-## Minha turma / matr?cula
+## Minha turma / matrícula
 
 - `GET /enrollments/me`
 
@@ -66,13 +66,13 @@ O aluno n?o escolhe disciplinas individualmente.
 - `GET /assessments/{assessment_id}/availability/me`
 - `GET /assessments/{assessment_id}/submission/me`
 
-Responder quest?o:
+Responder questão:
 
 - `POST /answers/questions/{question_id}`
 
 ---
 
-## Resultado de avalia??o
+## Resultado de avaliação
 
 - `GET /assessments/{assessment_id}/results/me`
 
@@ -82,7 +82,7 @@ Quando autorizado:
 
 ---
 
-## Hist?rico de avalia??es
+## Hist?rico de avaliações
 
 - `GET /assessments/history/me`
 - `GET /assessments/history/me/filter`
@@ -112,7 +112,7 @@ Quando autorizado:
 
 ---
 
-## Hist?rico acad?mico
+## Hist?rico acadêmico
 
 - `GET /academic-record/me`
 
@@ -166,7 +166,7 @@ Principais endpoints:
 - `PATCH /notifications/me/read-all`
 - `PATCH /notifications/{notification_id}/read`
 
-O frontend dever? exibir badge din?mico para notifica??es n?o lidas.
+O frontend deverá exibir badge din?mico para notificações não lidas.
 
 ---
 
@@ -196,7 +196,7 @@ O frontend dever? exibir badge din?mico para notifica??es n?o lidas.
 
 - `GET /enrollments/classroom/{classroom_id}`
 
-A autoriza??o depende da atua??o do professor ou do v?nculo como DT.
+A autoriza??o depende da atua??o do professor ou do vínculo como DT.
 
 ---
 
@@ -220,7 +220,7 @@ A autoriza??o depende da atua??o do professor ou do v?nculo como DT.
 
 ---
 
-## Quest?es da avalia??o
+## Questáes da avaliação
 
 - `POST /assessments/{assessment_id}/questions`
 - `PATCH /assessments/{assessment_id}/questions/{question_id}`
@@ -228,7 +228,7 @@ A autoriza??o depende da atua??o do professor ou do v?nculo como DT.
 
 ---
 
-## Libera??o da avalia??o
+## Libera??o da avaliação
 
 - `PATCH /assessments/{assessment_id}/access`
 
@@ -257,7 +257,7 @@ A autoriza??o depende da atua??o do professor ou do v?nculo como DT.
 
 ---
 
-## An?lise pedag?gica
+## An?lise pedagógica
 
 - `GET /assessments/teacher/summary/classrooms`
 - `GET /assessments/teacher/difficulties/students`
@@ -272,11 +272,11 @@ A autoriza??o depende da atua??o do professor ou do v?nculo como DT.
 
 - `GET /academic-record/{student_id}`
 
-O acesso depende da atua??o do professor ou v?nculo como DT.
+O acesso depende da atua??o do professor ou vínculo como DT.
 
 ---
 
-## Banco de quest?es
+## Banco de questões
 
 - `POST /library/question-bank`
 - `GET /library/question-bank/me`
@@ -287,7 +287,7 @@ O acesso depende da atua??o do professor ou v?nculo como DT.
 
 ---
 
-# Administra??o
+# Administração
 
 ## Dashboard
 
@@ -388,14 +388,14 @@ Cadastro:
 
 # Suporte
 
-## Usu?rios
+## Usuários
 
 - `GET /users/`
 - `POST /users/register`
 
 O Suporte pode criar:
 
-- Administra??o;
+- Administração;
 - Professor;
 - Aluno.
 
@@ -420,13 +420,13 @@ O Suporte pode criar:
 - `POST /library/books`
 - `POST /library/books/{book_id}/chapters`
 
-O Suporte n?o deve possuir acesso ao conte?do pedag?gico protegido.
+O Suporte não deve possuir acesso ao conteúdo pedagógico protegido.
 
 ---
 
 # Componentes globais do frontend
 
-## Badge de notifica??es
+## Badge de notificações
 
 Usar:
 
@@ -452,13 +452,13 @@ Desativar:
 
 ## Chamados
 
-Dispon?vel para usu?rios autenticados.
+Dispon?vel para usuários autenticados.
 
 Criar:
 
 `POST /tickets`
 
-Consultar pr?prios:
+Consultar próprios:
 
 `GET /tickets/me`
 
@@ -466,47 +466,47 @@ Consultar pr?prios:
 
 # IA
 
-Ainda n?o integrar no frontend definitivo.
+Ainda não integrar no frontend definitivo.
 
 Status:
 
-**Pendente de implementa??o pelo colaborador.**
+**Pendente de implementação pelo colaborador.**
 
 As telas relacionadas podem inicialmente:
 
 - ficar ocultas;
 - ficar marcadas como futura funcionalidade;
-- utilizar apenas os recursos determin?sticos j? existentes.
+- utilizar apenas os recursos determin?sticos já existentes.
 
 ---
 
-# Regra de integra??o
+# Regra de integração
 
-O frontend nunca deve decidir sozinho se um usu?rio possui
+O frontend nunca deve decidir sozinho se um usuário possui
 permiss?o para acessar um recurso.
 
-A interface pode esconder bot?es, mas a autoriza??o oficial
+A interface pode esconder botões, mas a autoriza??o oficial
 sempre pertence ao backend.
 
 ---
 
-# Estado para in?cio do frontend
+# Estado para início do frontend
 
-O frontend pode come?ar utilizando:
+O frontend pode começar utilizando:
 
-1. autentica??o;
+1. autenticação;
 2. perfil;
-3. navega??o por papel;
+3. navegação por papel;
 4. dashboards;
 5. turmas;
 6. disciplinas;
-7. avalia??es;
+7. avaliações;
 8. notas;
-9. frequ?ncia;
+9. frequência;
 10. biblioteca;
-11. hor?rios;
-12. notifica??es;
+11. horários;
+12. notificações;
 13. chamados.
 
-A integra??o de IA pode ser adicionada posteriormente sem
+A integração de IA pode ser adicionada posteriormente sem
 bloquear o desenvolvimento atual.
