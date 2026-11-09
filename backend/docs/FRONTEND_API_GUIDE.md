@@ -58,7 +58,7 @@ O aluno não escolhe disciplinas individualmente.
 
 ---
 
-## Avalia??es
+## Avaliações
 
 - `GET /assessments/`
 - `GET /assessments/{assessment_id}`
@@ -82,14 +82,14 @@ Quando autorizado:
 
 ---
 
-## Hist?rico de avaliações
+## Histórico de avaliações
 
 - `GET /assessments/history/me`
 - `GET /assessments/history/me/filter`
 
 ---
 
-## Evolu??o
+## Evolução
 
 - `GET /assessments/summary/me`
 - `GET /assessments/summary/me/subjects`
@@ -103,7 +103,7 @@ Quando autorizado:
 
 ---
 
-## Frequ?ncia
+## Frequência
 
 - `GET /attendance/me`
 - `GET /attendance/me/summary`
@@ -112,13 +112,13 @@ Quando autorizado:
 
 ---
 
-## Hist?rico acadêmico
+## Histórico acadêmico
 
 - `GET /academic-record/me`
 
 ---
 
-## Hor?rios
+## Horários
 
 - `GET /schedules/me`
 
@@ -149,7 +149,7 @@ Principais endpoints:
 
 ---
 
-## Sess?es de estudo
+## Sessões de estudo
 
 - `POST /study-sessions/`
 - `GET /study-sessions/`
@@ -159,14 +159,14 @@ Principais endpoints:
 
 ---
 
-## Notifica??es
+## Notificações
 
 - `GET /notifications/me`
 - `GET /notifications/me/unread-count`
 - `PATCH /notifications/me/read-all`
 - `PATCH /notifications/{notification_id}/read`
 
-O frontend deverá exibir badge din?mico para notificações não lidas.
+O frontend deverá exibir badge dinâmico para notificações não lidas.
 
 ---
 
@@ -196,11 +196,11 @@ O frontend deverá exibir badge din?mico para notificações não lidas.
 
 - `GET /enrollments/classroom/{classroom_id}`
 
-A autoriza??o depende da atua??o do professor ou do vínculo como DT.
+A autorização depende da atuação do professor ou do vínculo como DT.
 
 ---
 
-## Frequ?ncia
+## Frequência
 
 - `POST /attendance/`
 - `GET /attendance/teacher/me`
@@ -211,7 +211,7 @@ A autoriza??o depende da atua??o do professor ou do vínculo como DT.
 
 ---
 
-## Avalia??es
+## Avaliações
 
 - `POST /assessments`
 - `GET /assessments/`
@@ -228,7 +228,7 @@ A autoriza??o depende da atua??o do professor ou do vínculo como DT.
 
 ---
 
-## Libera??o da avaliação
+## Liberação da avaliação
 
 - `PATCH /assessments/{assessment_id}/access`
 
@@ -241,7 +241,7 @@ A autoriza??o depende da atua??o do professor ou do vínculo como DT.
 
 ---
 
-## Corre??o subjetiva
+## Correção subjetiva
 
 - `GET /answers/teacher/pending`
 - `PATCH /answers/{answer_id}/review`
@@ -257,7 +257,7 @@ A autoriza??o depende da atua??o do professor ou do vínculo como DT.
 
 ---
 
-## An?lise pedagógica
+## Análise pedagógica
 
 - `GET /assessments/teacher/summary/classrooms`
 - `GET /assessments/teacher/difficulties/students`
@@ -268,11 +268,11 @@ A autoriza??o depende da atua??o do professor ou do vínculo como DT.
 
 ---
 
-## Hist?rico de aluno
+## Histórico de aluno
 
 - `GET /academic-record/{student_id}`
 
-O acesso depende da atua??o do professor ou vínculo como DT.
+O acesso depende da atuação do professor ou vínculo como DT.
 
 ---
 
@@ -349,7 +349,7 @@ Cadastro:
 
 ---
 
-## Matr?culas
+## Matrículas
 
 - `POST /enrollments`
 - `GET /enrollments`
@@ -357,7 +357,7 @@ Cadastro:
 
 ---
 
-## Hor?rios
+## Horários
 
 - `POST /schedules`
 - `GET /schedules`
@@ -367,14 +367,14 @@ Cadastro:
 
 ---
 
-## Avalia??es
+## Avaliações
 
 - `GET /admin/assessments`
 - `GET /admin/assessments/{assessment_id}`
 
 ---
 
-## Frequ?ncia institucional
+## Frequência institucional
 
 - `GET /attendance/`
 
@@ -452,7 +452,7 @@ Desativar:
 
 ## Chamados
 
-Dispon?vel para usuários autenticados.
+Disponível para usuários autenticados.
 
 Criar:
 
@@ -476,16 +476,16 @@ As telas relacionadas podem inicialmente:
 
 - ficar ocultas;
 - ficar marcadas como futura funcionalidade;
-- utilizar apenas os recursos determin?sticos já existentes.
+- utilizar apenas os recursos determinísticos já existentes.
 
 ---
 
 # Regra de integração
 
 O frontend nunca deve decidir sozinho se um usuário possui
-permiss?o para acessar um recurso.
+permissão para acessar um recurso.
 
-A interface pode esconder botões, mas a autoriza??o oficial
+A interface pode esconder botões, mas a autorização oficial
 sempre pertence ao backend.
 
 ---

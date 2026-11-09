@@ -55,14 +55,14 @@ Responsável pelo trabalho pedagógico:
 
 ### Diretor de Turma — DT
 
-DT não ? um perfil separado.
+DT não é um perfil separado.
 
 É um professor definido em:
 
 `Classroom.teacher_id`
 
 O DT pode possuir acesso de leitura ampliado aos dados
-acadêmicos dos estudantes da pr?pria turma.
+acadêmicos dos estudantes da própria turma.
 
 ### Administração
 
@@ -120,7 +120,7 @@ Principais funções:
 - edição do perfil;
 - desativação lógica da conta.
 
-A exclusão física do usuário não ? utilizada.
+A exclusão física do usuário não é utilizada.
 
 ---
 
@@ -130,7 +130,7 @@ Prefixo:
 
 `/teachers`
 
-Fun??es:
+Funções:
 
 - listagem;
 - turmas do professor autenticado;
@@ -144,7 +144,7 @@ Prefixo:
 
 `/classrooms`
 
-Fun??es:
+Funções:
 
 - cadastro;
 - listagem;
@@ -166,13 +166,13 @@ O aluno não seleciona disciplinas individualmente.
 Fluxo:
 
 Aluno
-? matrícula ativa
+→ matrícula ativa
 → turma
 → disciplinas da turma
 
 ---
 
-## Matr?culas
+## Matrículas
 
 Prefixo:
 
@@ -183,12 +183,12 @@ Responsável pelo vínculo:
 Aluno
 → Turma
 
-Existe apenas uma matrícula ativa utilizada como refer?ncia
+Existe apenas uma matrícula ativa utilizada como referência
 acadêmica principal.
 
 ---
 
-## Frequ?ncia
+## Frequência
 
 Prefixo:
 
@@ -208,7 +208,7 @@ A edição realizada pelo professor possui regra temporal de 24 horas.
 
 ---
 
-## Avalia??es
+## Avaliações
 
 Prefixo:
 
@@ -273,7 +273,7 @@ Possui:
 
 ---
 
-## Hist?rico acadêmico
+## Histórico acadêmico
 
 Prefixo:
 
@@ -329,12 +329,12 @@ Professor:
 
 Suporte:
 
-- administração estrutural de livros/cap?tulos;
+- administração estrutural de livros/capítulos;
 - sem acesso ao conteúdo pedagógico protegido.
 
 ---
 
-## Hor?rios
+## Horários
 
 Prefixo:
 
@@ -356,7 +356,7 @@ Possui validação de conflito de turma e professor.
 
 ---
 
-## Notifica??es
+## Notificações
 
 Prefixo:
 
@@ -383,7 +383,7 @@ Suporte possui:
 
 - fila de chamados;
 - contagem de pendentes;
-- atualiza??o de status;
+- atualização de status;
 - solução.
 
 ---
@@ -394,19 +394,19 @@ Prefixo:
 
 `/study-plans`
 
-M?dulo ativo.
+Módulo ativo.
 
 Atualmente restrito ao aluno.
 
 ---
 
-## Sess?es de estudo
+## Sessões de estudo
 
 Prefixo:
 
 `/study-sessions`
 
-M?dulo ativo.
+Módulo ativo.
 
 Permite registrar:
 
@@ -419,13 +419,13 @@ Permite registrar:
 
 ---
 
-## Hist?rico de aprendizagem
+## Histórico de aprendizagem
 
 Prefixo:
 
 `/learning-history`
 
-M?dulo ativo.
+Módulo ativo.
 
 Endpoints registrados:
 
@@ -438,7 +438,7 @@ Endpoints registrados:
 
 Status:
 
-**PENDENTE ? dependência externa**
+**PENDENTE — dependência externa**
 
 O módulo Gemini/IA será retomado quando o componente
 desenvolvido pelo colaborador estiver disponível.
@@ -481,7 +481,7 @@ Tabelas principais ativas:
 
 ## library_books
 
-Existe no banco e possui model/schema, por?m nenhuma rota
+Existe no banco e possui model/schema, porém nenhuma rota
 registrada atualmente utiliza `LibraryBook`.
 
 A biblioteca atualmente utiliza:
@@ -492,20 +492,20 @@ Tabela:
 
 `books`
 
-Não remover sem uma migração espec?fica.
+Não remover sem uma migração específica.
 
 ---
 
 # Routers não registrados
 
-Atualmente não estão incluídos na aplica??o:
+Atualmente não estão incluídos na aplicação:
 
 - `app.router.ai.chat`
 - `app.router.education.books`
 - `app.router.education.lesson_plan`
 - `app.router.education.questions`
 
-Eles devem ser tratados como candidatos a c?digo legado ou
+Eles devem ser tratados como candidatos a código legado ou
 funcionalidade futura.
 
 Não remover automaticamente.
@@ -525,7 +525,7 @@ O backend possui:
 - Swagger/OpenAPI desativados em produção;
 - configuração sensível via `.env`.
 
-Auditoria de segurança conclu?da no Dia 11.
+Auditoria de segurança concluída no Dia 11.
 
 ---
 
