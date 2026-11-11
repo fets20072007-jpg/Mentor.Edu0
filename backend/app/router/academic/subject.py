@@ -233,6 +233,8 @@ def register_subject(
             subject.descricao
         ),
 
+        categoria=(subject.categoria or "Outras").strip() or "Outras",
+
         teacher_id=(
             teacher.id
         ),

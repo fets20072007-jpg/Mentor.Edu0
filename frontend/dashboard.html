@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Painel Mentor.Edu">
+    <title>Mentor.Edu | Painel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css?v=19.3">
+    <link rel="stylesheet" href="css/pages.css?v=19.3">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="app-body" data-page="dashboard" data-role="loading">
+    <div id="appRoot" class="app-shell">
+        <aside id="sidebar" class="sidebar" aria-label="Navegação principal"></aside>
+        <div id="sidebarBackdrop" class="sidebar-backdrop" hidden></div>
+        <div class="app-main">
+            <header id="topbar" class="topbar"></header>
+            <main id="pageContent" class="page-content" tabindex="-1">
+                <div class="page-loading" aria-live="polite">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <p>Carregando seu painel...</p>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="js/main.js?v=19.3"></script>
+</body>
+</html>

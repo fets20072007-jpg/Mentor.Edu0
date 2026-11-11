@@ -18,6 +18,8 @@ def create_subject(
 
         descricao=subject.descricao,
 
+        categoria=(subject.categoria or "Outras").strip() or "Outras",
+
         teacher_id=subject.teacher_id,
 
         classroom_id=subject.classroom_id

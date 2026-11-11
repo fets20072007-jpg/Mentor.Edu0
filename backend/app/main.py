@@ -6,6 +6,10 @@ from app.core.config import (
 )
 
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from app.database.database import engine
+from fastapi.responses import FileResponse
+from pathlib import Path
 from fastapi.openapi.docs import get_swagger_ui_html
 
 from app.router.user.users import router as users_router
@@ -60,6 +64,8 @@ from app.router.academic.admin import (
 from app.router.system.ticket import (
     router as ticket_router
 )
+
+from app.router.system.uploads import router as uploads_router
 
 from app.router.system.notification import (
     router as notification_router
@@ -158,9 +164,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {"message": "Mentor Edu backend rodando com sucesso!"}
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+
+@app.get("/", include_in_schema=False)
+def frontend_index():
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 
 app.include_router(users_router)
@@ -194,7 +203,42 @@ app.include_router(admin_router)
 #app.include_router(lesson_plan_router)
 app.include_router(library_questions_router)
 app.include_router(ticket_router)
+app.include_router(uploads_router)
 app.include_router(notification_router)
 app.include_router(class_schedule_router)
 app.include_router(assessment_access_router)
 app.include_router(attendance_edit_router)
+
+# Migração leve dos campos adicionados na Revisão 1.
+@app.on_event("startup")
+def ensure_review1_columns():
+    migrations = {
+        "subjects": [("categoria", "VARCHAR DEFAULT 'Outras' NOT NULL")],
+        "study_plans": [("material_url", "VARCHAR"), ("arquivo", "VARCHAR")],
+        "tickets": [
+            ("destinatario_perfil", "VARCHAR DEFAULT 'Suporte' NOT NULL"),
+            ("destinatario_user_id", "INTEGER"),
+            ("destinatario_nome", "VARCHAR")
+        ],
+        "attendance": [
+            ("justificativa_status", "VARCHAR"),
+            ("justificativa_enviada_em", "DATETIME"),
+            ("justificativa_analisada_em", "DATETIME"),
+            ("justificativa_analisada_por", "INTEGER")
+        ],
+    }
+    with engine.begin() as conn:
+        for table, columns in migrations.items():
+            existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+            for name, ddl in columns:
+                if name not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+
+UPLOADS_DIR = PROJECT_ROOT / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
+# Frontend estático servido pelo mesmo FastAPI.
+# Deve ficar por último para não capturar as rotas da API.
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

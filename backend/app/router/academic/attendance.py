@@ -17,7 +17,8 @@ from app.database.models import (
 from app.schema.attendance import (
     AttendanceCreate,
     AttendanceResponse,
-    AttendanceJustification
+    AttendanceJustification,
+    AttendanceJustificationReview
 )
 
 from app.security.auth import get_current_user
@@ -54,11 +55,17 @@ def finalizar_faltas_pendentes(
         .all()
     )
 
+    changed = False
     for falta in faltas:
+        # Uma justificativa enviada dentro do prazo aguarda análise do professor
+        # mesmo que a análise aconteça depois das 24 horas.
+        if (falta.justificativa_status or "").lower() == "solicitada":
+            continue
         falta.status = "falta_nao_justificada"
         falta.justificada = False
+        changed = True
 
-    if faltas:
+    if changed:
         db.commit()
 
 
@@ -853,130 +860,140 @@ def justify_attendance(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
-    finalizar_faltas_pendentes(db)
-
-    attendance = (
-        db.query(Attendance)
-        .filter(
-            Attendance.id == attendance_id
-        )
-        .first()
-    )
-
+    attendance = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if not attendance:
-        raise HTTPException(
-            status_code=404,
-            detail="Registro de frequência não encontrado."
-        )
+        raise HTTPException(status_code=404, detail="Registro de frequência não encontrado.")
 
-    tipo = (
-        current_user.tipo
-        or ""
-    ).strip().lower()
-
-    # -----------------------------------------------------
-    # ALUNO
-    # -----------------------------------------------------
-
-    if tipo == "aluno":
-
-        if attendance.student_id != current_user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="Esta falta não pertence ao aluno."
-            )
-
-    # -----------------------------------------------------
-    # PROFESSOR
-    # -----------------------------------------------------
-
-    elif tipo == "professor":
-
-        teacher = (
-            db.query(Teacher)
-            .filter(
-                Teacher.user_id == current_user.id
-            )
-            .first()
-        )
-
-        if (
-            not teacher
-            or attendance.teacher_id != teacher.id
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail=(
-                    "Este registro não pertence "
-                    "ao professor."
-                )
-            )
-
-    else:
-
-        raise HTTPException(
-            status_code=403,
-            detail=(
-                "Usuário sem permissão para "
-                "justificar esta falta."
-            )
-        )
-
-    # -----------------------------------------------------
-    # PRECISA ESTAR PENDENTE
-    # -----------------------------------------------------
+    tipo = (current_user.tipo or "").strip().lower()
 
     if attendance.status != "falta_pendente":
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Esta falta não está pendente "
-                "de justificativa."
-            )
-        )
+        raise HTTPException(status_code=400, detail="Esta falta não está pendente de justificativa.")
 
-    # -----------------------------------------------------
-    # CONFERE PRAZO DE 24 HORAS
-    # -----------------------------------------------------
+    if tipo == "aluno":
+        if attendance.student_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Esta falta não pertence ao aluno.")
 
-    limite = (
-        attendance.data
-        + timedelta(hours=24)
-    )
+        limite = attendance.data + timedelta(hours=24)
+        if datetime.now() > limite and (attendance.justificativa_status or "").lower() != "solicitada":
+            attendance.status = "falta_nao_justificada"
+            attendance.justificada = False
+            db.commit()
+            raise HTTPException(status_code=400, detail="O prazo de 24 horas para enviar a justificativa terminou.")
 
-    if datetime.now() > limite:
-
-        attendance.status = "falta_nao_justificada"
+        attendance.motivo = justification.motivo
+        attendance.arquivo = justification.arquivo
+        if justification.observacao:
+            attendance.observacao = justification.observacao
         attendance.justificada = False
+        attendance.justificativa_status = "solicitada"
+        attendance.justificativa_enviada_em = datetime.now()
+        attendance.justificativa_analisada_em = None
+        attendance.justificativa_analisada_por = None
 
+        # A falta continua pendente até o professor analisar a solicitação.
+        attendance.status = "falta_pendente"
         db.commit()
+        db.refresh(attendance)
 
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "O prazo de 24 horas para "
-                "justificativa terminou."
-            )
-        )
+        try:
+            from app.services.system.notification_service import create_notification
+            teacher = db.query(Teacher).filter(Teacher.id == attendance.teacher_id).first()
+            if teacher:
+                create_notification(
+                    db=db,
+                    user_id=teacher.user_id,
+                    titulo="Nova solicitação de justificativa",
+                    mensagem=f"Um aluno enviou justificativa para a falta #{attendance.id}.",
+                    tipo="Frequência",
+                    link="/dashboard.html#attendance-pending"
+                )
+                db.commit()
+        except Exception:
+            db.rollback()
 
-    # -----------------------------------------------------
-    # REGISTRA JUSTIFICATIVA
-    # -----------------------------------------------------
+        return attendance
 
-    attendance.status = "falta_justificada"
-    attendance.justificada = True
+    if tipo == "professor":
+        teacher = db.query(Teacher).filter(Teacher.user_id == current_user.id).first()
+        if not teacher or attendance.teacher_id != teacher.id:
+            raise HTTPException(status_code=403, detail="Este registro não pertence ao professor.")
 
-    attendance.motivo = justification.motivo
-    attendance.arquivo = justification.arquivo
+        # Justificativa manual do professor continua permitida.
+        attendance.motivo = justification.motivo
+        attendance.arquivo = justification.arquivo
+        if justification.observacao:
+            attendance.observacao = justification.observacao
+        attendance.status = "falta_justificada"
+        attendance.justificada = True
+        attendance.justificativa_status = "aceita"
+        attendance.justificativa_analisada_em = datetime.now()
+        attendance.justificativa_analisada_por = current_user.id
+        db.commit()
+        db.refresh(attendance)
+        return attendance
 
-    if justification.observacao:
-        attendance.observacao = (
-            justification.observacao
-        )
+    raise HTTPException(status_code=403, detail="Usuário sem permissão para justificar esta falta.")
+
+
+@router.patch(
+    "/{attendance_id}/justification/review",
+    response_model=AttendanceResponse
+)
+def review_attendance_justification(
+    attendance_id: int,
+    review: AttendanceJustificationReview,
+    current_user: User = Depends(require_teacher),
+    db: Session = Depends(get_db)
+):
+    attendance = db.query(Attendance).filter(Attendance.id == attendance_id).first()
+    if not attendance:
+        raise HTTPException(status_code=404, detail="Registro de frequência não encontrado.")
+
+    teacher = db.query(Teacher).filter(Teacher.user_id == current_user.id).first()
+    if not teacher or attendance.teacher_id != teacher.id:
+        raise HTTPException(status_code=403, detail="Este registro não pertence ao professor.")
+
+    if (attendance.justificativa_status or "").lower() != "solicitada":
+        raise HTTPException(status_code=400, detail="Não existe solicitação de justificativa aguardando análise.")
+
+    decisao = (review.decisao or "").strip().lower()
+    if decisao not in {"aceitar", "rejeitar"}:
+        raise HTTPException(status_code=400, detail="Use 'aceitar' ou 'rejeitar'.")
+
+    attendance.justificativa_analisada_em = datetime.now()
+    attendance.justificativa_analisada_por = current_user.id
+    if review.observacao:
+        attendance.observacao = review.observacao
+
+    if decisao == "aceitar":
+        attendance.justificada = True
+        attendance.status = "falta_justificada"
+        attendance.justificativa_status = "aceita"
+    else:
+        attendance.justificada = False
+        attendance.status = "falta_nao_justificada"
+        attendance.justificativa_status = "rejeitada"
 
     db.commit()
     db.refresh(attendance)
+
+    try:
+        from app.services.system.notification_service import create_notification
+        create_notification(
+            db=db,
+            user_id=attendance.student_id,
+            titulo="Justificativa de falta analisada",
+            mensagem=(
+                "Sua justificativa foi aceita pelo professor."
+                if decisao == "aceitar"
+                else "Sua justificativa não foi aceita pelo professor."
+            ),
+            tipo="Frequência",
+            link="/dashboard.html#attendance-justifications"
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
 
     return attendance
 

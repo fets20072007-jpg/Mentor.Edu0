@@ -1,140 +1,116 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mentor.Edu</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mentor.Edu — ambiente educacional personalizado.">
+    <title>Mentor.Edu | Entrar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css?v=19.3">
+    <link rel="stylesheet" href="css/pages.css?v=19.3">
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
-  <div id="toast-root"></div>
+<body data-page="login">
+    <main class="login-page">
+        <header class="login-top-brand">
+            <div class="brand-lockup">
+                <img src="assets/brand/logo-symbol.png" alt="" class="brand-symbol">
+                <span class="brand-name">Mentor<span>.Edu</span></span>
+            </div>
+        </header>
 
-  <section id="auth-screen" class="auth-screen">
-    <div class="auth-grid">
-      <div class="auth-brand-panel">
-        <div class="brand">
-          <div class="brand-mark">M</div>
-          <div>
-            <strong>Mentor.Edu</strong>
-            <span>Ensino personalizado</span>
-          </div>
+        <div class="login-shell">
+            <section class="login-brand-panel" aria-label="Apresentação do Mentor.Edu">
+                <div class="login-brand-content">
+                    <h1>Mentor.Edu</h1>
+                    <p>Ensino personalizado, acompanhamento acadêmico e gestão institucional em um único lugar.</p>
+
+                    <div class="login-benefits" aria-label="Recursos principais">
+                        <div>
+                            <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M9 19v-5h6v5"/></svg></span>
+                            <p><strong>Acompanhamento personalizado</strong><small>Visualize desempenho, evolução e sua rotina acadêmica.</small></p>
+                        </div>
+                        <div>
+                            <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></span>
+                            <p><strong>Organização acadêmica</strong><small>Turmas, avaliações, conteúdos, frequência e horários conectados.</small></p>
+                        </div>
+                        <div>
+                            <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span>
+                            <p><strong>Experiência por perfil</strong><small>Ambiente próprio para alunos, professores, administração e suporte.</small></p>
+                        </div>
+                        <div>
+                            <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M17 14v6M14 17h6"/></svg></span>
+                            <p><strong>Detecção automática de perfil</strong><small>Entre uma vez e o Mentor.Edu abre o ambiente correto para sua função.</small></p>
+                        </div>
+                    </div>
+
+                    <div class="login-illustration" aria-hidden="true">
+                        <span class="hero-books"></span>
+                        <span class="hero-cap"></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="login-form-panel">
+                <div class="login-card">
+                    <header class="login-heading">
+                        <h2>Bem-vindo ao Mentor.Edu!</h2>
+                        <p>Entre na sua conta institucional para acessar a plataforma. Seu perfil será identificado automaticamente.</p>
+                    </header>
+
+                    <div class="login-subheading">Entre na sua conta:</div>
+
+                    <form id="loginForm" novalidate>
+                        <div class="field">
+                            <label for="email">E-mail</label>
+                            <div class="input-shell">
+                                <span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>
+                                <input id="email" name="email" type="email" autocomplete="email" placeholder="Seu e-mail institucional" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="password">Senha</label>
+                            <div class="password-field input-shell">
+                                <span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>
+                                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+                                <button type="button" id="togglePassword" class="text-button" aria-label="Mostrar senha">
+                                    <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="login-options">
+                            <label class="checkbox-row"><input id="rememberMe" type="checkbox"><span>Lembrar-me neste dispositivo</span></label>
+                            <button id="forgotPassword" type="button" class="text-button">Esqueceu a senha?</button>
+                        </div>
+
+                        <div id="loginMessage" class="form-message" role="status" aria-live="polite"></div>
+                        <button id="loginButton" type="submit" class="button button--primary button--block">Entrar</button>
+                    </form>
+
+                    <section id="socialLoginArea" class="social-login">
+                        <div class="divider"><span>ou continue com</span></div>
+                        <div class="social-login-grid">
+                            <button type="button" class="button button--outline" data-provider="google">
+                                <span class="provider-mark provider-mark--google">G</span>
+                                <span>Continuar com Google</span>
+                            </button>
+                            <button type="button" class="button button--outline" data-provider="microsoft">
+                                <span class="provider-mark provider-mark--microsoft" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                                <span>Continuar com Microsoft</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <p class="login-help">Problemas para entrar? Entre em contato com o suporte da sua instituição.</p>
+                </div>
+            </section>
         </div>
-        <span class="eyebrow">PLATAFORMA EDUCACIONAL</span>
-        <h1>Entre com sua conta e o sistema identifica automaticamente seu perfil.</h1>
-        <p>
-          O login é único. Depois de autenticar, o frontend reconhece se o usuário é
-          <strong>Aluno</strong>, <strong>Professor</strong>, <strong>Administração</strong> ou <strong>Suporte</strong>
-          e abre o dashboard correto sem pedir escolha manual.
-        </p>
-        <div class="feature-list">
-          <div class="feature-pill">Dashboard por perfil</div>
-          <div class="feature-pill">Permissões automáticas</div>
-          <div class="feature-pill">Login via FastAPI</div>
-          <div class="feature-pill">Modo demonstração opcional</div>
-        </div>
-        <div class="preview-card">
-          <div class="preview-top"><span class="status-dot"></span> Fluxo principal</div>
-          <div class="preview-body">
-            <div class="preview-step"><b>1</b><span>Login com e-mail e senha</span></div>
-            <div class="preview-step"><b>2</b><span>Leitura de <code>/users/me</code></span></div>
-            <div class="preview-step"><b>3</b><span>Abertura automática do perfil</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="auth-form-panel">
-        <div class="card auth-card">
-          <div class="card-header-simple">
-            <h2>Entrar</h2>
-            <p>Acesse o Mentor.Edu com sua conta institucional.</p>
-          </div>
-          <form id="login-form" class="auth-form">
-            <label>
-              URL da API
-              <input id="api-url" type="text" value="http://127.0.0.1:8000" />
-            </label>
-            <label>
-              E-mail
-              <input id="login-email" type="email" placeholder="usuario@escola.com" required />
-            </label>
-            <label>
-              Senha
-              <input id="login-password" type="password" placeholder="••••••••" required />
-            </label>
-            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
-            <p id="login-error" class="form-error"></p>
-          </form>
-
-          <div class="divider"><span>ou</span></div>
-
-          <button id="open-demo-modal" class="btn btn-secondary btn-full">Abrir modo demonstração</button>
-          <p class="helper-text">
-            O modo demonstração é opcional e serve apenas para apresentar as telas sem depender do backend.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div id="demo-modal" class="modal hidden">
-    <div class="modal-backdrop" data-close-demo></div>
-    <div class="modal-card">
-      <button class="modal-close" data-close-demo>×</button>
-      <h3>Modo demonstração</h3>
-      <p>Escolha um perfil apenas para apresentar a interface. No login real isso não é necessário.</p>
-      <div class="demo-role-grid">
-        <button class="demo-role-btn" data-demo-role="aluno">Aluno</button>
-        <button class="demo-role-btn" data-demo-role="professor">Professor / DT</button>
-        <button class="demo-role-btn" data-demo-role="administracao">Administração</button>
-        <button class="demo-role-btn" data-demo-role="suporte">Suporte</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="app-shell" class="app-shell hidden">
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-head">
-        <div class="brand brand-white">
-          <div class="brand-mark">M</div>
-          <div>
-            <strong>Mentor.Edu</strong>
-            <span>Ensino personalizado</span>
-          </div>
-        </div>
-        <button id="close-sidebar" class="sidebar-close">×</button>
-      </div>
-
-      <div id="sidebar-profile" class="sidebar-profile"></div>
-      <nav id="sidebar-nav" class="sidebar-nav"></nav>
-
-      <div class="sidebar-footer">
-        <button id="logout-btn" class="sidebar-action danger">Sair</button>
-      </div>
-    </aside>
-
-    <main class="main-area">
-      <header class="topbar">
-        <div class="topbar-left">
-          <button id="open-sidebar" class="icon-btn mobile-only">☰</button>
-          <div>
-            <span id="page-kicker" class="eyebrow">VISÃO GERAL</span>
-            <h1 id="page-title">Dashboard</h1>
-          </div>
-        </div>
-        <div class="topbar-right">
-          <span id="connection-badge" class="badge muted">Modo demonstração</span>
-          <button class="icon-btn">🔔</button>
-          <div id="top-avatar" class="avatar">ME</div>
-        </div>
-      </header>
-
-      <section id="page-content" class="page-content"></section>
     </main>
-  </div>
-
-  <script src="./app.js"></script>
+    <script type="module" src="js/main.js?v=19.3"></script>
 </body>
 </html>

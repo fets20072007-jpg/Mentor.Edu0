@@ -600,27 +600,20 @@ def get_student_assessment_history(
             )
         )
 
+        percentual = float(result["percentual"] or 0)
+
         history.append({
-            "assessment_id":
-                assessment.id,
-
-            "titulo":
-                assessment.titulo,
-
-            "subject_id":
-                assessment.subject_id,
-
-            "semestre":
-                assessment.semestre,
-
-            "ano_letivo":
-                assessment.ano_letivo,
-
-            "percentual":
-                result["percentual"],
-
-            "nota_final":
-                result["nota_final"]
+            "assessment_id": assessment.id,
+            "titulo": assessment.titulo,
+            "subject_id": assessment.subject_id,
+            "classroom_id": assessment.classroom_id,
+            "teacher_id": assessment.teacher_id,
+            "tipo": assessment.tipo,
+            "semestre": assessment.semestre,
+            "ano_letivo": assessment.ano_letivo,
+            "percentual": percentual,
+            "nota_final": float(result["nota_final"] or 0),
+            "status_desempenho": classificar_desempenho(percentual)
         })
 
     return history

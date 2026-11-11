@@ -7,7 +7,10 @@ from sqlalchemy import func
 
 from app.database.models import (
     Ticket,
-    User
+    User,
+    Teacher,
+    Subject,
+    Enrollment
 )
 
 from app.services.system.notification_service import (
@@ -134,164 +137,105 @@ def normalize_status(
 # CRIAR CHAMADO
 # =========================================================
 
-def create_ticket(
+def _recipient_user_for_ticket(db: Session, current_user, data):
+    perfil = (getattr(data, "destinatario_perfil", None) or "Suporte").strip()
+    recipient_id = getattr(data, "destinatario_user_id", None)
 
-    db: Session,
+    if recipient_id is None:
+        return perfil, None, perfil
 
-    current_user,
+    recipient = db.query(User).filter(User.id == recipient_id).first()
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Destinatário não encontrado.")
 
-    data
+    recipient_type = normalize_text(recipient.tipo)
+    target = normalize_text(perfil)
+    allowed_types = {
+        "professor": {"professor"},
+        "suporte": {"suporte"},
+        "administracao": {"administracao", "admin"},
+        "admin": {"administracao", "admin"},
+    }
+    if target in allowed_types and recipient_type not in allowed_types[target]:
+        raise HTTPException(status_code=400, detail="O usuário escolhido não pertence ao perfil selecionado.")
 
-):
+    # Aluno só pode direcionar chamado a professores que lecionam para sua turma.
+    if normalize_text(current_user.tipo) == "aluno" and target == "professor":
+        enrollment = db.query(Enrollment).filter(
+            Enrollment.user_id == current_user.id,
+            Enrollment.ativo == True
+        ).first()
+        if not enrollment:
+            raise HTTPException(status_code=400, detail="Aluno sem matrícula ativa.")
+        teacher = db.query(Teacher).filter(Teacher.user_id == recipient.id).first()
+        teaches_student = False
+        if teacher:
+            teaches_student = db.query(Subject).filter(
+                Subject.classroom_id == enrollment.classroom_id,
+                Subject.teacher_id == teacher.id,
+                Subject.ativa == True
+            ).first() is not None
+        if not teaches_student:
+            raise HTTPException(status_code=403, detail="Este professor não leciona para o aluno.")
 
-    titulo = (
-        data.titulo
-        or ""
-    ).strip()
+    return perfil, recipient, recipient.nome
 
 
-    descricao = (
-        data.descricao
-        or ""
-    ).strip()
-
-
-    categoria = (
-        data.categoria
-        or "Sistema"
-    ).strip()
-
-
+def create_ticket(db: Session, current_user, data):
+    titulo = (data.titulo or "").strip()
+    descricao = (data.descricao or "").strip()
+    categoria = (data.categoria or "Sistema").strip()
     if not titulo:
-
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "O título do chamado "
-                "é obrigatório."
-            )
-        )
-
-
+        raise HTTPException(status_code=400, detail="O título do chamado é obrigatório.")
     if not descricao:
+        raise HTTPException(status_code=400, detail="A descrição do chamado é obrigatória.")
 
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "A descrição do chamado "
-                "é obrigatória."
-            )
-        )
-
-
-    prioridade = normalize_priority(
-        data.prioridade
-    )
-
+    prioridade = normalize_priority(data.prioridade)
+    perfil, recipient, recipient_name = _recipient_user_for_ticket(db, current_user, data)
 
     ticket = Ticket(
-
         titulo=titulo,
-
         descricao=descricao,
-
         categoria=categoria,
-
         prioridade=prioridade,
-
         status="Aberto",
-
-        requester_id=(
-            current_user.id
-        )
+        destinatario_perfil=perfil,
+        destinatario_user_id=recipient.id if recipient else None,
+        destinatario_nome=recipient_name,
+        requester_id=current_user.id
     )
-
-
-    db.add(
-        ticket
-    )
-
-    # Precisamos do ID antes do commit.
+    db.add(ticket)
     db.flush()
 
-
-    # =====================================================
-    # NOTIFICA O SOLICITANTE
-    # =====================================================
-
     create_notification(
-
-        db=db,
-
-        user_id=current_user.id,
-
-        titulo="Chamado aberto",
-
-        mensagem=(
-            f"Seu chamado #{ticket.id} "
-            f"foi registrado com sucesso."
-        ),
-
-        tipo="Chamado",
-
-        link=f"/tickets/{ticket.id}"
+        db=db, user_id=current_user.id, titulo="Chamado aberto",
+        mensagem=f"Seu chamado #{ticket.id} foi registrado para {recipient_name}.",
+        tipo="Chamado", link=f"/tickets/{ticket.id}"
     )
 
+    if recipient:
+        targets = [recipient]
+    else:
+        target_role = normalize_text(perfil)
+        type_options = {
+            "suporte": ["suporte"],
+            "professor": ["professor"],
+            "administracao": ["administracao", "admin"],
+            "admin": ["administracao", "admin"],
+        }.get(target_role, ["suporte"])
+        targets = db.query(User).filter(func.lower(User.tipo).in_(type_options)).all()
 
-    # =====================================================
-    # NOTIFICA TODOS OS USUÁRIOS DE SUPORTE
-    # =====================================================
-
-    support_users = (
-        db.query(User)
-        .filter(
-            func.lower(
-                User.tipo
-            )
-            == "suporte"
-        )
-        .all()
-    )
-
-
-    for support in support_users:
-
-        # Caso o próprio Suporte abra chamado,
-        # evita notificação duplicada.
-
-        if (
-            support.id
-            == current_user.id
-        ):
-
+    for target in targets:
+        if target.id == current_user.id:
             continue
-
-
         create_notification(
-
-            db=db,
-
-            user_id=support.id,
-
-            titulo="Novo chamado",
-
-            mensagem=(
-                f"Novo chamado #{ticket.id}: "
-                f"{ticket.titulo}"
-            ),
-
-            tipo="Chamado",
-
-            link=f"/tickets/{ticket.id}"
+            db=db, user_id=target.id, titulo="Novo chamado",
+            mensagem=f"Novo chamado #{ticket.id}: {ticket.titulo}",
+            tipo="Chamado", link=f"/tickets/{ticket.id}"
         )
-
 
     db.commit()
-
-    db.refresh(
-        ticket
-    )
-
+    db.refresh(ticket)
     return ticket
 
 
@@ -320,6 +264,65 @@ def get_user_tickets(
     )
 
 
+def get_user_inbox(db: Session, user_id: int):
+    return (
+        db.query(Ticket)
+        .filter(Ticket.destinatario_user_id == user_id)
+        .order_by(Ticket.id.desc())
+        .all()
+    )
+
+
+def get_ticket_recipients(db: Session, current_user):
+    result = []
+    user_type = normalize_text(current_user.tipo)
+
+    if user_type == "aluno":
+        enrollment = db.query(Enrollment).filter(
+            Enrollment.user_id == current_user.id, Enrollment.ativo == True
+        ).first()
+        if enrollment:
+            rows = (
+                db.query(Teacher, Subject)
+                .join(Subject, Subject.teacher_id == Teacher.id)
+                .filter(
+                    Subject.classroom_id == enrollment.classroom_id,
+                    Subject.ativa == True,
+                    Teacher.ativo == True
+                )
+                .order_by(Teacher.nome.asc(), Subject.nome.asc())
+                .all()
+            )
+            grouped = {}
+            for teacher, subject in rows:
+                item = grouped.setdefault(teacher.user_id, {
+                    "perfil": "Professor",
+                    "user_id": teacher.user_id,
+                    "nome": teacher.nome,
+                    "subjects": []
+                })
+                item["subjects"].append(subject.nome)
+            for item in grouped.values():
+                result.append({
+                    "perfil": item["perfil"],
+                    "user_id": item["user_id"],
+                    "nome": item["nome"],
+                    "detalhe": ", ".join(item["subjects"])
+                })
+
+    for role_label, types in [("Suporte", ["suporte"]), ("Administração", ["administracao", "admin"])]:
+        users = db.query(User).filter(func.lower(User.tipo).in_(types)).order_by(User.nome.asc()).all()
+        for user in users:
+            result.append({
+                "perfil": role_label,
+                "user_id": user.id,
+                "nome": user.nome,
+                "detalhe": user.email
+            })
+
+    return result
+
+
 # =========================================================
 # FILA DO SUPORTE
 # =========================================================
@@ -330,9 +333,8 @@ def get_support_tickets(
 
     return (
         db.query(Ticket)
-        .order_by(
-            Ticket.id.desc()
-        )
+        .filter(func.lower(Ticket.destinatario_perfil) == "suporte")
+        .order_by(Ticket.id.desc())
         .all()
     )
 
@@ -350,12 +352,8 @@ def get_pending_ticket_count(
     return (
         db.query(Ticket)
         .filter(
-            Ticket.status.in_(
-                [
-                    "Aberto",
-                    "Em análise"
-                ]
-            )
+            func.lower(Ticket.destinatario_perfil) == "suporte",
+            Ticket.status.in_(["Aberto", "Em análise"])
         )
         .count()
     )

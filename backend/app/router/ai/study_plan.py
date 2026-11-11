@@ -36,6 +36,8 @@ def create_study_plan(
         horas_dia=plan.horas_dia,
         materias=plan.materias,
         dificuldade=plan.dificuldade,
+        material_url=plan.material_url,
+        arquivo=plan.arquivo,
         user_id=current_user.id
     )
 

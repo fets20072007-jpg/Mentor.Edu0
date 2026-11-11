@@ -1,0 +1,1548 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #3155d9;
+    --primary-dark: #223ca3;
+
+    --background: #f4f6fb;
+
+    --text: #1e2432;
+    --text-secondary: #6e7585;
+
+    --white: #ffffff;
+
+    --border: #e0e4ec;
+
+    --success: #198754;
+    --danger: #d43f4f;
+}
+
+body {
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: var(--background);
+
+    color: var(--text);
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-page {
+    min-height: 100vh;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(400px, 1fr)
+        minmax(450px, 1fr);
+}
+
+
+/* =====================================================
+   LADO ESQUERDO
+===================================================== */
+
+.login-brand {
+    background:
+        linear-gradient(
+            140deg,
+            #263fae,
+            #3155d9,
+            #5374ef
+        );
+
+    color: var(--white);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 70px;
+}
+
+.brand-content {
+    width: 100%;
+    max-width: 560px;
+}
+
+.brand-badge {
+    display: inline-block;
+
+    padding:
+        8px 14px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.12
+        );
+
+    font-size: 13px;
+
+    margin-bottom: 30px;
+}
+
+.brand-content h1 {
+    font-size: 54px;
+
+    margin-bottom: 18px;
+
+    letter-spacing: -2px;
+}
+
+.brand-content h1 span {
+    opacity: 0.78;
+}
+
+.brand-content > p {
+    max-width: 480px;
+
+    line-height: 1.7;
+
+    font-size: 18px;
+
+    opacity: 0.9;
+}
+
+.brand-features {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 22px;
+
+    margin-top: 55px;
+}
+
+.feature {
+    display: flex;
+
+    gap: 15px;
+
+    align-items: flex-start;
+}
+
+.feature-icon {
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.15
+        );
+
+    font-weight: 700;
+}
+
+.feature strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    font-size: 15px;
+}
+
+.feature p {
+    opacity: 0.74;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   LOGIN DIREITO
+===================================================== */
+
+.login-area {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 45px;
+}
+
+.login-card {
+    width: 100%;
+
+    max-width: 430px;
+}
+
+.mobile-logo {
+    display: none;
+
+    font-size: 27px;
+
+    font-weight: 800;
+
+    color: var(--primary);
+
+    margin-bottom: 45px;
+}
+
+.mobile-logo span {
+    color: var(--text);
+}
+
+.login-header {
+    margin-bottom: 35px;
+}
+
+.welcome {
+    color: var(--primary);
+
+    font-weight: 700;
+
+    font-size: 14px;
+
+    margin-bottom: 8px;
+}
+
+.login-header h2 {
+    font-size: 31px;
+
+    letter-spacing: -0.8px;
+
+    margin-bottom: 10px;
+}
+
+.login-header > p:last-child {
+    color: var(--text-secondary);
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   FORMULÁRIO
+===================================================== */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+
+    height: 50px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 9px;
+
+    padding:
+        0 15px;
+
+    font-size: 14px;
+
+    outline: none;
+
+    background: var(--white);
+
+    transition: 0.2s;
+}
+
+.form-group input:focus {
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            49,
+            85,
+            217,
+            0.08
+        );
+}
+
+
+/* =====================================================
+   SENHA
+===================================================== */
+
+.password-container {
+    position: relative;
+}
+
+.password-container input {
+    padding-right: 60px;
+}
+
+.password-toggle {
+    position: absolute;
+
+    right: 12px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    color: var(--primary);
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   BOTÃO
+===================================================== */
+
+.login-button {
+    width: 100%;
+
+    height: 50px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: var(--primary);
+
+    color: var(--white);
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.login-button:hover {
+    background: var(--primary-dark);
+}
+
+.login-button:disabled {
+    opacity: 0.7;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   MENSAGEM
+===================================================== */
+
+.login-message {
+    display: none;
+
+    margin-bottom: 16px;
+
+    padding: 11px 13px;
+
+    border-radius: 7px;
+
+    font-size: 13px;
+}
+
+.login-message.error {
+    display: block;
+
+    background: #fff0f1;
+
+    color: var(--danger);
+}
+
+.login-message.success {
+    display: block;
+
+    background: #edf9f2;
+
+    color: var(--success);
+}
+
+
+/* =====================================================
+   RODAPÉ LOGIN
+===================================================== */
+
+.login-footer {
+    border-top:
+        1px solid var(--border);
+
+    margin-top: 35px;
+
+    padding-top: 23px;
+
+    text-align: center;
+
+    color: var(--text-secondary);
+
+    font-size: 12px;
+}
+
+.login-footer p {
+    font-weight: 600;
+
+    color: var(--text);
+
+    margin-bottom: 4px;
+}
+
+
+/* =====================================================
+   RESPONSIVO
+===================================================== */
+
+@media (
+    max-width: 850px
+) {
+
+    .login-page {
+        display: block;
+    }
+
+    .login-brand {
+        display: none;
+    }
+
+    .login-area {
+        min-height: 100vh;
+
+        padding:
+            35px 25px;
+    }
+
+    .mobile-logo {
+        display: block;
+    }
+}
+
+/* =====================================================
+   APLICAÇÃO / DASHBOARD
+===================================================== */
+
+.app-body {
+    background: #f5f7fb;
+    min-height: 100vh;
+}
+
+.app-shell {
+    min-height: 100vh;
+    display: flex;
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+    width: 255px;
+    min-height: 100vh;
+
+    background: #ffffff;
+
+    border-right: 1px solid #e5e8ef;
+
+    padding: 26px 18px;
+
+    display: flex;
+    flex-direction: column;
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    z-index: 100;
+}
+
+.sidebar-logo {
+    font-size: 25px;
+    font-weight: 800;
+
+    color: #3155d9;
+
+    padding: 3px 10px 26px;
+}
+
+.sidebar-logo span {
+    color: #1e2432;
+}
+
+
+/* USUÁRIO SIDEBAR */
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 15px 10px;
+
+    background: #f5f7fb;
+
+    border-radius: 12px;
+
+    margin-bottom: 25px;
+}
+
+.sidebar-avatar,
+.topbar-avatar {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #3155d9;
+
+    color: white;
+
+    font-weight: 700;
+}
+
+.sidebar-user strong {
+    display: block;
+
+    font-size: 13px;
+
+    max-width: 135px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-user span {
+    display: block;
+
+    font-size: 11px;
+
+    color: #7a8190;
+
+    margin-top: 3px;
+}
+
+
+/* =====================================================
+   MENU
+===================================================== */
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    flex: 1;
+}
+
+.menu-item {
+    width: 100%;
+
+    border: none;
+
+    background: transparent;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px 13px;
+
+    border-radius: 9px;
+
+    color: #5e6676;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    font-size: 13px;
+
+    transition: 0.2s;
+}
+
+.menu-item:hover {
+    background: #f2f5ff;
+
+    color: #3155d9;
+}
+
+.menu-item.active {
+    background: #eef2ff;
+
+    color: #3155d9;
+
+    font-weight: 700;
+}
+
+.menu-icon {
+    width: 23px;
+
+    text-align: center;
+
+    font-size: 16px;
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+.sidebar-footer {
+    border-top: 1px solid #eceef3;
+
+    padding-top: 15px;
+}
+
+.sidebar-footer button {
+    width: 100%;
+
+    border: none;
+
+    background: transparent;
+
+    text-align: left;
+
+    padding: 11px;
+
+    color: #d04455;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   ÁREA PRINCIPAL
+===================================================== */
+
+.app-main {
+    flex: 1;
+
+    margin-left: 255px;
+
+    min-width: 0;
+}
+
+
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+.topbar {
+    height: 82px;
+
+    background: white;
+
+    border-bottom: 1px solid #e5e8ef;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 35px;
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 50;
+}
+
+.topbar-left {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+.topbar-caption {
+    color: #9096a4;
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+.topbar h1 {
+    font-size: 20px;
+
+    margin-top: 2px;
+}
+
+.topbar-user {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    text-align: right;
+}
+
+.topbar-user strong {
+    display: block;
+
+    font-size: 13px;
+}
+
+.topbar-user span {
+    display: block;
+
+    font-size: 11px;
+
+    color: #818897;
+
+    margin-top: 3px;
+}
+
+.mobile-menu-button {
+    display: none;
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 23px;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   CONTEÚDO
+===================================================== */
+
+.dashboard-content {
+    padding: 32px 35px 50px;
+}
+
+.loading-dashboard {
+    padding: 50px;
+
+    text-align: center;
+
+    color: #7b8291;
+}
+
+
+/* =====================================================
+   SAUDAÇÃO
+===================================================== */
+
+.dashboard-welcome {
+    margin-bottom: 28px;
+}
+
+.dashboard-welcome h2 {
+    font-size: 25px;
+
+    margin-bottom: 7px;
+
+    letter-spacing: -0.5px;
+}
+
+.dashboard-welcome p {
+    color: #747b89;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   CARDS
+===================================================== */
+
+.stats-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(180px, 1fr)
+        );
+
+    gap: 17px;
+
+    margin-bottom: 28px;
+}
+
+.stat-card {
+    background: white;
+
+    border: 1px solid #e6e9f0;
+
+    border-radius: 13px;
+
+    padding: 20px;
+
+    min-height: 125px;
+
+    transition: 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 25px
+        rgba(36, 46, 80, 0.06);
+}
+
+.stat-card-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 17px;
+}
+
+.stat-title {
+    color: #727988;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+.stat-icon {
+    width: 35px;
+    height: 35px;
+
+    border-radius: 9px;
+
+    background: #eef2ff;
+
+    color: #3155d9;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-value {
+    font-size: 26px;
+
+    font-weight: 800;
+
+    color: #222838;
+}
+
+.stat-description {
+    font-size: 11px;
+
+    color: #9399a5;
+
+    margin-top: 5px;
+}
+
+
+/* =====================================================
+   PAINÉIS
+===================================================== */
+
+.dashboard-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(280px, 1fr);
+
+    gap: 20px;
+}
+
+.panel {
+    background: white;
+
+    border: 1px solid #e5e8ef;
+
+    border-radius: 13px;
+
+    padding: 22px;
+
+    margin-bottom: 20px;
+}
+
+.panel-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+}
+
+.panel-header h3 {
+    font-size: 15px;
+}
+
+.panel-header span {
+    font-size: 11px;
+
+    color: #818896;
+}
+
+
+/* =====================================================
+   LISTAS
+===================================================== */
+
+.activity-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.activity-item {
+    padding: 14px 5px;
+
+    border-bottom: 1px solid #eef0f4;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-info strong {
+    display: block;
+
+    font-size: 13px;
+
+    margin-bottom: 4px;
+}
+
+.activity-info span {
+    color: #878e9b;
+
+    font-size: 11px;
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status {
+    display: inline-block;
+
+    padding: 5px 8px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+}
+
+.status.success {
+    background: #edf9f2;
+
+    color: #198754;
+}
+
+.status.warning {
+    background: #fff7e8;
+
+    color: #b77a09;
+}
+
+.status.info {
+    background: #edf3ff;
+
+    color: #3155d9;
+}
+
+.status.danger {
+    background: #fff0f1;
+
+    color: #ca4050;
+}
+
+
+/* =====================================================
+   ATALHOS
+===================================================== */
+
+.quick-actions {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(130px, 1fr)
+        );
+
+    gap: 11px;
+}
+
+.quick-action {
+    border: 1px solid #e4e8ef;
+
+    background: white;
+
+    border-radius: 10px;
+
+    padding: 16px;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    transition: 0.2s;
+}
+
+.quick-action:hover {
+    border-color: #3155d9;
+
+    background: #f8f9ff;
+}
+
+.quick-action strong {
+    display: block;
+
+    font-size: 12px;
+
+    margin-bottom: 4px;
+}
+
+.quick-action span {
+    color: #888f9c;
+
+    font-size: 10px;
+}
+
+
+/* =====================================================
+   PÁGINAS INTERNAS
+===================================================== */
+
+.page-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-end;
+
+    margin-bottom: 25px;
+}
+
+.page-header h2 {
+    font-size: 23px;
+
+    margin-bottom: 5px;
+}
+
+.page-header p {
+    color: #7d8492;
+
+    font-size: 13px;
+}
+
+.primary-button {
+    border: none;
+
+    background: #3155d9;
+
+    color: white;
+
+    padding: 11px 17px;
+
+    border-radius: 8px;
+
+    font-weight: 600;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   CARDS FUNCIONALIDADES
+===================================================== */
+
+.feature-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(200px, 1fr)
+        );
+
+    gap: 17px;
+}
+
+.feature-card {
+    background: white;
+
+    border: 1px solid #e5e8ef;
+
+    border-radius: 12px;
+
+    padding: 22px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #cbd4fa;
+}
+
+.feature-card-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #eef2ff;
+
+    margin-bottom: 17px;
+
+    font-size: 19px;
+}
+
+.feature-card h3 {
+    font-size: 14px;
+
+    margin-bottom: 7px;
+}
+
+.feature-card p {
+    color: #858c99;
+
+    font-size: 11px;
+
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.empty-state {
+    padding: 45px;
+
+    text-align: center;
+
+    color: #8a919e;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   RESPONSIVO
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .feature-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 760px) {
+
+    .sidebar {
+        transform: translateX(-100%);
+
+        transition: 0.25s;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .app-main {
+        margin-left: 0;
+    }
+
+    .mobile-menu-button {
+        display: block;
+    }
+
+    .topbar {
+        padding:
+            0 18px;
+    }
+
+    .topbar-user > div:first-child {
+        display: none;
+    }
+
+    .dashboard-content {
+        padding:
+            24px 18px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =====================================================
+   FREQUÊNCIA DO ALUNO
+===================================================== */
+
+.attendance-layout {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(280px, 1fr);
+
+    gap: 20px;
+}
+
+
+.frequency-highlight {
+    display: flex;
+
+    align-items: center;
+
+    gap: 35px;
+
+    padding: 12px 5px;
+}
+
+
+.frequency-circle {
+    width: 135px;
+    height: 135px;
+
+    min-width: 135px;
+
+    border-radius: 50%;
+
+    border: 12px solid #eef2ff;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #ffffff;
+}
+
+
+.frequency-circle strong {
+    font-size: 27px;
+
+    color: #3155d9;
+}
+
+
+.frequency-circle span {
+    font-size: 10px;
+
+    color: #8a919e;
+
+    margin-top: 3px;
+}
+
+
+.frequency-progress-area {
+    flex: 1;
+}
+
+
+.frequency-progress-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 10px;
+
+    font-size: 12px;
+}
+
+
+.frequency-progress {
+    width: 100%;
+
+    height: 10px;
+
+    background: #edf0f5;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+}
+
+
+.frequency-progress-bar {
+    height: 100%;
+
+    background: #3155d9;
+
+    border-radius: 20px;
+
+    transition: width 0.5s ease;
+}
+
+
+.frequency-progress-area p {
+    margin-top: 10px;
+
+    color: #8b929f;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+/* RESUMO */
+
+.attendance-summary-list {
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.attendance-summary-item {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 14px 0;
+
+    border-bottom:
+        1px solid #eef0f4;
+
+    font-size: 12px;
+}
+
+
+.attendance-summary-item:last-child {
+    border-bottom: none;
+}
+
+
+.attendance-summary-item > div {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+}
+
+
+.attendance-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    display: block;
+}
+
+
+.attendance-dot.success {
+    background: #198754;
+}
+
+
+.attendance-dot.info {
+    background: #3155d9;
+}
+
+
+.attendance-dot.warning {
+    background: #d99a23;
+}
+
+
+.attendance-dot.danger {
+    background: #d04455;
+}
+
+
+/* =====================================================
+   TABELA FREQUÊNCIA
+===================================================== */
+
+.attendance-table {
+    width: 100%;
+}
+
+
+.attendance-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(160px, 1.3fr)
+        minmax(100px, 0.7fr)
+        minmax(160px, 1fr)
+        minmax(160px, 1.2fr);
+
+    gap: 15px;
+
+    align-items: center;
+
+    padding: 15px 8px;
+
+    border-bottom:
+        1px solid #edf0f4;
+
+    font-size: 12px;
+}
+
+
+.attendance-table-header {
+    color: #89909d;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+}
+
+
+.attendance-subject strong {
+    font-size: 12px;
+}
+
+
+.attendance-observation {
+    color: #7c8491;
+
+    line-height: 1.4;
+}
+
+
+@media (max-width: 900px) {
+
+    .attendance-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .attendance-row {
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .attendance-table-header {
+        display: none;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .frequency-highlight {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .frequency-progress-area {
+        width: 100%;
+    }
+
+    .attendance-row {
+        grid-template-columns: 1fr;
+    }
+
+}

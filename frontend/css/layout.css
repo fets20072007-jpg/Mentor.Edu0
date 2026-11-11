@@ -1,0 +1,12 @@
+.app-body { background: var(--role-page-bg, #f4f6fb); }
+.app-shell { min-height: 100vh; }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; width: var(--sidebar-width); display: flex; flex-direction: column; background: linear-gradient(180deg, var(--role-sidebar-bg, #132e50), var(--role-sidebar-bg-strong, #0e2542)); color: var(--role-sidebar-text, #fff); overflow-y: auto; transition: transform var(--transition); }
+.app-main { min-height: 100vh; margin-left: var(--sidebar-width); transition: margin-left var(--transition); }
+.topbar { position: sticky; top: 0; z-index: 30; min-height: var(--topbar-height); display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 10px 26px; background: rgba(255,255,255,.96); border-bottom: 1px solid rgba(231,234,240,.95); backdrop-filter: blur(14px); box-shadow: 0 2px 12px rgba(15,23,42,.03); }
+.page-content { width: min(1480px, 100%); margin: 0 auto; padding: 28px 30px 48px; }
+.sidebar-backdrop { position: fixed; inset: 0; z-index: 35; background: rgba(15,23,42,.48); }
+
+@media (min-width: 981px) {
+    body.sidebar-collapsed .sidebar { transform: translateX(-100%); }
+    body.sidebar-collapsed .app-main { margin-left: 0; }
+}

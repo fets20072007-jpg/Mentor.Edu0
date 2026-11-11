@@ -7,6 +7,7 @@ from app.schema.classroom import (
 )
 
 
+
 def create_classroom(
     db: Session,
     classroom: ClassroomCreate

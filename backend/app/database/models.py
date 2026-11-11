@@ -71,6 +71,8 @@ class StudyPlan(Base):
     horas_dia = Column(Integer)
     materias = Column(String)
     dificuldade = Column(String)
+    material_url = Column(String, nullable=True)
+    arquivo = Column(String, nullable=True)
     status = Column(String, default="ativo")
 
     user_id = Column(Integer, ForeignKey("users.id"))
@@ -486,6 +488,8 @@ class Subject(Base):
 
     descricao = Column(String)
 
+    categoria = Column(String, default="Outras", nullable=False)
+
     ativa = Column(Boolean, default=True)
 
     teacher_id = Column(
@@ -576,6 +580,11 @@ class Attendance(Base):
 
     observacao = Column(String, nullable=True)
 
+    justificativa_status = Column(String, nullable=True)
+    justificativa_enviada_em = Column(DateTime, nullable=True)
+    justificativa_analisada_em = Column(DateTime, nullable=True)
+    justificativa_analisada_por = Column(Integer, ForeignKey("users.id"), nullable=True)
+
     teacher_id = Column(
         Integer,
         ForeignKey("teachers.id"),
@@ -606,7 +615,13 @@ class Attendance(Base):
     )
 
     student = relationship(
-        "User"
+        "User",
+        foreign_keys=[student_id]
+    )
+
+    justificativa_analisador = relationship(
+        "User",
+        foreign_keys=[justificativa_analisada_por]
     )
 
     classroom = relationship(
@@ -918,6 +933,23 @@ class Ticket(Base):
     )
 
     solucao = Column(
+        String,
+        nullable=True
+    )
+
+    destinatario_perfil = Column(
+        String,
+        default="Suporte",
+        nullable=False
+    )
+
+    destinatario_user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    destinatario_nome = Column(
         String,
         nullable=True
     )

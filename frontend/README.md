@@ -1,44 +1,39 @@
-# Mentor.Edu — Frontend Demonstrativo V3
+# Mentor.Edu — Frontend
 
-## O que mudou nesta versão
+Frontend modular em HTML, CSS e JavaScript ES Modules, integrado ao backend FastAPI.
 
-- **Tela inicial agora é um login normal**.
-- O usuário **não escolhe o perfil** no fluxo principal.
-- Após autenticar, o frontend consulta **`/users/me`** e identifica automaticamente se o usuário é:
-  - Aluno
-  - Professor
-  - Administração
-  - Suporte
-- O modo demonstração continua existindo, mas ficou **secundário**.
-- Interface refeita com layout mais estável: sidebar, topbar, cards, tabelas e dashboards por perfil.
+## Executar localmente
 
-## Como abrir
-
-Na pasta `frontend`, execute:
+Com o backend em `http://127.0.0.1:8000`:
 
 ```powershell
+cd frontend
 python -m http.server 5500
 ```
 
-Abra no navegador:
+Abra `http://127.0.0.1:5500`.
 
-```text
-http://127.0.0.1:5500
-```
+## Estrutura principal
 
-## Backend
+- `index.html`: login institucional;
+- `dashboard.html`: shell autenticado;
+- `css/`: tokens, layout, componentes, páginas e responsividade;
+- `js/api/`: acesso centralizado ao backend;
+- `js/components/`: sidebar, topbar e componentes compartilhados;
+- `js/pages/`: dashboards e páginas por perfil;
+- `docs/visual-references/`: referências visuais oficiais aprovadas;
+- `legacy/pre-dia16/`: protótipos antigos preservados apenas como histórico.
 
-Fluxo de login usado pelo frontend:
+## Status
 
-- `POST /auth/login`
-- `GET /users/me`
+- Dia 16: fundação modular, login, shell, dashboards e identidade visual — concluído.
+- Dia 17: páginas funcionais do Aluno e integração com endpoints acadêmicos — implementado para teste local.
+- Dia 18: Professor, Administração e Suporte — próximo.
 
-URL padrão da API:
+## Regras visuais
 
-```text
-http://127.0.0.1:8000
-```
+A fonte oficial de especificação é `backend/docs/FRONTEND_SPEC.md`.
 
-## Observação
+Os dashboards iniciais são deliberadamente minimalistas: detalhes aparecem depois que o usuário entra no módulo por meio de `Ver` ou pela sidebar.
 
-O modo demonstração existe apenas para apresentação. O fluxo correto do sistema é o login normal, com redirecionamento automático conforme o perfil retornado pelo backend.
+Google e Microsoft aparecem no login por coerência visual, mas ficam desabilitados enquanto o backend não possuir OAuth oficial.

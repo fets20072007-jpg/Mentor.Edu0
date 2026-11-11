@@ -1,0 +1,18 @@
+import { listClassrooms } from '../../api/classrooms.js';
+import { getAdminTeachers, getClassroomTeachers, createClassroom, setClassroomDt } from '../../api/admin.js';
+import { escapeHtml } from '../../core/format.js';
+import { pageHeader, surface, emptyBlock, statusPill } from '../shared/page-ui.js';
+import { showToast } from '../../components/toast.js';
+
+export async function renderAdminClassrooms(container){
+ const rows=await listClassrooms();
+ container.innerHTML=`${pageHeader('Turmas','Crie e consulte as turmas da instituição.')}${surface(`<form class="inline-form" data-form><h3 class="form-title">Nova turma</h3><div class="form-grid"><label>Nome<input name="nome" required placeholder="3º D"></label><label>Série<input name="serie" required placeholder="3º ano"></label><label>Turno<select name="turno"><option>Manhã</option><option>Tarde</option><option>Noite</option><option>Integral</option></select></label><label>Sala<input name="sala" required></label><label>Ano<input type="number" name="ano" value="${new Date().getFullYear()}" required></label><label>Capacidade<input type="number" name="capacidade" value="40" min="1"></label></div><div class="form-actions"><button class="mini-button mini-button--primary">Criar turma</button></div></form>${rows.length?`<div class="entity-grid">${rows.map(c=>`<article class="entity-card"><div class="entity-card-main"><span class="entity-card-kicker">${escapeHtml(c.serie)} · ${escapeHtml(c.turno)} · ${c.ano}</span><h3>${escapeHtml(c.nome)}</h3><p>Sala ${escapeHtml(c.sala)} · capacidade ${c.capacidade}</p></div><div class="entity-card-footer">${statusPill(c.ativa?'Ativa':'Inativa',c.ativa?'success':'neutral')}<span class="soft-label">DT ${c.teacher_id?`#${c.teacher_id}`:'não definido'}</span></div></article>`).join('')}</div>`:emptyBlock('Nenhuma turma','Crie a primeira turma para começar.','users')}`)}`;
+ container.querySelector('[data-form]').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;await createClassroom({nome:f.nome.value,serie:f.serie.value,turno:f.turno.value,sala:f.sala.value,ano:Number(f.ano.value),capacidade:Number(f.capacidade.value||40)});showToast('Turma criada.','success');await renderAdminClassrooms(container);});
+}
+
+export async function renderAdminDt(container){
+ const classrooms=await listClassrooms();
+ const cards=await Promise.all(classrooms.map(async c=>{let teachers=[];try{teachers=await getClassroomTeachers(c.id);}catch{}return {c,teachers};}));
+ container.innerHTML=`${pageHeader('Diretores de turma','Defina o DT entre os professores que já lecionam em cada turma.')}${surface(cards.length?`<div class="entity-grid">${cards.map(({c,teachers})=>`<article class="entity-card"><div class="entity-card-main"><span class="entity-card-kicker">${escapeHtml(c.serie)} · ${escapeHtml(c.turno)}</span><h3>${escapeHtml(c.nome)}</h3><label class="admin-control">Diretor de turma<select data-dt="${c.id}"><option value="">Sem DT</option>${teachers.map(t=>`<option value="${t.teacher_id}" ${t.is_dt?'selected':''}>${escapeHtml(t.nome)}${t.disciplinas?.length?` · ${escapeHtml(t.disciplinas.join(', '))}`:''}</option>`).join('')}</select></label></div><div class="entity-card-footer"><button class="mini-button mini-button--primary" data-save-dt="${c.id}">Salvar DT</button></div></article>`).join('')}</div>`:emptyBlock('Nenhuma turma','Não existem turmas disponíveis.','users'))}`;
+ container.querySelectorAll('[data-save-dt]').forEach(b=>b.addEventListener('click',async()=>{const id=Number(b.dataset.saveDt);const select=container.querySelector(`[data-dt="${id}"]`);await setClassroomDt(id,select.value?Number(select.value):null);showToast('Diretor de turma atualizado.','success');await renderAdminDt(container);}));
+}

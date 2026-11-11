@@ -1,0 +1,14 @@
+import { listSubjects } from '../../api/subjects.js';
+import { listClassrooms } from '../../api/classrooms.js';
+import { listTeacherProfiles, createSubject } from '../../api/admin.js';
+import { escapeHtml } from '../../core/format.js';
+import { pageHeader, surface, emptyBlock, statusPill } from '../shared/page-ui.js';
+import { showToast } from '../../components/toast.js';
+
+const CATEGORIES=['Ciências da Natureza','Ciências Humanas','Matemática','Linguagens','Técnica / Curso','Outras'];
+
+export async function renderAdminSubjects(container){
+  const [subs,cls,teachers]=await Promise.all([listSubjects(),listClassrooms(),listTeacherProfiles()]);
+  container.innerHTML=`${pageHeader('Disciplinas','Cadastre disciplinas, defina sua área e vincule-as a turmas e professores.')}${surface(`<form class="inline-form" data-form><h3 class="form-title">Nova disciplina</h3><div class="form-grid"><label>Nome<input name="nome" required></label><label>Área / tipo<select name="categoria" required>${CATEGORIES.map(c=>`<option>${escapeHtml(c)}</option>`).join('')}</select></label><label>Carga horária<input type="number" name="carga_horaria" value="80" min="1"></label><label>Turma<select name="classroom_id" required><option value="">Selecione</option>${cls.map(c=>`<option value="${c.id}">${escapeHtml(c.nome)} · ${escapeHtml(c.serie)}</option>`).join('')}</select></label><label>Professor<select name="teacher_id" required><option value="">Selecione</option>${teachers.filter(t=>t.ativo).map(t=>`<option value="${t.id}">${escapeHtml(t.nome)} · ${escapeHtml(t.especialidade||'Professor')}</option>`).join('')}</select></label><label class="form-span-2">Descrição<input name="descricao"></label></div><div class="form-actions"><button class="mini-button mini-button--primary">Criar disciplina</button></div></form>${subs.length?`<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Disciplina</th><th>Área</th><th>Turma</th><th>Professor</th><th>Carga</th><th>Status</th></tr></thead><tbody>${subs.map(s=>`<tr><td>${escapeHtml(s.nome)}</td><td>${escapeHtml(s.categoria||'Outras')}</td><td>#${s.classroom_id}</td><td>${escapeHtml(teachers.find(t=>Number(t.id)===Number(s.teacher_id))?.nome||`Professor #${s.teacher_id}`)}</td><td>${s.carga_horaria}h</td><td>${statusPill(s.ativa?'Ativa':'Inativa',s.ativa?'success':'neutral')}</td></tr>`).join('')}</tbody></table></div>`:emptyBlock('Nenhuma disciplina','Cadastre a primeira disciplina.','book')}`)}`;
+  container.querySelector('[data-form]').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget;await createSubject({nome:f.nome.value,categoria:f.categoria.value,carga_horaria:Number(f.carga_horaria.value||80),descricao:f.descricao.value||null,teacher_id:Number(f.teacher_id.value),classroom_id:Number(f.classroom_id.value)});showToast('Disciplina criada.','success');await renderAdminSubjects(container);});
+}

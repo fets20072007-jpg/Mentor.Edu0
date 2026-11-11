@@ -1,6 +1,7 @@
 from fastapi import (
     APIRouter,
-    Depends
+    Depends,
+    HTTPException
 )
 
 from sqlalchemy.orm import Session
@@ -10,13 +11,16 @@ from app.database.dependencies import (
 )
 
 from app.database.models import (
-    User
+    User,
+    Ticket
 )
 
 from app.schema.ticket import (
     TicketCreate,
     TicketStatusUpdate,
-    TicketResponse
+    TicketResponse,
+    TicketRecipientResponse,
+    ForgotPasswordRequest
 )
 
 from app.security.auth import (
@@ -30,6 +34,8 @@ from app.core.permissions import (
 from app.services.system.ticket_service import (
     create_ticket,
     get_user_tickets,
+    get_user_inbox,
+    get_ticket_recipients,
     get_support_tickets,
     get_pending_ticket_count,
     update_ticket_status
@@ -40,6 +46,22 @@ router = APIRouter(
     prefix="/tickets",
     tags=["Tickets"]
 )
+
+
+@router.post("/forgot-password", status_code=202)
+def forgot_password_request(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    from app.database.models import Ticket
+    from app.services.system.notification_service import create_notification
+    from sqlalchemy import func
+    email = str(data.email).strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == email).first()
+    if user:
+        ticket = Ticket(titulo="Recuperação de senha", descricao=f"Solicitação de recuperação de senha para {user.email}.", categoria="Acesso", prioridade="Alta", status="Aberto", destinatario_perfil="Suporte", requester_id=user.id)
+        db.add(ticket); db.flush()
+        for support in db.query(User).filter(func.lower(User.tipo) == "suporte").all():
+            create_notification(db=db, user_id=support.id, titulo="Recuperação de senha", mensagem=f"Novo pedido de recuperação de senha #{ticket.id}.", tipo="Chamado", link=f"/tickets/{ticket.id}")
+        db.commit()
+    return {"message": "Se o e-mail estiver cadastrado, a solicitação foi enviada ao suporte."}
 
 
 # =========================================================
@@ -97,6 +119,48 @@ def my_tickets(
     return get_user_tickets(
         db=db,
         user_id=current_user.id
+    )
+
+
+@router.get(
+    "/recipients",
+    response_model=list[TicketRecipientResponse]
+)
+def ticket_recipients(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return get_ticket_recipients(db, current_user)
+
+
+@router.get(
+    "/inbox",
+    response_model=list[TicketResponse]
+)
+def ticket_inbox(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return get_user_inbox(db, current_user.id)
+
+
+@router.patch(
+    "/{ticket_id}/respond",
+    response_model=TicketResponse
+)
+def respond_to_ticket(
+    ticket_id: int,
+    data: TicketStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Chamado não encontrado.")
+    if ticket.destinatario_user_id != current_user.id and (current_user.tipo or "").strip().lower() != "suporte":
+        raise HTTPException(status_code=403, detail="Este chamado não foi direcionado a você.")
+    return update_ticket_status(
+        db=db, ticket_id=ticket_id, support_user=current_user, data=data
     )
 
 
