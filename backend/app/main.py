@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from app.database.database import engine, Base
 from app.database import models as database_models  # registra todos os modelos no metadata
+from app.database.seed import seed_test_users
 from fastapi.responses import FileResponse
 from pathlib import Path
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -238,6 +239,9 @@ def initialize_database():
             for name, ddl in columns:
                 if name not in existing:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+
+    # Cria somente as contas de teste que ainda nao existem.
+    seed_test_users()
 
 UPLOADS_DIR = PROJECT_ROOT / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
