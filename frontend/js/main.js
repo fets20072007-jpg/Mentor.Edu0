@@ -18,7 +18,7 @@ import { renderSupportTickets } from "./pages/support/tickets.js";
 import { renderSupportUsers, renderSupportTeachers } from "./pages/support/users.js";
 import { renderSupportBooks, renderSupportChapters } from "./pages/support/library.js";
 import { renderSupportSettings } from "./pages/support/settings.js";
-import { renderAdminStudents, renderAdminTeachers, renderAdminUsers, renderSupportUsers as renderAdminSupportUsers } from "./pages/admin/users.js";
+import { renderAdminStudents, renderAdminTeachers, renderAdminUsers, renderSupportUsers as renderAdminSupportUsers } from "./pages/admin/users.js?v=19.4";
 import { renderAdminClassrooms, renderAdminDt } from "./pages/admin/classrooms.js";
 import { renderAdminSubjects } from "./pages/admin/subjects.js";
 import { renderAdminEnrollments } from "./pages/admin/enrollments.js";
@@ -298,3 +298,4 @@ applyUiPreferences();
 
 if (page === "login") bootLogin();
 if (page === "dashboard") bootDashboard();
+
