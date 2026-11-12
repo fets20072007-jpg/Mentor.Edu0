@@ -23,8 +23,6 @@ class User(Base):
     senha = Column(String)
 
     tipo = Column(String, nullable=False)
-    arquivo = Column(String, nullable=True)
-    arquivo_nome = Column(String, nullable=True)
     ativo = Column(Boolean, default=True, nullable=False)
     cargo_administrativo = Column(String, nullable=True)
 
@@ -1084,3 +1082,4 @@ class ClassSchedule(Base):
     subject = relationship(
         "Subject"
     )
+
