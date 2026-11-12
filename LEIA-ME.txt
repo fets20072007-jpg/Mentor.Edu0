@@ -1,0 +1,40 @@
+MENTOR EDU — POSTGRES PERSISTENTE NO RENDER
+
+1. Extraia este ZIP na raiz do projeto Mentor.Edu.
+2. Abra PowerShell na raiz:
+   C:\Users\franc\Documents\Mentor.Edu
+
+3. Rode:
+   .\aplicar_postgres.ps1
+
+Se o PowerShell bloquear:
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   .\aplicar_postgres.ps1
+
+4. Depois:
+   git add backend/app/main.py backend/requirements.txt
+   git commit -m "feat: adiciona suporte a Postgres persistente"
+   git push origin main
+
+5. No Render:
+   New -> Postgres
+   Nome sugerido: mentor-edu-db
+   Plano: Free
+   Regiao: a mesma do Web Service, se possivel
+
+6. Apos criar o banco, copie a Internal Database URL.
+
+7. No Web Service Mentor.Edu0:
+   Environment -> Add Environment Variable
+
+   KEY:
+   DATABASE_URL
+
+   VALUE:
+   cole a Internal Database URL do Postgres
+
+8. Save, rebuild, and deploy.
+
+IMPORTANTE:
+- O Postgres Free do Render persiste entre deploys/restarts, mas expira apos 30 dias.
+- Uploads de PDFs ainda ficam no filesystem do Web Service e continuam efemeros.

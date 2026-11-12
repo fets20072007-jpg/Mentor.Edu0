@@ -15,6 +15,7 @@ from pathlib import Path
 from fastapi.openapi.docs import get_swagger_ui_html
 
 from app.router.user.users import router as users_router
+from app.router.user.password import router as password_router
 from app.router.auth.auth import router as auth_router
 
 from app.router.academic.attendance import router as attendance_router
@@ -195,6 +196,7 @@ def frontend_index():
 
 
 app.include_router(users_router)
+app.include_router(password_router)
 app.include_router(auth_router)
 app.include_router(study_plan_router)
 app.include_router(study_sessions_router)
@@ -240,6 +242,7 @@ def initialize_database():
 
     migrations = {
         "subjects": [("categoria", "VARCHAR DEFAULT 'Outras' NOT NULL")],
+        "assessments": [("arquivo", "VARCHAR"), ("arquivo_nome", "VARCHAR")],
         "study_plans": [("material_url", "VARCHAR"), ("arquivo", "VARCHAR")],
         "tickets": [
             ("destinatario_perfil", "VARCHAR DEFAULT 'Suporte' NOT NULL"),
@@ -286,6 +289,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 # Deve ficar por Ãºltimo para nÃ£o capturar as rotas da API.
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
 
 
 

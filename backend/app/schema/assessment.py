@@ -1,10 +1,10 @@
-from pydantic import BaseModel
+﻿from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
 
 # =========================================================
-# CRIAÇÃO DE AVALIAÇÃO
+# CRIAÃ‡ÃƒO DE AVALIAÃ‡ÃƒO
 # =========================================================
 
 class AssessmentCreate(BaseModel):
@@ -12,6 +12,8 @@ class AssessmentCreate(BaseModel):
     descricao: Optional[str] = None
 
     tipo: str
+    arquivo: Optional[str] = None
+    arquivo_nome: Optional[str] = None
     data: Optional[datetime] = None
 
     valor: float = 10
@@ -24,7 +26,7 @@ class AssessmentCreate(BaseModel):
 
 
 # =========================================================
-# RESPOSTA DA AVALIAÇÃO
+# RESPOSTA DA AVALIAÃ‡ÃƒO
 # =========================================================
 
 class AssessmentResponse(BaseModel):
@@ -35,6 +37,8 @@ class AssessmentResponse(BaseModel):
     descricao: Optional[str] = None
 
     tipo: str
+    arquivo: Optional[str] = None
+    arquivo_nome: Optional[str] = None
 
     data: Optional[datetime] = None
 
@@ -57,7 +61,7 @@ class AssessmentResponse(BaseModel):
 
 
 # =========================================================
-# EDIÇÃO DE AVALIAÇÃO
+# EDIÃ‡ÃƒO DE AVALIAÃ‡ÃƒO
 # =========================================================
 
 class AssessmentUpdate(BaseModel):

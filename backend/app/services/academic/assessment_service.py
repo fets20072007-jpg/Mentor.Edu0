@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+﻿from datetime import date, datetime, time
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -16,7 +16,7 @@ from app.database.models import (
 )
 
 # =========================================================
-# AVALIAÇÕES
+# AVALIAÃ‡Ã•ES
 # =========================================================
 
 def create_assessment(
@@ -24,7 +24,7 @@ def create_assessment(
     user_id: int,
     assessment
 ):
-    # Localiza o perfil Teacher do usuário autenticado
+    # Localiza o perfil Teacher do usuÃ¡rio autenticado
     teacher = (
         db.query(Teacher)
         .filter(Teacher.user_id == user_id)
@@ -34,7 +34,7 @@ def create_assessment(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     # A disciplina precisa pertencer ao professor autenticado
@@ -50,22 +50,24 @@ def create_assessment(
     if not subject:
         raise HTTPException(
             status_code=403,
-            detail="Disciplina não encontrada ou não pertence a este professor."
+            detail="Disciplina nÃ£o encontrada ou nÃ£o pertence a este professor."
         )
 
-    # A turma vem da própria disciplina
+    # A turma vem da prÃ³pria disciplina
     classroom = subject.classroom
 
     if not classroom:
         raise HTTPException(
             status_code=400,
-            detail="A disciplina não está vinculada a uma turma."
+            detail="A disciplina nÃ£o estÃ¡ vinculada a uma turma."
         )
 
     nova = Assessment(
         titulo=assessment.titulo,
         descricao=assessment.descricao,
         tipo=assessment.tipo,
+        arquivo=assessment.arquivo,
+        arquivo_nome=assessment.arquivo_nome,
         data=assessment.data,
         valor=assessment.valor,
 
@@ -76,7 +78,7 @@ def create_assessment(
         teacher_id=teacher.id,
         subject_id=subject.id,
 
-        # Não vem mais do formulário
+        # NÃ£o vem mais do formulÃ¡rio
         classroom_id=classroom.id
     )
 
@@ -106,7 +108,7 @@ def get_assessment_by_id(
     if not assessment:
         raise HTTPException(
             status_code=404,
-            detail="Avaliação não encontrada."
+            detail="AvaliaÃ§Ã£o nÃ£o encontrada."
         )
 
     return assessment
@@ -129,7 +131,7 @@ def update_assessment(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     assessment = (
@@ -144,7 +146,7 @@ def update_assessment(
     if not assessment:
         raise HTTPException(
             status_code=404,
-            detail="Avaliação não encontrada ou não pertence a este professor."
+            detail="AvaliaÃ§Ã£o nÃ£o encontrada ou nÃ£o pertence a este professor."
         )
 
     update_data = data.model_dump(
@@ -171,7 +173,7 @@ def update_assessment(
         if not subject:
             raise HTTPException(
                 status_code=403,
-                detail="Disciplina não encontrada ou não pertence a este professor."
+                detail="Disciplina nÃ£o encontrada ou nÃ£o pertence a este professor."
             )
 
         classroom = subject.classroom
@@ -179,7 +181,7 @@ def update_assessment(
         if not classroom:
             raise HTTPException(
                 status_code=400,
-                detail="A disciplina não está vinculada a uma turma."
+                detail="A disciplina nÃ£o estÃ¡ vinculada a uma turma."
             )
 
         # Atualiza os dois juntos
@@ -222,7 +224,7 @@ def get_student_assessment_result(
     if not assessment:
         raise HTTPException(
             status_code=404,
-            detail="Avaliação não encontrada."
+            detail="AvaliaÃ§Ã£o nÃ£o encontrada."
         )
 
         # -----------------------------------------------------
@@ -240,7 +242,7 @@ def get_student_assessment_result(
     if not student:
         raise HTTPException(
             status_code=404,
-            detail="Aluno não encontrado."
+            detail="Aluno nÃ£o encontrado."
         )
 
     tipo = (
@@ -251,21 +253,21 @@ def get_student_assessment_result(
     if tipo != "aluno":
         raise HTTPException(
             status_code=404,
-            detail="Aluno não encontrado."
+            detail="Aluno nÃ£o encontrado."
         )
 
     # -----------------------------------------------------
-    # SEGURANÇA:
+    # SEGURANÃ‡A:
     # RESULTADO SOMENTE DA TURMA DO ALUNO
     # -----------------------------------------------------
 
     # -----------------------------------------------------
-    # SEGURANÇA:
-    # O ALUNO PRECISA POSSUIR MATRÍCULA NA TURMA
-    # DA AVALIAÇÃO.
+    # SEGURANÃ‡A:
+    # O ALUNO PRECISA POSSUIR MATRÃCULA NA TURMA
+    # DA AVALIAÃ‡ÃƒO.
     #
-    # Aqui não exigimos matrícula ativa porque o aluno
-    # também pode consultar resultados históricos.
+    # Aqui nÃ£o exigimos matrÃ­cula ativa porque o aluno
+    # tambÃ©m pode consultar resultados histÃ³ricos.
     # -----------------------------------------------------
 
     enrollment = (
@@ -280,7 +282,7 @@ def get_student_assessment_result(
     if not enrollment:
         raise HTTPException(
             status_code=404,
-            detail="Resultado não encontrado ou sem acesso."
+            detail="Resultado nÃ£o encontrado ou sem acesso."
         )
 
     questions = (
@@ -325,7 +327,7 @@ def get_student_assessment_result(
         .all()
     )
 
-    # Se houver mais de uma resposta para uma questão,
+    # Se houver mais de uma resposta para uma questÃ£o,
     # utiliza a mais recente.
     latest_answers = {}
 
@@ -360,7 +362,7 @@ def get_student_assessment_result(
             )
 
     # Aqui "pendente" significa:
-    # respondeu, mas ainda não foi corrigida.
+    # respondeu, mas ainda nÃ£o foi corrigida.
     questoes_pendentes = (
         questoes_respondidas
         - questoes_corrigidas
@@ -449,7 +451,7 @@ def get_assessment_results(
     if not assessment:
         raise HTTPException(
             status_code=404,
-            detail="Avaliação não encontrada."
+            detail="AvaliaÃ§Ã£o nÃ£o encontrada."
         )
 
     questions = (
@@ -541,7 +543,7 @@ def get_assessment_results(
 
 
 # =========================================================
-# HISTÓRICO DO ALUNO
+# HISTÃ“RICO DO ALUNO
 # =========================================================
 
 def get_student_assessment_history(
@@ -587,8 +589,8 @@ def get_student_assessment_history(
             .first()
         )
 
-        # Não coloca no histórico
-        # avaliações nunca respondidas.
+        # NÃ£o coloca no histÃ³rico
+        # avaliaÃ§Ãµes nunca respondidas.
         if not answer:
             continue
 
@@ -620,7 +622,7 @@ def get_student_assessment_history(
 
 
 # =========================================================
-# CLASSIFICAÇÃO DE DESEMPENHO
+# CLASSIFICAÃ‡ÃƒO DE DESEMPENHO
 # =========================================================
 
 def classificar_desempenho(
@@ -640,7 +642,7 @@ def classificar_desempenho(
 
 
 # =========================================================
-# HISTÓRICO DO ALUNO COM FILTROS
+# HISTÃ“RICO DO ALUNO COM FILTROS
 # =========================================================
 
 def get_student_assessment_history_filtered(
@@ -716,7 +718,7 @@ def get_student_assessment_history_filtered(
             )
         )
 
-    # TIPO DE AVALIAÇÃO
+    # TIPO DE AVALIAÃ‡ÃƒO
     if tipo is not None:
 
         assessments_query = (
@@ -792,8 +794,8 @@ def get_student_assessment_history_filtered(
             .first()
         )
 
-        # O aluno não respondeu
-        # essa avaliação.
+        # O aluno nÃ£o respondeu
+        # essa avaliaÃ§Ã£o.
         if not answer:
             continue
 
@@ -1054,7 +1056,7 @@ def get_student_evolution(
     return results
 
 # =========================================================
-# ESCOPO PEDAGÓGICO DO PROFESSOR / DT
+# ESCOPO PEDAGÃ“GICO DO PROFESSOR / DT
 # =========================================================
 
 def get_teacher_accessible_classroom_ids(
@@ -1076,7 +1078,7 @@ def get_teacher_accessible_classroom_ids(
         if item[0] is not None
     }
 
-    # Turmas onde ele é Diretor de Turma
+    # Turmas onde ele Ã© Diretor de Turma
     dt_classrooms = (
         db.query(Classroom.id)
         .filter(
@@ -1112,11 +1114,11 @@ def get_teacher_scope_assessments_query(
     ]
 
     # Professor comum:
-    # apenas avaliações próprias.
+    # apenas avaliaÃ§Ãµes prÃ³prias.
     #
     # DT:
-    # avaliações próprias +
-    # avaliações de qualquer disciplina da turma DT.
+    # avaliaÃ§Ãµes prÃ³prias +
+    # avaliaÃ§Ãµes de qualquer disciplina da turma DT.
     if dt_classroom_ids:
 
         return (
@@ -1155,7 +1157,7 @@ def ensure_student_in_teacher_scope(
     if not student:
         raise HTTPException(
             status_code=404,
-            detail="Aluno não encontrado."
+            detail="Aluno nÃ£o encontrado."
         )
 
     tipo = (
@@ -1166,7 +1168,7 @@ def ensure_student_in_teacher_scope(
     if tipo != "aluno":
         raise HTTPException(
             status_code=404,
-            detail="Aluno não encontrado."
+            detail="Aluno nÃ£o encontrado."
         )
 
     classroom_ids = (
@@ -1182,8 +1184,8 @@ def ensure_student_in_teacher_scope(
             detail="Professor sem acesso a alunos."
         )
 
-    # Não exigimos matrícula ativa aqui,
-    # pois análises podem envolver histórico acadêmico.
+    # NÃ£o exigimos matrÃ­cula ativa aqui,
+    # pois anÃ¡lises podem envolver histÃ³rico acadÃªmico.
     enrollment = (
         db.query(Enrollment)
         .filter(
@@ -1199,8 +1201,8 @@ def ensure_student_in_teacher_scope(
         raise HTTPException(
             status_code=403,
             detail=(
-                "Este aluno não pertence ao "
-                "escopo pedagógico deste professor."
+                "Este aluno nÃ£o pertence ao "
+                "escopo pedagÃ³gico deste professor."
             )
         )
 
@@ -1219,7 +1221,7 @@ def get_teacher_classroom_summary(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     assessments = (
@@ -1362,7 +1364,7 @@ def get_teacher_students_difficulties(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     assessments = (
@@ -1512,7 +1514,7 @@ def get_teacher_students_performance(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     assessments_query = (
@@ -1523,7 +1525,7 @@ def get_teacher_students_performance(
 )
 
 
-    # filtros da avaliação
+    # filtros da avaliaÃ§Ã£o
     if subject_id is not None:
         assessments_query = assessments_query.filter(
             Assessment.subject_id == subject_id
@@ -1557,7 +1559,7 @@ def get_teacher_students_performance(
             )
         )
 
-        # filtro por conteúdo/categoria
+        # filtro por conteÃºdo/categoria
         if categoria:
             questions_query = questions_query.filter(
                 Question.categoria.ilike(
@@ -1612,7 +1614,7 @@ def get_teacher_students_performance(
                     continue
 
             # calcula desempenho apenas
-            # nas questões filtradas
+            # nas questÃµes filtradas
             student_answers = [
                 answer
                 for answer in answers
@@ -1725,7 +1727,7 @@ def get_teacher_students_performance(
                 student_status
         })
 
-    # ordenação
+    # ordenaÃ§Ã£o
     if ordem == "maior_media":
 
         results.sort(
@@ -1743,8 +1745,8 @@ def get_teacher_students_performance(
 
     else:
 
-        # padrão:
-        # menor média primeiro
+        # padrÃ£o:
+        # menor mÃ©dia primeiro
         results.sort(
             key=lambda item: item["media"]
         )
@@ -1765,7 +1767,7 @@ def get_student_content_difficulties(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     student = ensure_student_in_teacher_scope(
@@ -1777,7 +1779,7 @@ def get_student_content_difficulties(
     if not student:
         raise HTTPException(
             status_code=404,
-            detail="Aluno não encontrado."
+            detail="Aluno nÃ£o encontrado."
         )
 
     assessments = (
@@ -1801,7 +1803,7 @@ def get_student_content_difficulties(
 
         for question in questions:
 
-            # questões sem categoria não entram
+            # questÃµes sem categoria nÃ£o entram
             if not question.categoria:
                 continue
 
@@ -1878,7 +1880,7 @@ def get_student_content_difficulties(
                 )
         })
 
-    # pior conteúdo primeiro
+    # pior conteÃºdo primeiro
     results.sort(
         key=lambda item:
             item["percentual_medio"]
@@ -1896,7 +1898,7 @@ def classificar_dificuldade_questao(
         return "Alta"
 
     if percentual_erro >= 25:
-        return "Média"
+        return "MÃ©dia"
 
     return "Baixa"
 
@@ -1921,7 +1923,7 @@ def get_teacher_questions_difficulties(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     assessments_query = (
@@ -2084,7 +2086,7 @@ def get_student_analysis_data(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     student = ensure_student_in_teacher_scope(
@@ -2093,7 +2095,7 @@ def get_student_analysis_data(
         student_id=student_id
     )
     # -------------------------------------------------
-    # Conteúdos com dificuldade
+    # ConteÃºdos com dificuldade
     # -------------------------------------------------
 
     difficulties = get_student_content_difficulties(
@@ -2114,7 +2116,7 @@ def get_student_analysis_data(
     ]
 
     # -------------------------------------------------
-    # Questões críticas
+    # QuestÃµes crÃ­ticas
     # -------------------------------------------------
 
     questions = get_teacher_questions_difficulties(
@@ -2219,7 +2221,7 @@ def get_teacher_profile(
     if not teacher:
         raise HTTPException(
             status_code=404,
-            detail="Perfil de professor não encontrado."
+            detail="Perfil de professor nÃ£o encontrado."
         )
 
     return teacher
@@ -2248,8 +2250,8 @@ def get_teacher_assessment(
         raise HTTPException(
             status_code=404,
             detail=(
-                "Avaliação não encontrada ou "
-                "não pertence a este professor."
+                "AvaliaÃ§Ã£o nÃ£o encontrada ou "
+                "nÃ£o pertence a este professor."
             )
         )
 
@@ -2265,13 +2267,13 @@ def get_assessments_for_user(
     ).strip().lower()
 
     # =====================================================
-    # ADMINISTRAÇÃO
-    # Pode visualizar todas as avaliações.
+    # ADMINISTRAÃ‡ÃƒO
+    # Pode visualizar todas as avaliaÃ§Ãµes.
     # =====================================================
 
     if tipo in [
         "administracao",
-        "administração"
+        "administraÃ§Ã£o"
     ]:
         return (
             db.query(Assessment)
@@ -2285,13 +2287,13 @@ def get_assessments_for_user(
     # PROFESSOR
     #
     # Professor comum:
-    # vê somente as avaliações criadas por ele.
+    # vÃª somente as avaliaÃ§Ãµes criadas por ele.
     #
     # DT:
-    # também pode CONSULTAR avaliações da turma
-    # pela qual é responsável.
+    # tambÃ©m pode CONSULTAR avaliaÃ§Ãµes da turma
+    # pela qual Ã© responsÃ¡vel.
     #
-    # Isso NÃO dá permissão para editar avaliações
+    # Isso NÃƒO dÃ¡ permissÃ£o para editar avaliaÃ§Ãµes
     # de outros professores.
     # =====================================================
 
@@ -2308,7 +2310,7 @@ def get_assessments_for_user(
         if not teacher:
             raise HTTPException(
                 status_code=404,
-                detail="Perfil de professor não encontrado."
+                detail="Perfil de professor nÃ£o encontrado."
             )
 
         dt_classrooms = (
@@ -2356,8 +2358,8 @@ def get_assessments_for_user(
     # =====================================================
     # ALUNO
     #
-    # Usa a matrícula ativa como fonte oficial da turma.
-    # Vê somente avaliações ativas da própria turma.
+    # Usa a matrÃ­cula ativa como fonte oficial da turma.
+    # VÃª somente avaliaÃ§Ãµes ativas da prÃ³pria turma.
     # =====================================================
 
     if tipo == "aluno":
@@ -2394,7 +2396,7 @@ def get_assessments_for_user(
 
     raise HTTPException(
         status_code=403,
-        detail="Perfil sem permissão para acessar avaliações."
+        detail="Perfil sem permissÃ£o para acessar avaliaÃ§Ãµes."
     )
 
 def get_assessment_for_user(
@@ -2413,5 +2415,5 @@ def get_assessment_for_user(
 
     raise HTTPException(
         status_code=404,
-        detail="Avaliação não encontrada ou sem acesso."
+        detail="AvaliaÃ§Ã£o nÃ£o encontrada ou sem acesso."
     )   

@@ -1,4 +1,4 @@
-from sqlalchemy import (
+﻿from sqlalchemy import (
     Column,
     Integer,
     String,
@@ -23,6 +23,8 @@ class User(Base):
     senha = Column(String)
 
     tipo = Column(String, nullable=False)
+    arquivo = Column(String, nullable=True)
+    arquivo_nome = Column(String, nullable=True)
     ativo = Column(Boolean, default=True, nullable=False)
     cargo_administrativo = Column(String, nullable=True)
 
@@ -37,7 +39,7 @@ class User(Base):
     horas_estudo = Column(Integer, nullable=True)
 
 
-    # seus campos já existentes...
+    # seus campos jÃ¡ existentes...
 
     classroom_id = Column(
         Integer,
@@ -207,7 +209,7 @@ class Exercise(Base):
 
     explicacao = Column(String)
 
-    dificuldade = Column(String, default="Média")
+    dificuldade = Column(String, default="MÃ©dia")
 
     chapter_id = Column(
         Integer,
@@ -311,7 +313,7 @@ class Question(Base):
 
     explicacao = Column(String)
 
-    dificuldade = Column(String, default="Médio")
+    dificuldade = Column(String, default="MÃ©dio")
 
     peso = Column(Float, default=1.0)
 
@@ -642,6 +644,8 @@ class Assessment(Base):
     titulo = Column(String, nullable=False)
     descricao = Column(String, nullable=True)
     tipo = Column(String, nullable=False)
+    arquivo = Column(String, nullable=True)
+    arquivo_nome = Column(String, nullable=True)
 
     data = Column(DateTime)
 
@@ -861,7 +865,7 @@ class LibraryQuestion(Base):
 
     dificuldade = Column(
         String,
-        default="Médio"
+        default="MÃ©dio"
     )
 
     categoria = Column(
@@ -979,7 +983,7 @@ class Ticket(Base):
 
 
 # =========================================================
-# NOTIFICAÇÕES
+# NOTIFICAÃ‡Ã•ES
 # =========================================================
 
 class Notification(Base):
