@@ -1,4 +1,4 @@
-import { FEATURES } from "./config.js";
+﻿import { FEATURES } from "./config.js";
 import { login, requestPasswordReset } from "./api/auth.js";
 import { getMe } from "./api/users.js";
 import { getUnreadCount } from "./api/notifications.js";
@@ -18,7 +18,7 @@ import { renderSupportTickets } from "./pages/support/tickets.js";
 import { renderSupportUsers, renderSupportTeachers } from "./pages/support/users.js";
 import { renderSupportBooks, renderSupportChapters } from "./pages/support/library.js";
 import { renderSupportSettings } from "./pages/support/settings.js";
-import { renderAdminStudents, renderAdminTeachers, renderAdminUsers, renderSupportUsers as renderAdminSupportUsers } from "./pages/admin/users.js?v=19.4";
+import { renderAdminStudents, renderAdminTeachers, renderAdminUsers, renderSupportUsers as renderAdminSupportUsers } from "./pages/admin/users.js?v=19.5";
 import { renderAdminClassrooms, renderAdminDt } from "./pages/admin/classrooms.js";
 import { renderAdminSubjects } from "./pages/admin/subjects.js";
 import { renderAdminEnrollments } from "./pages/admin/enrollments.js";
@@ -92,7 +92,7 @@ async function bootLogin() {
             button.disabled = false;
             button.addEventListener("click", () => {
                 const provider = button.dataset.provider === "google" ? "Google" : "Microsoft";
-                if (!FEATURES.socialLogin) return showLoginMessage(`Login com ${provider}: estrutura pronta, aguardando as credenciais OAuth institucionais para ativação.`, "success");
+                if (!FEATURES.socialLogin) return showLoginMessage(`Login com ${provider}: estrutura pronta, aguardando as credenciais OAuth institucionais para ativaÃ§Ã£o.`, "success");
                 location.href = `${location.origin}/auth/oauth/${button.dataset.provider}`;
             });
         });
@@ -110,7 +110,7 @@ async function bootLogin() {
         const currentEmail = document.getElementById("email")?.value?.trim() || "";
         const wrapper = document.createElement("div");
         wrapper.className = "modal-backdrop";
-        wrapper.innerHTML = `<section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgotTitle"><button class="modal-close" type="button" aria-label="Fechar">×</button><h3 id="forgotTitle">Recuperar acesso</h3><p>Informe seu e-mail institucional. O Mentor.Edu abrirá um chamado de acesso para o suporte.</p><form data-forgot-form><label>E-mail<input type="email" name="email" required value="${currentEmail.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"></label><div class="form-actions"><button type="button" class="mini-button" data-close>Cancelar</button><button class="mini-button mini-button--primary" type="submit">Enviar ao suporte</button></div><p class="form-message" data-forgot-message></p></form></section>`;
+        wrapper.innerHTML = `<section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgotTitle"><button class="modal-close" type="button" aria-label="Fechar">Ã—</button><h3 id="forgotTitle">Recuperar acesso</h3><p>Informe seu e-mail institucional. O Mentor.Edu abrirÃ¡ um chamado de acesso para o suporte.</p><form data-forgot-form><label>E-mail<input type="email" name="email" required value="${currentEmail.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"></label><div class="form-actions"><button type="button" class="mini-button" data-close>Cancelar</button><button class="mini-button mini-button--primary" type="submit">Enviar ao suporte</button></div><p class="form-message" data-forgot-message></p></form></section>`;
         document.body.appendChild(wrapper);
         const close=()=>wrapper.remove(); wrapper.querySelector('.modal-close').onclick=close; wrapper.querySelector('[data-close]').onclick=close;
         wrapper.querySelector('[data-forgot-form]').addEventListener('submit', async event => { event.preventDefault(); const btn=event.currentTarget.querySelector('button[type="submit"]'); btn.disabled=true; try { const data=await requestPasswordReset(event.currentTarget.email.value); const msg=wrapper.querySelector('[data-forgot-message]'); msg.textContent=data.message; msg.className='form-message is-visible is-success'; } catch(error){ const msg=wrapper.querySelector('[data-forgot-message]'); msg.textContent=error.message; msg.className='form-message is-visible is-error'; btn.disabled=false; } });
@@ -134,7 +134,7 @@ async function bootLogin() {
             location.replace("dashboard.html");
         } catch (error) {
             clearSession();
-            showLoginMessage(error.message || "Não foi possível entrar.");
+            showLoginMessage(error.message || "NÃ£o foi possÃ­vel entrar.");
         } finally {
             button.disabled = false;
             button.textContent = "Entrar";
@@ -258,10 +258,10 @@ async function renderRoute(route, role, user) {
             if (renderer) return await renderer(container, navigate);
         }
 
-        renderPlaceholder(container, routeTitle(route), "Esta página será integrada na etapa correspondente ao seu perfil.");
+        renderPlaceholder(container, routeTitle(route), "Esta pÃ¡gina serÃ¡ integrada na etapa correspondente ao seu perfil.");
     } catch (error) {
         console.error(error);
-        container.innerHTML = errorBlock(error.message || "Ocorreu um erro ao carregar a página.");
+        container.innerHTML = errorBlock(error.message || "Ocorreu um erro ao carregar a pÃ¡gina.");
     }
 }
 
@@ -271,7 +271,7 @@ async function bootDashboard() {
     try {
         const user = await getMe();
         const role = normalizeRole(user.tipo);
-        if (![ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN, ROLES.SUPPORT].includes(role)) throw new Error("Perfil não reconhecido pelo Mentor.Edu.");
+        if (![ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN, ROLES.SUPPORT].includes(role)) throw new Error("Perfil nÃ£o reconhecido pelo Mentor.Edu.");
         setCachedUser(user);
         document.body.dataset.role = role;
 
@@ -298,4 +298,5 @@ applyUiPreferences();
 
 if (page === "login") bootLogin();
 if (page === "dashboard") bootDashboard();
+
 
