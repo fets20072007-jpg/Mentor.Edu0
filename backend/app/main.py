@@ -112,6 +112,26 @@ app = FastAPI(
         else "/openapi.json"
     )
 )
+# =========================================================
+# DESATIVA CACHE DO FRONTEND DURANTE O DESENVOLVIMENTO
+# =========================================================
+@app.middleware("http")
+async def disable_frontend_cache(request, call_next):
+    response = await call_next(request)
+    path = request.url.path.lower()
+
+    if (
+        path == "/"
+        or path.endswith(".html")
+        or path.endswith(".js")
+        or path.endswith(".css")
+    ):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    return response
+
 
 # =========================================================
 # ARQUIVOS ESTÃTICOS
@@ -266,4 +286,6 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 # Deve ficar por Ãºltimo para nÃ£o capturar as rotas da API.
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
+
 
