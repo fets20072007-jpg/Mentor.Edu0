@@ -7,7 +7,8 @@ from app.core.config import (
 
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
-from app.database.database import engine
+from app.database.database import engine, Base
+from app.database import models as database_models  # registra todos os modelos no metadata
 from fastapi.responses import FileResponse
 from pathlib import Path
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -209,9 +210,13 @@ app.include_router(class_schedule_router)
 app.include_router(assessment_access_router)
 app.include_router(attendance_edit_router)
 
-# Migração leve dos campos adicionados na Revisão 1.
+# Inicialização do banco + migrações leves.
+# Em ambientes novos (ex.: Render), o SQLite começa vazio.
+# Por isso as tabelas precisam existir antes de qualquer PRAGMA/ALTER TABLE.
 @app.on_event("startup")
-def ensure_review1_columns():
+def initialize_database():
+    Base.metadata.create_all(bind=engine)
+
     migrations = {
         "subjects": [("categoria", "VARCHAR DEFAULT 'Outras' NOT NULL")],
         "study_plans": [("material_url", "VARCHAR"), ("arquivo", "VARCHAR")],
