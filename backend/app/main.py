@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import (
     CORS_ORIGINS,
@@ -6,7 +6,7 @@ from app.core.config import (
 )
 
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from app.database.database import engine, Base
 from app.database import models as database_models  # registra todos os modelos no metadata
 from app.database.seed import seed_test_users
@@ -39,7 +39,7 @@ from app.router.education.chapters import router as chapters_router
 from app.router.education.exercises import router as exercises_router
 from app.router.education.answers import router as answers_router
 
-# LEGADO - NÃO USAR
+# LEGADO - NÃƒO USAR
 # from app.router.education.questions import router as questions_router
 
 from app.router.education.library import router as library_router
@@ -55,7 +55,7 @@ from app.router.education.videos import router as videos_router
 from app.router.user.teacher import router as teacher_router
 
 # LEGADO:
-# questões da biblioteca agora usam LibraryQuestion / question-bank
+# questÃµes da biblioteca agora usam LibraryQuestion / question-bank
 #from app.router.education.library_questions import (router as library_questions_router)
 
 
@@ -114,7 +114,7 @@ app = FastAPI(
 )
 
 # =========================================================
-# ARQUIVOS ESTÁTICOS
+# ARQUIVOS ESTÃTICOS
 # =========================================================
 
 app.mount(
@@ -139,7 +139,7 @@ if not IS_PRODUCTION:
         return get_swagger_ui_html(
             openapi_url=app.openapi_url,
 
-            title="Mentor.Edu - Documentação da API",
+            title="Mentor.Edu - DocumentaÃ§Ã£o da API",
 
             swagger_css_url=(
                 "/static/swagger-custom.css"
@@ -211,8 +211,8 @@ app.include_router(class_schedule_router)
 app.include_router(assessment_access_router)
 app.include_router(attendance_edit_router)
 
-# Inicialização do banco + migrações leves.
-# Em ambientes novos (ex.: Render), o SQLite começa vazio.
+# InicializaÃ§Ã£o do banco + migraÃ§Ãµes leves.
+# Em ambientes novos (ex.: Render), o SQLite comeÃ§a vazio.
 # Por isso as tabelas precisam existir antes de qualquer PRAGMA/ALTER TABLE.
 @app.on_event("startup")
 def initialize_database():
@@ -234,11 +234,26 @@ def initialize_database():
         ],
     }
     with engine.begin() as conn:
+        inspector = inspect(conn)
         for table, columns in migrations.items():
-            existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+            existing = {
+                column["name"]
+                for column in inspector.get_columns(table)
+            }
             for name, ddl in columns:
                 if name not in existing:
-                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+                    # PostgreSQL usa TIMESTAMP no lugar de DATETIME.
+                    safe_ddl = (
+                        ddl.replace("DATETIME", "TIMESTAMP")
+                        if engine.dialect.name == "postgresql"
+                        else ddl
+                    )
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE {table} "
+                            f"ADD COLUMN {name} {safe_ddl}"
+                        )
+                    )
 
     # Cria somente as contas de teste que ainda nao existem.
     seed_test_users()
@@ -247,7 +262,8 @@ UPLOADS_DIR = PROJECT_ROOT / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
-# Frontend estático servido pelo mesmo FastAPI.
-# Deve ficar por último para não capturar as rotas da API.
+# Frontend estÃ¡tico servido pelo mesmo FastAPI.
+# Deve ficar por Ãºltimo para nÃ£o capturar as rotas da API.
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
