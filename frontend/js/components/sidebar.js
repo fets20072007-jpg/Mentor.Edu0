@@ -7,13 +7,13 @@ const navigation = {
             { route: "subjects", label: "Minhas disciplinas" },
             { route: "library", label: "ConteÃºdos" },
         ]},
-        { label: "AvaliaÃ§Ãµes", icon: "clipboard", children: [
+        { label: "Avaliações", icon: "clipboard", children: [
             { route: "assessments", label: "DisponÃ­veis" },
             { route: "assessment-history", label: "HistÃ³rico" },
             { route: "assessment-results", label: "Resultados" },
         ]},
         { route: "grades", label: "Notas", icon: "chart" },
-        { label: "FrequÃªncia", icon: "calendar", children: [
+        { label: "Frequência", icon: "calendar", children: [
             { route: "attendance", label: "Resumo" },
             { route: "attendance-justifications", label: "Justificativas" },
         ]},
@@ -26,9 +26,9 @@ const navigation = {
             { route: "library", label: "Explorar biblioteca" },
         ]},
         { route: "recommendations", label: "RecomendaÃ§Ãµes", icon: "help" },
-        { route: "schedules", label: "HorÃ¡rios", icon: "calendar" },
-        { route: "academic-calendar", label: "CalendÃ¡rio acadÃªmico", icon: "calendar" },
-        { route: "notifications", label: "NotificaÃ§Ãµes", icon: "bell", badge: "notifications" },
+        { route: "schedules", label: "Horários", icon: "calendar" },
+        { route: "academic-calendar", label: "Calendário acadêmico", icon: "calendar" },
+        { route: "notifications", label: "Notificações", icon: "bell", badge: "notifications" },
         { route: "tickets", label: "Chamados", icon: "message" },
         { route: "profile", label: "Perfil", icon: "user" },
     ],
@@ -36,17 +36,17 @@ const navigation = {
         { route: "overview", label: "InÃ­cio", icon: "home" },
         { label: "Minhas turmas", icon: "users", children: [
             { route: "classrooms", label: "Turmas vinculadas" },
-            { route: "teacher-dt", label: "DireÃ§Ã£o de turma" },
+            { route: "teacher-dt", label: "Direção de turma" },
         ]},
         { route: "subjects", label: "Disciplinas", icon: "book" },
-        { label: "AvaliaÃ§Ãµes", icon: "clipboard", children: [
-            { route: "assessment-create", label: "Criar avaliaÃ§Ã£o" },
+        { label: "Avaliações", icon: "clipboard", children: [
+            { route: "assessment-create", label: "Criar avaliação" },
             { route: "assessments", label: "Minhas avaliaÃ§Ãµes" },
             { route: "results", label: "Resultados" },
             { route: "reviews", label: "CorreÃ§Ãµes" },
             { route: "assessment-access", label: "LiberaÃ§Ã£o de acesso" },
         ]},
-        { label: "FrequÃªncia", icon: "calendar", children: [
+        { label: "Frequência", icon: "calendar", children: [
             { route: "attendance", label: "Registrar" },
             { route: "attendance-pending", label: "PendÃªncias" },
             { route: "attendance-summary", label: "Resumos" },
@@ -64,17 +64,17 @@ const navigation = {
             { route: "analytics-difficulties", label: "Dificuldades" },
             { route: "analytics-evolution", label: "EvoluÃ§Ã£o" },
         ]},
-        { route: "schedules", label: "HorÃ¡rios", icon: "calendar" },
-        { route: "academic-calendar", label: "CalendÃ¡rio acadÃªmico", icon: "calendar" },
+        { route: "schedules", label: "Horários", icon: "calendar" },
+        { route: "academic-calendar", label: "Calendário acadêmico", icon: "calendar" },
         { route: "tickets", label: "Chamados", icon: "message" },
         { route: "profile", label: "Perfil", icon: "user" },
     ],
     administracao: [
         { route: "overview", label: "InÃ­cio", icon: "home" },
-        { label: "UsuÃ¡rios", icon: "users", children: [
+        { label: "Usuários", icon: "users", children: [
             { route: "students", label: "Alunos" },
             { route: "teachers", label: "Professores" },
-            { route: "admin-users", label: "AdministraÃ§Ã£o" },
+            { route: "admin-users", label: "Administração" },
             { route: "support-users", label: "Suporte" },
         ]},
         { label: "Turmas", icon: "users", children: [
@@ -82,10 +82,10 @@ const navigation = {
             { route: "dt", label: "Diretores de turma" },
         ]},
         { route: "subjects", label: "Disciplinas", icon: "book" },
-        { route: "enrollments", label: "MatrÃ­culas", icon: "file" },
-        { route: "schedules", label: "HorÃ¡rios", icon: "calendar" },
-        { route: "academic-calendar", label: "CalendÃ¡rio acadÃªmico", icon: "calendar" },
-        { label: "AvaliaÃ§Ãµes", icon: "clipboard", children: [
+        { route: "enrollments", label: "Matrículas", icon: "file" },
+        { route: "schedules", label: "Horários", icon: "calendar" },
+        { route: "academic-calendar", label: "Calendário acadêmico", icon: "calendar" },
+        { label: "Avaliações", icon: "clipboard", children: [
             { route: "assessments", label: "Geral" },
             { route: "reports-assessments", label: "Resumo institucional" },
         ]},
@@ -94,12 +94,12 @@ const navigation = {
             { route: "library-chapters", label: "CapÃ­tulos" },
             { route: "library-content", label: "ConteÃºdos" },
         ]},
-        { label: "RelatÃ³rios", icon: "chart", children: [
+        { label: "Relatórios", icon: "chart", children: [
             { route: "reports", label: "Desempenho" },
-            { route: "reports-attendance", label: "FrequÃªncia" },
-            { route: "reports-assessments", label: "AvaliaÃ§Ãµes" },
+            { route: "reports-attendance", label: "Frequência" },
+            { route: "reports-assessments", label: "Avaliações" },
         ]},
-        { route: "settings", label: "ConfiguraÃ§Ãµes", icon: "settings" },
+        { route: "settings", label: "Configurações", icon: "settings" },
         { route: "tickets", label: "Chamados e mensagens", icon: "message" },
         { route: "profile", label: "Perfil", icon: "user" },
     ],
@@ -107,14 +107,14 @@ const navigation = {
         { route: "overview", label: "InÃ­cio", icon: "home" },
         { label: "Atendimento", icon: "message", children: [
             { route: "tickets", label: "Chamados" },
-            { route: "users", label: "UsuÃ¡rios" },
+            { route: "users", label: "Usuários" },
             { route: "teachers", label: "Professores" },
         ]},
         { label: "Estrutura da biblioteca", icon: "book", children: [
             { route: "library-books", label: "Livros" },
             { route: "library-chapters", label: "CapÃ­tulos" },
         ]},
-        { route: "settings", label: "ConfiguraÃ§Ãµes", icon: "settings" },
+        { route: "settings", label: "Configurações", icon: "settings" },
         { route: "profile", label: "Perfil", icon: "user" },
     ],
 };
