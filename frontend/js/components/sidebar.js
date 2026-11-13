@@ -1,11 +1,11 @@
-﻿import { icon } from "./icons.js";
+import { icon } from "./icons.js";
 
 const navigation = {
     aluno: [
-        { route: "overview", label: "InÃ­cio", icon: "home" },
+        { route: "overview", label: "Início", icon: "home" },
         { label: "Disciplinas", icon: "book", children: [
             { route: "subjects", label: "Minhas disciplinas" },
-            { route: "library", label: "ConteÃºdos" },
+            { route: "library", label: "Conteúdos" },
         ]},
         { label: "Avaliações", icon: "clipboard", children: [
             { route: "assessments", label: "DisponÃ­veis" },
@@ -17,7 +17,7 @@ const navigation = {
             { route: "attendance", label: "Resumo" },
             { route: "attendance-justifications", label: "Justificativas" },
         ]},
-        { route: "record", label: "HistÃ³rico acadÃªmico", icon: "school" },
+        { route: "record", label: "HistÃ³rico acadêmico", icon: "school" },
         { label: "Plano de estudos", icon: "activity", children: [
             { route: "study-plans", label: "Meu plano" },
             { route: "study-sessions", label: "SessÃµes de estudo" },
@@ -33,7 +33,7 @@ const navigation = {
         { route: "profile", label: "Perfil", icon: "user" },
     ],
     professor: [
-        { route: "overview", label: "InÃ­cio", icon: "home" },
+        { route: "overview", label: "Início", icon: "home" },
         { label: "Minhas turmas", icon: "users", children: [
             { route: "classrooms", label: "Turmas vinculadas" },
             { route: "teacher-dt", label: "Direção de turma" },
@@ -41,28 +41,28 @@ const navigation = {
         { route: "subjects", label: "Disciplinas", icon: "book" },
         { label: "Avaliações", icon: "clipboard", children: [
             { route: "assessment-create", label: "Criar avaliação" },
-            { route: "assessments", label: "Minhas avaliaÃ§Ãµes" },
+            { route: "assessments", label: "Minhas avaliações" },
             { route: "results", label: "Resultados" },
-            { route: "reviews", label: "CorreÃ§Ãµes" },
-            { route: "assessment-access", label: "LiberaÃ§Ã£o de acesso" },
+            { route: "reviews", label: "Correções" },
+            { route: "assessment-access", label: "Liberação de acesso" },
         ]},
         { label: "Frequência", icon: "calendar", children: [
             { route: "attendance", label: "Registrar" },
-            { route: "attendance-pending", label: "PendÃªncias" },
+            { route: "attendance-pending", label: "Pendências" },
             { route: "attendance-summary", label: "Resumos" },
         ]},
         { route: "grades", label: "Notas", icon: "chart" },
-        { label: "Banco de questÃµes", icon: "school", children: [
-            { route: "question-bank", label: "Minhas questÃµes" },
+        { label: "Banco de questões", icon: "school", children: [
+            { route: "question-bank", label: "Minhas questões" },
             { route: "question-bank-shared", label: "Compartilhadas" },
         ]},
-        { label: "Biblioteca pedagÃ³gica", icon: "book", children: [
+        { label: "Biblioteca pedagógica", icon: "book", children: [
             { route: "library", label: "Recursos" },
         ]},
         { label: "Desempenho", icon: "chart", children: [
             { route: "analytics", label: "Turmas" },
             { route: "analytics-difficulties", label: "Dificuldades" },
-            { route: "analytics-evolution", label: "EvoluÃ§Ã£o" },
+            { route: "analytics-evolution", label: "Evolução" },
         ]},
         { route: "schedules", label: "Horários", icon: "calendar" },
         { route: "academic-calendar", label: "Calendário acadêmico", icon: "calendar" },
@@ -70,7 +70,7 @@ const navigation = {
         { route: "profile", label: "Perfil", icon: "user" },
     ],
     administracao: [
-        { route: "overview", label: "InÃ­cio", icon: "home" },
+        { route: "overview", label: "Início", icon: "home" },
         { label: "Usuários", icon: "users", children: [
             { route: "students", label: "Alunos" },
             { route: "teachers", label: "Professores" },
@@ -91,8 +91,8 @@ const navigation = {
         ]},
         { label: "Biblioteca", icon: "book", children: [
             { route: "library-books", label: "Livros" },
-            { route: "library-chapters", label: "CapÃ­tulos" },
-            { route: "library-content", label: "ConteÃºdos" },
+            { route: "library-chapters", label: "Capítulos" },
+            { route: "library-content", label: "Conteúdos" },
         ]},
         { label: "Relatórios", icon: "chart", children: [
             { route: "reports", label: "Desempenho" },
@@ -104,7 +104,7 @@ const navigation = {
         { route: "profile", label: "Perfil", icon: "user" },
     ],
     suporte: [
-        { route: "overview", label: "InÃ­cio", icon: "home" },
+        { route: "overview", label: "Início", icon: "home" },
         { label: "Atendimento", icon: "message", children: [
             { route: "tickets", label: "Chamados" },
             { route: "users", label: "Usuários" },
@@ -112,7 +112,7 @@ const navigation = {
         ]},
         { label: "Estrutura da biblioteca", icon: "book", children: [
             { route: "library-books", label: "Livros" },
-            { route: "library-chapters", label: "CapÃ­tulos" },
+            { route: "library-chapters", label: "Capítulos" },
         ]},
         { route: "settings", label: "Configurações", icon: "settings" },
         { route: "profile", label: "Perfil", icon: "user" },
