@@ -22,6 +22,7 @@ from app.router.academic.attendance import router as attendance_router
 from app.router.academic.assessment import router as assessment_router
 from app.router.academic.grade import router as grade_router
 from app.router.academic.classroom import router as classroom_router
+from app.router.academic.calendar import router as calendar_router
 from app.router.academic.enrollment import router as enrollment_router
 from app.router.academic.subject import router as subject_router
 from app.router.academic.academic_record import router as academic_record_router
@@ -215,6 +216,7 @@ app.include_router(smart_router)
 app.include_router(dashboard_router)
 app.include_router(teacher_router)
 app.include_router(classroom_router)
+app.include_router(calendar_router)
 app.include_router(subject_router)
 app.include_router(enrollment_router)
 app.include_router(attendance_router)
@@ -241,6 +243,7 @@ def initialize_database():
     Base.metadata.create_all(bind=engine)
 
     migrations = {
+        "users": [("cpf", "VARCHAR"), ("matricula", "VARCHAR"), ("contato1", "VARCHAR"), ("contato2", "VARCHAR")],
         "subjects": [("categoria", "VARCHAR DEFAULT 'Outras' NOT NULL")],
         "assessments": [("arquivo", "VARCHAR"), ("arquivo_nome", "VARCHAR")],
         "study_plans": [("material_url", "VARCHAR"), ("arquivo", "VARCHAR")],
@@ -289,6 +292,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 # Deve ficar por Ãºltimo para nÃ£o capturar as rotas da API.
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
 
 
 

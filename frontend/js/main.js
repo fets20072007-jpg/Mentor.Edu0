@@ -61,6 +61,7 @@ import { renderStudentRecommendations } from "./pages/student/recommendations.js
 import { renderNotifications } from "./pages/shared/notifications.js";
 import { renderMyTickets } from "./pages/shared/tickets.js";
 import { renderProfile } from "./pages/shared/profile.js";
+import { renderAcademicCalendar } from "./pages/shared/academic-calendar.js";
 import { errorBlock } from "./pages/shared/page-ui.js";
 import { applyUiPreferences } from "./core/ui-preferences.js";
 import { renderAdminLibraryBooks, renderAdminLibraryChapters, renderAdminLibraryContent } from "./pages/admin/library.js";
@@ -173,6 +174,7 @@ async function renderRoute(route, role, user) {
 
         if (route === "notifications") return await renderNotifications(container);
         if (route === "profile") return await renderProfile(container);
+        if (route === "academic-calendar") return await renderAcademicCalendar(container, user);
         if (route === "tickets" && role !== ROLES.SUPPORT) return await renderMyTickets(container);
 
         if (role === ROLES.TEACHER) {
@@ -298,5 +300,6 @@ applyUiPreferences();
 
 if (page === "login") bootLogin();
 if (page === "dashboard") bootDashboard();
+
 
 

@@ -25,6 +25,10 @@ class User(Base):
     tipo = Column(String, nullable=False)
     ativo = Column(Boolean, default=True, nullable=False)
     cargo_administrativo = Column(String, nullable=True)
+    cpf = Column(String, nullable=True)
+    matricula = Column(String, nullable=True)
+    contato1 = Column(String, nullable=True)
+    contato2 = Column(String, nullable=True)
 
     bio = Column(String, nullable=True)
     escola = Column(String, nullable=True)
@@ -391,7 +395,7 @@ class Teacher(Base):
 
     nome = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    cpf = Column(String, unique=True, nullable=False)
+    cpf = Column(String, unique=True, nullable=True)
     matricula = Column(String, unique=True, nullable=False)
     telefone = Column(String)
     especialidade = Column(String, nullable=False)
@@ -1083,3 +1087,14 @@ class ClassSchedule(Base):
         "Subject"
     )
 
+
+class AcademicEvent(Base):
+    __tablename__ = "academic_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String, nullable=False)
+    descricao = Column(String, nullable=True)
+    tipo = Column(String, default="Evento", nullable=False)
+    visibilidade = Column(String, default="todos", nullable=False)
+    data_inicio = Column(DateTime, nullable=False)
+    ativo = Column(Boolean, default=True, nullable=False)

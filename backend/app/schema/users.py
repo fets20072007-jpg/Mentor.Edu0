@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+﻿from pydantic import BaseModel
 from typing import Optional
 
 
 # =========================================================
-# CADASTRO DE USUÁRIO
+# CADASTRO DE USUÃRIO
 # =========================================================
 
 class UserCreate(BaseModel):
@@ -19,6 +19,8 @@ class UserCreate(BaseModel):
 
     bio: Optional[str] = None
     escola: Optional[str] = None
+    contato1: Optional[str] = None
+    contato2: Optional[str] = None
     serie: Optional[str] = None
     idade: Optional[int] = None
 
@@ -36,7 +38,7 @@ class UserCreate(BaseModel):
     # -----------------------------------------------------
     # PROFESSOR
     #
-    # Só serão utilizados quando tipo == "Professor".
+    # SÃ³ serÃ£o utilizados quando tipo == "Professor".
     # -----------------------------------------------------
 
     cpf: Optional[str] = None
@@ -47,7 +49,7 @@ class UserCreate(BaseModel):
 
 
 # =========================================================
-# ATUALIZAÇÃO DO PRÓPRIO PERFIL
+# ATUALIZAÃ‡ÃƒO DO PRÃ“PRIO PERFIL
 # =========================================================
 
 class UserUpdate(BaseModel):
@@ -57,6 +59,8 @@ class UserUpdate(BaseModel):
 
     bio: Optional[str] = None
     escola: Optional[str] = None
+    contato1: Optional[str] = None
+    contato2: Optional[str] = None
     serie: Optional[str] = None
     idade: Optional[int] = None
 

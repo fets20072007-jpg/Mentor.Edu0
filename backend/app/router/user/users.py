@@ -1,4 +1,4 @@
-from fastapi import (
+﻿from fastapi import (
     APIRouter,
     Depends,
     HTTPException
@@ -40,14 +40,14 @@ router = APIRouter(
 
 
 # =========================================================
-# CADASTRO DE USUÁRIOS
+# CADASTRO DE USUÃRIOS
 #
 # SUPORTE:
-# - Administração
+# - AdministraÃ§Ã£o
 # - Professor
 # - Aluno
 #
-# ADMINISTRAÇÃO:
+# ADMINISTRAÃ‡ÃƒO:
 # - Professor
 # - Aluno
 #
@@ -101,25 +101,25 @@ def register_user(
         "aluno",
         "professor",
         "administracao",
-        "administração"
+        "administraÃ§Ã£o"
     ]
 
     if tipo_novo not in tipos_validos:
 
         raise HTTPException(
             status_code=400,
-            detail="Tipo de usuário inválido."
+            detail="Tipo de usuÃ¡rio invÃ¡lido."
         )
 
 
     # =====================================================
-    # PERMISSÕES DE CADASTRO
+    # PERMISSÃ•ES DE CADASTRO
     # =====================================================
 
     if tipo_atual == "suporte":
 
         # Suporte pode cadastrar:
-        # - Administração
+        # - AdministraÃ§Ã£o
         # - Professor
         # - Aluno
 
@@ -128,22 +128,22 @@ def register_user(
 
     elif tipo_atual in [
         "administracao",
-        "administração"
+        "administraÃ§Ã£o"
     ]:
 
-        # Administração não pode cadastrar
-        # outra Administração.
+        # AdministraÃ§Ã£o nÃ£o pode cadastrar
+        # outra AdministraÃ§Ã£o.
 
         if tipo_novo in [
             "administracao",
-            "administração"
+            "administraÃ§Ã£o"
         ]:
 
             raise HTTPException(
                 status_code=403,
                 detail=(
                     "Somente o Suporte pode cadastrar "
-                    "integrantes da Administração."
+                    "integrantes da AdministraÃ§Ã£o."
                 )
             )
 
@@ -153,7 +153,7 @@ def register_user(
         raise HTTPException(
             status_code=403,
             detail=(
-                "Usuário sem permissão "
+                "UsuÃ¡rio sem permissÃ£o "
                 "para realizar cadastros."
             )
         )
@@ -172,7 +172,7 @@ def register_user(
 
         raise HTTPException(
             status_code=400,
-            detail="E-mail é obrigatório."
+            detail="E-mail Ã© obrigatÃ³rio."
         )
 
 
@@ -192,7 +192,7 @@ def register_user(
 
         raise HTTPException(
             status_code=400,
-            detail="E-mail já cadastrado."
+            detail="E-mail jÃ¡ cadastrado."
         )
 
 
@@ -249,7 +249,7 @@ def register_user(
 
             raise HTTPException(
                 status_code=404,
-                detail="Turma não encontrada."
+                detail="Turma nÃ£o encontrada."
             )
 
 
@@ -258,7 +258,7 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Não é possível cadastrar "
+                    "NÃ£o Ã© possÃ­vel cadastrar "
                     "o aluno em uma turma inativa."
                 )
             )
@@ -266,7 +266,7 @@ def register_user(
 
     # =====================================================
     # PROFESSOR
-    # VALIDA CAMPOS OBRIGATÓRIOS
+    # VALIDA CAMPOS OBRIGATÃ“RIOS
     # =====================================================
 
     cpf_normalizado = None
@@ -303,14 +303,14 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "CPF é obrigatório "
+                    "CPF Ã© obrigatÃ³rio "
                     "para professores."
                 )
             )
 
 
         # -------------------------------------------------
-        # MATRÍCULA
+        # MATRÃCULA
         # -------------------------------------------------
 
         if not matricula_normalizada:
@@ -318,7 +318,7 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Matrícula é obrigatória "
+                    "MatrÃ­cula Ã© obrigatÃ³ria "
                     "para professores."
                 )
             )
@@ -333,7 +333,7 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Especialidade é obrigatória "
+                    "Especialidade Ã© obrigatÃ³ria "
                     "para professores."
                 )
             )
@@ -357,14 +357,14 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Já existe um professor "
+                    "JÃ¡ existe um professor "
                     "com este CPF."
                 )
             )
 
 
         # -------------------------------------------------
-        # MATRÍCULA DUPLICADA
+        # MATRÃCULA DUPLICADA
         # -------------------------------------------------
 
         professor_matricula = (
@@ -381,8 +381,8 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Já existe um professor "
-                    "com esta matrícula."
+                    "JÃ¡ existe um professor "
+                    "com esta matrÃ­cula."
                 )
             )
 
@@ -405,7 +405,7 @@ def register_user(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Já existe um professor "
+                    "JÃ¡ existe um professor "
                     "com este e-mail."
                 )
             )
@@ -465,7 +465,7 @@ def register_user(
 
 
     # =====================================================
-    # TRANSAÇÃO ÚNICA
+    # TRANSAÃ‡ÃƒO ÃšNICA
     # =====================================================
 
     try:
@@ -482,7 +482,7 @@ def register_user(
         # -------------------------------------------------
         # FLUSH
         #
-        # Gera o ID do usuário sem fazer commit.
+        # Gera o ID do usuÃ¡rio sem fazer commit.
         #
         # Assim podemos criar:
         #
@@ -492,7 +492,7 @@ def register_user(
         # Professor:
         # User + Teacher
         #
-        # na mesma transação.
+        # na mesma transaÃ§Ã£o.
         # -------------------------------------------------
 
         db.flush()
@@ -500,7 +500,7 @@ def register_user(
 
         # =================================================
         # ALUNO
-        # CRIA MATRÍCULA AUTOMATICAMENTE
+        # CRIA MATRÃCULA AUTOMATICAMENTE
         # =================================================
 
         if tipo_novo == "aluno":
@@ -578,7 +578,7 @@ def register_user(
 
 
         # =================================================
-        # COMMIT ÚNICO
+        # COMMIT ÃšNICO
         # =================================================
 
         db.commit()
@@ -601,9 +601,9 @@ def register_user(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Não foi possível concluir o cadastro. "
-                "Verifique se e-mail, CPF ou matrícula "
-                "já estão cadastrados."
+                "NÃ£o foi possÃ­vel concluir o cadastro. "
+                "Verifique se e-mail, CPF ou matrÃ­cula "
+                "jÃ¡ estÃ£o cadastrados."
             )
         )
 
@@ -620,8 +620,8 @@ def register_user(
 
 
 # =========================================================
-# LISTAGEM DE USUÁRIOS
-# ADMINISTRAÇÃO / SUPORTE
+# LISTAGEM DE USUÃRIOS
+# ADMINISTRAÃ‡ÃƒO / SUPORTE
 # =========================================================
 
 @router.get(
@@ -649,7 +649,7 @@ def list_users(
 
 
 # =========================================================
-# PERFIL DO USUÁRIO AUTENTICADO
+# PERFIL DO USUÃRIO AUTENTICADO
 # =========================================================
 
 @router.get(
@@ -668,7 +668,7 @@ def get_me(
 
 
 # =========================================================
-# ATUALIZAR PRÓPRIO PERFIL
+# ATUALIZAR PRÃ“PRIO PERFIL
 # =========================================================
 
 @router.put(
@@ -732,7 +732,7 @@ def update_me(
 
             raise HTTPException(
                 status_code=400,
-                detail="E-mail inválido."
+                detail="E-mail invÃ¡lido."
             )
 
 
@@ -753,7 +753,7 @@ def update_me(
 
             raise HTTPException(
                 status_code=400,
-                detail="E-mail já cadastrado."
+                detail="E-mail jÃ¡ cadastrado."
             )
 
 
@@ -787,11 +787,11 @@ def update_me(
 
 
 # =========================================================
-# EXCLUSÃO DA PRÓPRIA CONTA
+# EXCLUSÃƒO DA PRÃ“PRIA CONTA
 #
-# OBSERVAÇÃO:
-# Posteriormente será substituída por
-# desativação institucional.
+# OBSERVAÃ‡ÃƒO:
+# Posteriormente serÃ¡ substituÃ­da por
+# desativaÃ§Ã£o institucional.
 # =========================================================
 
 @router.delete(
@@ -830,3 +830,4 @@ def delete_me(
         "message":
             "Conta desativada com sucesso."
     }
+
