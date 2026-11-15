@@ -99,12 +99,21 @@ function openPrintableAssessment(assessment, subjectName, questions) {
     ? `
       <section class="answer-key">
         <h2>Gabarito</h2>
-        ${questions.map((q, i) => `
-          <div>${i + 1}. ${escapeHtml(q.resposta_correta || "—")}</div>
-        `).join("")}
+        <div class="answer-key-grid">
+          ${questions.map((q, i) => `
+            <div><strong>${i + 1}.</strong> ${escapeHtml(q.resposta_correta || "—")}</div>
+          `).join("")}
+        </div>
       </section>
     `
     : "";
+
+  const questionClass =
+    layout === "coluna_unica"
+      ? "questions one-column"
+      : layout === "hibrido"
+        ? "questions two-columns hybrid"
+        : "questions two-columns";
 
   w.document.write(`<!doctype html>
   <html lang="pt-BR">
@@ -112,45 +121,230 @@ function openPrintableAssessment(assessment, subjectName, questions) {
       <meta charset="utf-8">
       <title>${escapeHtml(assessment.titulo)}</title>
       <style>
-        @page{size:A4;margin:14mm}
-        *{box-sizing:border-box}
-        body{font-family:Arial,sans-serif;color:#111;margin:0;font-size:12px}
-        .toolbar{display:flex;gap:8px;margin:0 auto 16px;max-width:210mm}
-        .toolbar button{padding:9px 13px}
-        .sheet{max-width:210mm;margin:0 auto;background:#fff}
-        .cover{min-height:255mm;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;page-break-after:always}
-        .brand{font-size:14px;font-weight:800;letter-spacing:.08em}
-        .cover h1{font-size:30px;margin:20px 0 8px}
-        .cover p{font-size:16px}
-        .head{border:1px solid #111;padding:10px 12px;margin-bottom:12px}
-        .head-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
-        .school{font-weight:800;font-size:15px}
-        .assessment-title{text-transform:uppercase;font-size:17px;font-weight:800;margin-top:4px}
-        .meta{display:grid;grid-template-columns:2fr .7fr 1fr;gap:8px;margin-top:12px}
-        .meta div{border-bottom:1px solid #111;min-height:22px}
-        .questions{
-          display:grid;
-          grid-template-columns:${layout === "coluna_unica" ? "1fr" : "1fr 1fr"};
-          gap:0 18px;
-          align-items:start;
+        @page {
+          size: A4;
+          margin: 13mm 14mm;
         }
-        .print-question{
-          break-inside:avoid;
-          border-bottom:1px solid #bbb;
-          padding:9px 0 11px;
+
+        * {
+          box-sizing: border-box;
         }
-        .print-question.full-width{grid-column:1 / -1}
-        .question-title{font-weight:700;line-height:1.35;margin-bottom:7px}
-        .question-alt{margin:4px 0;line-height:1.3}
-        .answer-lines span{display:block;border-bottom:1px solid #aaa;height:24px}
-        .answer-key{page-break-before:always}
-        .answer-key h2{border-bottom:2px solid #111;padding-bottom:6px}
-        @media print{
-          .toolbar{display:none}
-          .sheet{max-width:none}
+
+        html, body {
+          margin: 0;
+          padding: 0;
+          background: #fff;
+        }
+
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          color: #111;
+          font-size: 11.2px;
+          line-height: 1.35;
+        }
+
+        .toolbar {
+          max-width: 182mm;
+          margin: 10px auto 12px;
+        }
+
+        .toolbar button {
+          min-height: 34px;
+          padding: 0 14px;
+          border: 1px solid #aaa;
+          border-radius: 5px;
+          background: #fff;
+          cursor: pointer;
+          font: inherit;
+        }
+
+        .sheet {
+          width: 100%;
+          max-width: 182mm;
+          margin: 0 auto;
+        }
+
+        .cover {
+          min-height: 250mm;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          page-break-after: always;
+        }
+
+        .cover .brand {
+          font-size: 13px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: .12em;
+        }
+
+        .cover h1 {
+          max-width: 140mm;
+          margin: 18px 0 8px;
+          font-size: 27px;
+          line-height: 1.15;
+          text-transform: uppercase;
+        }
+
+        .cover p {
+          margin: 3px 0;
+          font-size: 14px;
+        }
+
+        .exam-header {
+          margin-bottom: 12px;
+          border-top: 2px solid #111;
+          border-bottom: 1px solid #111;
+          padding: 8px 0 9px;
+        }
+
+        .exam-header-top {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 14px;
+          align-items: start;
+        }
+
+        .school {
+          font-size: 12px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: .03em;
+        }
+
+        .assessment-title {
+          margin-top: 2px;
+          font-size: 16px;
+          font-weight: 800;
+          text-transform: uppercase;
+          line-height: 1.15;
+        }
+
+        .assessment-value {
+          white-space: nowrap;
+          font-size: 11px;
+        }
+
+        .student-fields {
+          display: grid;
+          grid-template-columns: 2.2fr .55fr 1fr;
+          gap: 7px 10px;
+          margin-top: 9px;
+        }
+
+        .field {
+          display: flex;
+          align-items: flex-end;
+          gap: 5px;
+          min-height: 21px;
+        }
+
+        .field-label {
+          white-space: nowrap;
+          font-size: 10.5px;
+        }
+
+        .field-line {
+          flex: 1;
+          min-width: 25px;
+          border-bottom: 1px solid #333;
+          height: 17px;
+        }
+
+        .instructions {
+          margin: 0 0 10px;
+          font-size: 10.8px;
+        }
+
+        /*
+         * Duas colunas com fluxo vertical:
+         * 1, 2, 3... descem na esquerda e só depois continuam na direita.
+         * Não usamos CSS Grid para evitar 1 e 2 lado a lado.
+         */
+        .questions.two-columns {
+          column-count: 2;
+          column-gap: 13mm;
+          column-rule: 1px solid #d6d6d6;
+        }
+
+        .questions.one-column {
+          column-count: 1;
+        }
+
+        .print-question {
+          display: inline-block;
+          width: 100%;
+          margin: 0 0 10px;
+          padding: 0 0 2px;
+          vertical-align: top;
+          break-inside: avoid-column;
+          page-break-inside: avoid;
+        }
+
+        .questions.hybrid .print-question.full-width {
+          column-span: all;
+          display: block;
+          margin-top: 5px;
+          margin-bottom: 12px;
+        }
+
+        .question-title {
+          margin-bottom: 5px;
+          font-weight: 700;
+          line-height: 1.4;
+          text-align: justify;
+        }
+
+        .question-alt {
+          margin: 2.5px 0;
+          padding-left: 1px;
+          line-height: 1.3;
+        }
+
+        .answer-lines {
+          margin-top: 7px;
+        }
+
+        .answer-lines span {
+          display: block;
+          height: 23px;
+          border-bottom: 1px solid #9b9b9b;
+        }
+
+        .answer-key {
+          page-break-before: always;
+          padding-top: 5px;
+        }
+
+        .answer-key h2 {
+          margin: 0 0 10px;
+          padding-bottom: 5px;
+          border-bottom: 1px solid #111;
+          font-size: 16px;
+          text-transform: uppercase;
+        }
+
+        .answer-key-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 8px 12px;
+        }
+
+        @media print {
+          .toolbar {
+            display: none;
+          }
+
+          .sheet {
+            max-width: none;
+          }
         }
       </style>
     </head>
+
     <body>
       <div class="toolbar">
         <button onclick="window.print()">Imprimir / Salvar em PDF</button>
@@ -160,7 +354,7 @@ function openPrintableAssessment(assessment, subjectName, questions) {
         ${
           useCover
             ? `<section class="cover">
-                <div class="brand">MENTOR.EDU</div>
+                <div class="brand">Mentor.Edu</div>
                 <h1>${escapeHtml(assessment.titulo)}</h1>
                 <p>${escapeHtml(subjectName || "")}</p>
                 <p>${escapeHtml(assessment.tipo || "")}</p>
@@ -168,29 +362,63 @@ function openPrintableAssessment(assessment, subjectName, questions) {
             : ""
         }
 
-        <header class="head">
-          <div class="head-top">
+        <header class="exam-header">
+          <div class="exam-header-top">
             <div>
               <div class="school">Mentor.Edu</div>
-              <div class="assessment-title">${escapeHtml(assessment.titulo)}</div>
+              <div class="assessment-title">
+                ${escapeHtml(assessment.titulo)}
+              </div>
             </div>
-            <div>
+
+            <div class="assessment-value">
               <strong>Valor:</strong> ${assessment.valor ?? 10}
             </div>
           </div>
 
-          <div class="meta">
-            <div>Nome:</div>
-            <div>Nº:</div>
-            <div>Turma:</div>
-            <div>Professor:</div>
-            <div>Data:</div>
-            <div>Nota:</div>
+          <div class="student-fields">
+            <div class="field">
+              <span class="field-label">Nome:</span>
+              <span class="field-line"></span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Nº:</span>
+              <span class="field-line"></span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Turma:</span>
+              <span class="field-line"></span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Professor:</span>
+              <span class="field-line"></span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Data:</span>
+              <span class="field-line"></span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Nota:</span>
+              <span class="field-line"></span>
+            </div>
           </div>
         </header>
 
-        ${assessment.descricao ? `<p>${escapeHtml(assessment.descricao)}</p>` : ""}
-        <main class="questions">${body}</main>
+        ${
+          assessment.descricao
+            ? `<p class="instructions">${escapeHtml(assessment.descricao)}</p>`
+            : ""
+        }
+
+        <main class="${questionClass}">
+          ${body}
+        </main>
+
         ${key}
       </div>
     </body>

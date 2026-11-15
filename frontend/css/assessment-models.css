@@ -1,18 +1,22 @@
-/* Fase 1 — modelos de avaliação */
+/* Mentor Edu — refino visual dos modelos de avaliação
+   Mantém os controles compactos e a identidade do professor. */
+
 .assessment-model-box,
 .assessment-mode-box {
-  margin-top: 18px;
-  padding: 18px;
+  margin-top: 16px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 15px;
   background: #fff;
 }
 
 .assessment-model-title {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 11px;
+}
+
+.assessment-model-title strong,
+.assessment-mode-box > strong {
+  font-size: 14px;
 }
 
 .assessment-model-title small,
@@ -20,57 +24,167 @@
 .assessment-extra-options small,
 .assessment-add-e small {
   display: block;
-  margin-top: 4px;
+  margin-top: 3px;
   color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: 10.5px;
+  line-height: 1.35;
 }
 
 .assessment-model-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.assessment-model-option,
-.assessment-extra-options label {
-  display: flex;
   gap: 10px;
-  align-items: flex-start;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  cursor: pointer;
 }
 
-.assessment-model-option:has(input:checked),
-.assessment-extra-options label:has(input:checked) {
+/* Opções compactas — sem aqueles círculos gigantes. */
+.assessment-model-option {
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.assessment-model-option:hover,
+.assessment-model-option:has(input:checked) {
   border-color: var(--role-primary);
-  background: color-mix(in srgb, var(--role-primary) 7%, white);
+}
+
+.assessment-model-option:has(input:checked) {
+  background: color-mix(in srgb, var(--role-primary) 5%, white);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--role-primary) 8%, transparent);
+}
+
+.assessment-model-option > span {
+  min-width: 0;
+}
+
+.assessment-model-option strong {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.2;
+}
+
+/* Sobrescreve estilos globais de input que estavam aumentando radio/checkbox. */
+.assessment-model-option input[type="radio"],
+.assessment-mode-options input[type="radio"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1.5px solid #8b98aa !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  position: relative;
+}
+
+.assessment-model-option input[type="radio"]:checked,
+.assessment-mode-options input[type="radio"]:checked {
+  border-color: var(--role-primary) !important;
+}
+
+.assessment-model-option input[type="radio"]:checked::after,
+.assessment-mode-options input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--role-primary);
 }
 
 .assessment-extra-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.assessment-extra-options label {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.assessment-extra-options input[type="checkbox"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  min-height: 17px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1.5px solid #8b98aa !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  position: relative;
+}
+
+.assessment-extra-options input[type="checkbox"]:checked {
+  border-color: var(--role-primary) !important;
+  background: var(--role-primary) !important;
+}
+
+.assessment-extra-options input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  inset: -1px 0 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.assessment-extra-options label:has(input:checked) {
+  border-color: var(--role-primary);
+  background: color-mix(in srgb, var(--role-primary) 4%, white);
+}
+
+.assessment-mode-box {
+  display: grid;
+  gap: 10px;
 }
 
 .assessment-mode-options {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 22px;
   flex-wrap: wrap;
-  margin-top: 12px;
 }
 
 .assessment-mode-options label {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0;
+  font-size: 11.5px;
+  cursor: pointer;
 }
 
 .assessment-file-area {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .assessment-builder-head {
@@ -94,29 +208,32 @@
 
 .assessment-layout-summary {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin: 14px 0;
+  margin: 12px 0;
 }
 
 .assessment-layout-summary span {
-  padding: 7px 10px;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
   border-radius: 999px;
   background: var(--surface-soft);
-  font-size: 11px;
+  font-size: 10.5px;
 }
 
 .assessment-status {
   display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  margin-bottom: 14px;
+  gap: 3px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  margin-bottom: 13px;
 }
 
 .assessment-status span {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .assessment-status.is-published {
@@ -134,22 +251,22 @@
   align-items: center;
   gap: 10px;
   align-self: end;
-  min-height: 44px;
+  min-height: 42px;
 }
 
 .question-preview-item {
-  padding: 14px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .question-preview-item small {
   display: block;
-  margin-top: 8px;
+  margin-top: 7px;
   color: var(--text-muted);
 }
 
 .question-alt {
-  margin: 5px 0;
+  margin: 4px 0;
 }
 
 @media (max-width: 900px) {
