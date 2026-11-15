@@ -2,6 +2,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.database.dependencies import get_db
 from app.database.models import User, Assessment, Question, Grade
@@ -224,6 +225,10 @@ def assessment_questions(
         .filter(
             Question.assessment_id
             == assessment.id
+        )
+        .order_by(
+            Question.ordem.asc(),
+            Question.id.asc()
         )
         .all()
     )
@@ -622,10 +627,23 @@ def add_question_to_assessment(
         teacher_user_id=current_user.id
     )
 
-    question.assessment_id = assessment_id
+    payload = question.model_dump()
+    payload["assessment_id"] = assessment_id
+
+    if not payload.get("ordem"):
+        max_order = (
+            db.query(func.max(Question.ordem))
+            .filter(
+                Question.assessment_id == assessment_id
+            )
+            .scalar()
+            or 0
+        )
+
+        payload["ordem"] = max_order + 1
 
     nova_questao = Question(
-        **question.model_dump()
+        **payload
     )
 
     db.add(nova_questao)

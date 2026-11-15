@@ -311,6 +311,8 @@ class Question(Base):
     alternativa_c = Column(String, nullable=True)
     alternativa_d = Column(String, nullable=True)
     alternativa_e = Column(String, nullable=True)
+    imagem = Column(String, nullable=True)
+    ordem = Column(Integer, default=0, nullable=False)
 
     resposta_correta = Column(String, nullable=True)
 

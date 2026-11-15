@@ -13,6 +13,8 @@ class QuestionCreate(BaseModel):
     alternativa_c: Optional[str] = None
     alternativa_d: Optional[str] = None
     alternativa_e: Optional[str] = None
+    imagem: Optional[str] = None
+    ordem: Optional[int] = None
 
     resposta_correta: Optional[str] = None
 
@@ -48,6 +50,8 @@ class QuestionResponse(BaseModel):
     alternativa_c: Optional[str]
     alternativa_d: Optional[str]
     alternativa_e: Optional[str] = None
+    imagem: Optional[str] = None
+    ordem: int = 0
 
     resposta_correta: Optional[str]
 
@@ -82,6 +86,8 @@ class QuestionUpdate(BaseModel):
     alternativa_c: Optional[str] = None
     alternativa_d: Optional[str] = None
     alternativa_e: Optional[str] = None
+    imagem: Optional[str] = None
+    ordem: Optional[int] = None
     resposta_correta: Optional[str] = None
     explicacao: Optional[str] = None
     dificuldade: Optional[str] = None

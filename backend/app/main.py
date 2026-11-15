@@ -252,7 +252,11 @@ def initialize_database():
             ("usar_capa", "BOOLEAN DEFAULT FALSE NOT NULL"),
             ("gabarito_separado", "BOOLEAN DEFAULT FALSE NOT NULL")
         ],
-        "questions": [("alternativa_e", "VARCHAR")],
+        "questions": [
+            ("alternativa_e", "VARCHAR"),
+            ("imagem", "VARCHAR"),
+            ("ordem", "INTEGER DEFAULT 0 NOT NULL")
+        ],
         "study_plans": [("material_url", "VARCHAR"), ("arquivo", "VARCHAR")],
         "tickets": [
             ("destinatario_perfil", "VARCHAR DEFAULT 'Suporte' NOT NULL"),
