@@ -9,7 +9,9 @@ export const registerAttendance = data => api.post('/attendance/', data);
 
 export const createAssessment = data => api.post('/assessments', data);
 export const updateAssessment = (id, data) => api.patch(`/assessments/${id}`, data);
+export const deleteAssessment = id => api.delete(`/assessments/${id}`);
 export const createAssessmentQuestion = (id, data) => api.post(`/assessments/${id}/questions`, data);
+export const deleteAssessmentQuestion = (assessmentId, questionId) => api.delete(`/assessments/${assessmentId}/questions/${questionId}`);
 export const getAssessmentResults = id => api.get(`/assessments/${id}/results`);
 export const getTeacherAssessmentQuestions = id => api.get(`/assessments/${id}/questions/teacher`);
 export const configureAssessmentAccess = (id, data) => api.patch(`/assessments/${id}/access`, data);

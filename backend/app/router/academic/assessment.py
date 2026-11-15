@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
-from app.database.models import User, Assessment, Question
+from app.database.models import User, Assessment, Question, Grade
 
 from app.schema.assessment import (
     AssessmentCreate,
@@ -249,6 +249,31 @@ def edit_assessment(
         data=assessment
     )
 
+
+
+# =========================================================
+# PROFESSOR - EXCLUIR AVALIAÇÃO
+# =========================================================
+@router.delete("/{assessment_id}")
+def delete_assessment(
+    assessment_id: int,
+    current_user: User = Depends(require_teacher),
+    db: Session = Depends(get_db)
+):
+    assessment = get_teacher_assessment(
+        db=db,
+        assessment_id=assessment_id,
+        teacher_user_id=current_user.id
+    )
+
+    db.query(Grade).filter(
+        Grade.assessment_id == assessment.id
+    ).delete(synchronize_session=False)
+
+    db.delete(assessment)
+    db.commit()
+
+    return {"ok": True, "message": "Avaliação excluída com sucesso."}
 
 # =========================================================
 # ALUNO - VER PRÓPRIO RESULTADO
@@ -662,6 +687,40 @@ def edit_assessment_question(
     db.refresh(question)
 
     return question
+
+
+@router.delete("/{assessment_id}/questions/{question_id}")
+def delete_assessment_question(
+    assessment_id: int,
+    question_id: int,
+    current_user: User = Depends(require_teacher),
+    db: Session = Depends(get_db)
+):
+    get_teacher_assessment(
+        db=db,
+        assessment_id=assessment_id,
+        teacher_user_id=current_user.id
+    )
+
+    question = (
+        db.query(Question)
+        .filter(
+            Question.id == question_id,
+            Question.assessment_id == assessment_id
+        )
+        .first()
+    )
+
+    if not question:
+        raise HTTPException(
+            status_code=404,
+            detail="Questão não encontrada nesta avaliação."
+        )
+
+    db.delete(question)
+    db.commit()
+
+    return {"ok": True, "message": "Questão excluída com sucesso."}
 
 @router.get(
     "/{assessment_id}/results/students/{student_id}",

@@ -2,6 +2,7 @@ import { getMySubjects } from "../../api/subjects.js";
 import {
   createAssessment,
   createAssessmentQuestion,
+  deleteAssessmentQuestion,
   getTeacherAssessmentQuestions,
   updateAssessment
 } from "../../api/teacher.js";
@@ -52,7 +53,16 @@ function alternativesFor(q) {
 function questionPreview(q, index) {
   return `
     <article class="question-preview-item">
-      <strong>${index + 1}. ${escapeHtml(q.enunciado || "")}</strong>
+      <div class="question-preview-head">
+        <strong>${index + 1}. ${escapeHtml(q.enunciado || "")}</strong>
+        <button
+          type="button"
+          class="mini-button mini-button--danger question-preview-delete"
+          data-delete-question="${q.id}"
+        >
+          Excluir
+        </button>
+      </div>
       ${alternativesFor(q)}
       <small>Valor/peso: ${q.peso ?? 1}</small>
     </article>
@@ -570,6 +580,37 @@ function renderQuestionBuilder(container, assessment, subjectName, questions) {
       </div>
     </div>
   `);
+
+
+  target.querySelectorAll("[data-delete-question]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const questionId = Number(button.dataset.deleteQuestion);
+      const index = questions.findIndex(q => Number(q.id) === questionId);
+
+      if (index < 0) return;
+
+      const confirmed = window.confirm(
+        `Excluir a questão ${index + 1}?\n\n` +
+        "Se já houver respostas vinculadas a ela, elas também serão removidas."
+      );
+
+      if (!confirmed) return;
+      button.disabled = true;
+
+      try {
+        await deleteAssessmentQuestion(assessment.id, questionId);
+        questions.splice(index, 1);
+        showToast("Questão excluída.", "success");
+        renderQuestionBuilder(container, assessment, subjectName, questions);
+      } catch (error) {
+        button.disabled = false;
+        showToast(
+          error.message || "Não foi possível excluir a questão.",
+          "error"
+        );
+      }
+    });
+  });
 
   const form = target.querySelector("[data-question-form]");
   const type = form.querySelector('[name="tipo"]');
