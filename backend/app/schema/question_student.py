@@ -12,6 +12,7 @@ class QuestionStudentResponse(BaseModel):
     alternativa_b: Optional[str] = None
     alternativa_c: Optional[str] = None
     alternativa_d: Optional[str] = None
+    alternativa_e: Optional[str] = None
 
     dificuldade: str
     peso: float

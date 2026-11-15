@@ -1,10 +1,12 @@
 import { api } from './client.js';
+
 export const getTeacherClassrooms = () => api.get('/teachers/me/classrooms');
 export const getTeacherAttendance = () => api.get('/attendance/teacher/me');
 export const getTeacherPendingAttendance = () => api.get('/attendance/teacher/pending');
 export const getClassroomAttendance = id => api.get(`/attendance/classroom/${id}`);
 export const getClassroomAttendanceSummary = id => api.get(`/attendance/classroom/${id}/summary`);
 export const registerAttendance = data => api.post('/attendance/', data);
+
 export const createAssessment = data => api.post('/assessments', data);
 export const updateAssessment = (id, data) => api.patch(`/assessments/${id}`, data);
 export const createAssessmentQuestion = (id, data) => api.post(`/assessments/${id}/questions`, data);

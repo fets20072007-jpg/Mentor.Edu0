@@ -1,4 +1,4 @@
-﻿from sqlalchemy import (
+from sqlalchemy import (
     Column,
     Integer,
     String,
@@ -310,6 +310,7 @@ class Question(Base):
     alternativa_b = Column(String, nullable=True)
     alternativa_c = Column(String, nullable=True)
     alternativa_d = Column(String, nullable=True)
+    alternativa_e = Column(String, nullable=True)
 
     resposta_correta = Column(String, nullable=True)
 
@@ -648,6 +649,9 @@ class Assessment(Base):
     tipo = Column(String, nullable=False)
     arquivo = Column(String, nullable=True)
     arquivo_nome = Column(String, nullable=True)
+    modelo_layout = Column(String, default="duas_colunas", nullable=False)
+    usar_capa = Column(Boolean, default=False, nullable=False)
+    gabarito_separado = Column(Boolean, default=False, nullable=False)
 
     data = Column(DateTime)
 

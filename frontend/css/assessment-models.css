@@ -1,0 +1,163 @@
+/* Fase 1 — modelos de avaliação */
+.assessment-model-box,
+.assessment-mode-box {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.assessment-model-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.assessment-model-title small,
+.assessment-model-option small,
+.assessment-extra-options small,
+.assessment-add-e small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.assessment-model-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.assessment-model-option,
+.assessment-extra-options label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.assessment-model-option:has(input:checked),
+.assessment-extra-options label:has(input:checked) {
+  border-color: var(--role-primary);
+  background: color-mix(in srgb, var(--role-primary) 7%, white);
+}
+
+.assessment-extra-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.assessment-mode-options {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.assessment-mode-options label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.assessment-file-area {
+  margin-top: 16px;
+}
+
+.assessment-builder-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.assessment-builder-head p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.assessment-builder-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.assessment-layout-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+
+.assessment-layout-summary span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  font-size: 11px;
+}
+
+.assessment-status {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.assessment-status span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.assessment-status.is-published {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.assessment-status.is-draft {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.assessment-add-e {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: end;
+  min-height: 44px;
+}
+
+.question-preview-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.question-preview-item small {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-muted);
+}
+
+.question-alt {
+  margin: 5px 0;
+}
+
+@media (max-width: 900px) {
+  .assessment-model-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .assessment-extra-options {
+    grid-template-columns: 1fr;
+  }
+}

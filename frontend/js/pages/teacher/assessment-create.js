@@ -10,62 +10,189 @@ import { escapeHtml } from "../../core/format.js";
 import { pageHeader, surface, emptyBlock } from "../shared/page-ui.js";
 import { showToast } from "../../components/toast.js";
 
-const ASSESSMENT_TYPES = ["Prova","Trabalho","Atividade avaliativa","Exercício"];
+const ASSESSMENT_TYPES = [
+  "Prova",
+  "Trabalho",
+  "Atividade avaliativa",
+  "Exercício"
+];
+
+const LAYOUTS = [
+  ["duas_colunas", "Duas colunas"],
+  ["coluna_unica", "Coluna única"],
+  ["hibrido", "Híbrido"]
+];
+
+function titleFor(type, subjectName) {
+  const subject = String(subjectName || "").trim();
+  if (!subject) return type || "Avaliação";
+
+  const normalized = String(type || "").toLowerCase();
+
+  if (normalized === "prova") return `Avaliação de ${subject}`;
+  if (normalized === "exercício") return `Exercício de ${subject}`;
+  if (normalized === "trabalho") return `Trabalho de ${subject}`;
+  if (normalized === "atividade avaliativa") {
+    return `Atividade Avaliativa de ${subject}`;
+  }
+
+  return `${type} de ${subject}`;
+}
+
+function alternativesFor(q) {
+  return ["a", "b", "c", "d", "e"]
+    .map(letter => {
+      const value = q[`alternativa_${letter}`];
+      if (!value) return "";
+      return `<div class="question-alt">${letter.toUpperCase()}) ${escapeHtml(value)}</div>`;
+    })
+    .join("");
+}
 
 function questionPreview(q, index) {
-  const alternatives = ["a","b","c","d"]
-    .map(letter => q[`alternativa_${letter}`]
-      ? `<div style="margin:5px 0">${letter.toUpperCase()}) ${escapeHtml(q[`alternativa_${letter}`])}</div>`
-      : "")
-    .join("");
+  return `
+    <article class="question-preview-item">
+      <strong>${index + 1}. ${escapeHtml(q.enunciado || "")}</strong>
+      ${alternativesFor(q)}
+      <small>Valor/peso: ${q.peso ?? 1}</small>
+    </article>
+  `;
+}
 
-  return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb">
-    <strong>${index + 1}. ${escapeHtml(q.enunciado || "")}</strong>
-    ${alternatives}
-    <small style="display:block;margin-top:8px;color:#64748b">
-      Valor/peso: ${q.peso ?? 1}
-    </small>
-  </div>`;
+function printQuestion(q, index, layout) {
+  const isDiscursive = String(q.tipo || "").toLowerCase() === "discursiva";
+  const fullWidth = layout === "coluna_unica" || (layout === "hibrido" && isDiscursive);
+
+  return `
+    <section class="print-question ${fullWidth ? "full-width" : ""}">
+      <div class="question-title">
+        ${index + 1}. ${escapeHtml(q.enunciado || "")}
+      </div>
+      ${alternativesFor(q)}
+      ${
+        isDiscursive
+          ? `<div class="answer-lines">
+              <span></span><span></span><span></span><span></span>
+            </div>`
+          : ""
+      }
+    </section>
+  `;
 }
 
 function openPrintableAssessment(assessment, subjectName, questions) {
   const w = window.open("", "_blank");
   if (!w) {
-    showToast("Permita pop-ups para visualizar a prova.","error");
+    showToast("Permita pop-ups para visualizar a prova.", "error");
     return;
   }
 
+  const layout = assessment.modelo_layout || "duas_colunas";
+  const useCover = Boolean(assessment.usar_capa);
+  const separatedKey = Boolean(assessment.gabarito_separado);
+
   const body = questions.length
-    ? questions.map(questionPreview).join("")
+    ? questions.map((q, i) => printQuestion(q, i, layout)).join("")
     : "<p>Nenhuma questão adicionada ainda.</p>";
 
+  const key = separatedKey && questions.length
+    ? `
+      <section class="answer-key">
+        <h2>Gabarito</h2>
+        ${questions.map((q, i) => `
+          <div>${i + 1}. ${escapeHtml(q.resposta_correta || "—")}</div>
+        `).join("")}
+      </section>
+    `
+    : "";
+
   w.document.write(`<!doctype html>
-  <html>
+  <html lang="pt-BR">
     <head>
       <meta charset="utf-8">
       <title>${escapeHtml(assessment.titulo)}</title>
       <style>
-        body{font-family:Arial,sans-serif;max-width:850px;margin:36px auto;padding:0 30px;color:#111}
-        .head{text-align:center;border-bottom:2px solid #111;padding-bottom:18px;margin-bottom:24px}
-        .meta{display:flex;gap:24px;flex-wrap:wrap;margin:16px 0 28px}
-        .line{display:inline-block;min-width:220px;border-bottom:1px solid #111;height:18px}
-        button{margin:20px 8px 20px 0;padding:10px 16px}
-        @media print{button{display:none}}
+        @page{size:A4;margin:14mm}
+        *{box-sizing:border-box}
+        body{font-family:Arial,sans-serif;color:#111;margin:0;font-size:12px}
+        .toolbar{display:flex;gap:8px;margin:0 auto 16px;max-width:210mm}
+        .toolbar button{padding:9px 13px}
+        .sheet{max-width:210mm;margin:0 auto;background:#fff}
+        .cover{min-height:255mm;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;page-break-after:always}
+        .brand{font-size:14px;font-weight:800;letter-spacing:.08em}
+        .cover h1{font-size:30px;margin:20px 0 8px}
+        .cover p{font-size:16px}
+        .head{border:1px solid #111;padding:10px 12px;margin-bottom:12px}
+        .head-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+        .school{font-weight:800;font-size:15px}
+        .assessment-title{text-transform:uppercase;font-size:17px;font-weight:800;margin-top:4px}
+        .meta{display:grid;grid-template-columns:2fr .7fr 1fr;gap:8px;margin-top:12px}
+        .meta div{border-bottom:1px solid #111;min-height:22px}
+        .questions{
+          display:grid;
+          grid-template-columns:${layout === "coluna_unica" ? "1fr" : "1fr 1fr"};
+          gap:0 18px;
+          align-items:start;
+        }
+        .print-question{
+          break-inside:avoid;
+          border-bottom:1px solid #bbb;
+          padding:9px 0 11px;
+        }
+        .print-question.full-width{grid-column:1 / -1}
+        .question-title{font-weight:700;line-height:1.35;margin-bottom:7px}
+        .question-alt{margin:4px 0;line-height:1.3}
+        .answer-lines span{display:block;border-bottom:1px solid #aaa;height:24px}
+        .answer-key{page-break-before:always}
+        .answer-key h2{border-bottom:2px solid #111;padding-bottom:6px}
+        @media print{
+          .toolbar{display:none}
+          .sheet{max-width:none}
+        }
       </style>
     </head>
     <body>
-      <div class="head">
-        <h1>${escapeHtml(assessment.titulo)}</h1>
-        <div>${escapeHtml(subjectName || "")} · ${escapeHtml(assessment.tipo || "")}</div>
+      <div class="toolbar">
+        <button onclick="window.print()">Imprimir / Salvar em PDF</button>
       </div>
-      <div class="meta">
-        <div>Aluno: <span class="line"></span></div>
-        <div>Turma: <span class="line"></span></div>
-        <div>Data: <span class="line"></span></div>
+
+      <div class="sheet">
+        ${
+          useCover
+            ? `<section class="cover">
+                <div class="brand">MENTOR.EDU</div>
+                <h1>${escapeHtml(assessment.titulo)}</h1>
+                <p>${escapeHtml(subjectName || "")}</p>
+                <p>${escapeHtml(assessment.tipo || "")}</p>
+              </section>`
+            : ""
+        }
+
+        <header class="head">
+          <div class="head-top">
+            <div>
+              <div class="school">Mentor.Edu</div>
+              <div class="assessment-title">${escapeHtml(assessment.titulo)}</div>
+            </div>
+            <div>
+              <strong>Valor:</strong> ${assessment.valor ?? 10}
+            </div>
+          </div>
+
+          <div class="meta">
+            <div>Nome:</div>
+            <div>Nº:</div>
+            <div>Turma:</div>
+            <div>Professor:</div>
+            <div>Data:</div>
+            <div>Nota:</div>
+          </div>
+        </header>
+
+        ${assessment.descricao ? `<p>${escapeHtml(assessment.descricao)}</p>` : ""}
+        <main class="questions">${body}</main>
+        ${key}
       </div>
-      ${assessment.descricao ? `<p>${escapeHtml(assessment.descricao)}</p>` : ""}
-      <main>${body}</main>
-      <button onclick="window.print()">Imprimir / Salvar em PDF</button>
     </body>
   </html>`);
 
@@ -74,20 +201,19 @@ function openPrintableAssessment(assessment, subjectName, questions) {
 
 function statusBox(assessment) {
   const published = Boolean(assessment.ativa);
-  return `<div style="
-      padding:12px 14px;
-      border-radius:12px;
-      margin:14px 0;
-      background:${published ? "#ecfdf5" : "#fff7ed"};
-      border:1px solid ${published ? "#a7f3d0" : "#fed7aa"};
-    ">
+
+  return `
+    <div class="assessment-status ${published ? "is-published" : "is-draft"}">
       <strong>Status: ${published ? "Publicado" : "Rascunho"}</strong>
-      <div style="font-size:13px;margin-top:4px;color:#64748b">
-        ${published
-          ? "Esta avaliação já está lançada no sistema."
-          : "A avaliação está salva, mas ainda não foi publicada para os alunos."}
-      </div>
-    </div>`;
+      <span>
+        ${
+          published
+            ? "Esta avaliação já está lançada no sistema."
+            : "A avaliação está salva, mas ainda não foi publicada para os alunos."
+        }
+      </span>
+    </div>
+  `;
 }
 
 function renderQuestionBuilder(container, assessment, subjectName, questions) {
@@ -96,16 +222,15 @@ function renderQuestionBuilder(container, assessment, subjectName, questions) {
   target.innerHTML = surface(`
     ${statusBox(assessment)}
 
-    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+    <div class="assessment-builder-head">
       <div>
-        <h3 class="form-title" style="margin-bottom:4px">Questões da avaliação</h3>
-        <p style="margin:0;color:#64748b">
-          Cada questão adicionada é salva automaticamente no sistema.
-        </p>
+        <h3 class="form-title">Questões da avaliação</h3>
+        <p>Cada questão adicionada é salva automaticamente no sistema.</p>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+
+      <div class="assessment-builder-actions">
         <button type="button" class="mini-button" data-preview>
-          Visualizar prova pronta
+          Visualizar modelo
         </button>
         <button type="button" class="mini-button" data-save>
           Salvar prova
@@ -116,16 +241,27 @@ function renderQuestionBuilder(container, assessment, subjectName, questions) {
       </div>
     </div>
 
+    <div class="assessment-layout-summary">
+      <span><strong>Modelo:</strong> ${
+        LAYOUTS.find(([value]) => value === (assessment.modelo_layout || "duas_colunas"))?.[1]
+        || "Duas colunas"
+      }</span>
+      <span><strong>Capa:</strong> ${assessment.usar_capa ? "Sim" : "Não"}</span>
+      <span><strong>Gabarito separado:</strong> ${assessment.gabarito_separado ? "Sim" : "Não"}</span>
+    </div>
+
     <form class="inline-form page-section-gap" data-question-form>
       <div class="form-grid">
-        <label>Tipo da questão
+        <label>
+          Tipo da questão
           <select name="tipo">
             <option value="Objetiva">Objetiva</option>
             <option value="Discursiva">Discursiva</option>
           </select>
         </label>
 
-        <label>Dificuldade
+        <label>
+          Dificuldade
           <select name="dificuldade">
             <option value="Fácil">Fácil</option>
             <option value="Médio" selected>Médio</option>
@@ -143,11 +279,28 @@ function renderQuestionBuilder(container, assessment, subjectName, questions) {
         <label data-alt>C<input name="alternativa_c"></label>
         <label data-alt>D<input name="alternativa_d"></label>
 
+        <label data-alt-e style="display:none">
+          E
+          <input name="alternativa_e">
+        </label>
+
+        <div data-add-e class="assessment-add-e">
+          <button type="button" class="mini-button" data-add-e-button>
+            + Adicionar o item E
+          </button>
+          <small>
+            Use quando esta questão tiver cinco alternativas.
+          </small>
+        </div>
+
         <label data-answer>
           Resposta correta
           <select name="resposta_correta">
             <option value="">Selecione</option>
-            <option>A</option><option>B</option><option>C</option><option>D</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
           </select>
         </label>
 
@@ -177,23 +330,70 @@ function renderQuestionBuilder(container, assessment, subjectName, questions) {
     <div class="page-section-gap">
       <h3>Prévia das questões</h3>
       <div data-question-list>
-        ${questions.length
-          ? questions.map(questionPreview).join("")
-          : emptyBlock("Nenhuma questão","Adicione a primeira questão acima.","book")}
+        ${
+          questions.length
+            ? questions.map(questionPreview).join("")
+            : emptyBlock(
+                "Nenhuma questão",
+                "Adicione a primeira questão acima.",
+                "book"
+              )
+        }
       </div>
     </div>
   `);
 
   const form = target.querySelector("[data-question-form]");
   const type = form.querySelector('[name="tipo"]');
+  const altE = form.querySelector("[data-alt-e]");
+  const addE = form.querySelector("[data-add-e]");
+  const answer = form.querySelector('[name="resposta_correta"]');
+
+  const addEOption = () => {
+    if (![...answer.options].some(option => option.value === "E")) {
+      answer.insertAdjacentHTML("beforeend", "<option>E</option>");
+    }
+  };
+
+  const removeEOption = () => {
+    [...answer.options]
+      .filter(option => option.value === "E")
+      .forEach(option => option.remove());
+
+    if (answer.value === "E") answer.value = "";
+  };
+
+  const showE = () => {
+    altE.style.display = "";
+    addE.style.display = "none";
+    addEOption();
+  };
+
+  const hideE = () => {
+    altE.style.display = "none";
+    altE.querySelector("input").value = "";
+    addE.style.display = "";
+    removeEOption();
+  };
 
   const syncType = () => {
     const objetiva = type.value === "Objetiva";
+
     form.querySelectorAll("[data-alt],[data-answer]").forEach(
       el => el.style.display = objetiva ? "" : "none"
     );
+
+    if (!objetiva) {
+      altE.style.display = "none";
+      addE.style.display = "none";
+    } else if (altE.querySelector("input").value) {
+      showE();
+    } else {
+      hideE();
+    }
   };
 
+  target.querySelector("[data-add-e-button]").addEventListener("click", showE);
   type.addEventListener("change", syncType);
   syncType();
 
@@ -204,61 +404,84 @@ function renderQuestionBuilder(container, assessment, subjectName, questions) {
   target.querySelector("[data-save]").addEventListener("click", async () => {
     try {
       assessment = await updateAssessment(assessment.id, { ativa: false });
-      showToast("Prova salva como rascunho.","success");
+      showToast("Prova salva como rascunho.", "success");
       renderQuestionBuilder(container, assessment, subjectName, questions);
     } catch (error) {
-      showToast(error.message || "Não foi possível salvar a prova.","error");
+      showToast(error.message || "Não foi possível salvar a prova.", "error");
     }
   });
 
   target.querySelector("[data-publish]").addEventListener("click", async () => {
     if (!questions.length && !assessment.arquivo) {
-      showToast("Adicione pelo menos uma questão ou um arquivo antes de publicar.","error");
+      showToast(
+        "Adicione pelo menos uma questão ou um arquivo antes de publicar.",
+        "error"
+      );
       return;
     }
 
     try {
       assessment = await updateAssessment(assessment.id, { ativa: true });
-      showToast("Avaliação publicada no sistema.","success");
+      showToast("Avaliação publicada no sistema.", "success");
       renderQuestionBuilder(container, assessment, subjectName, questions);
     } catch (error) {
-      showToast(error.message || "Não foi possível publicar a avaliação.","error");
+      showToast(
+        error.message || "Não foi possível publicar a avaliação.",
+        "error"
+      );
     }
   });
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
     const f = new FormData(form);
     const objetiva = f.get("tipo") === "Objetiva";
 
     try {
-      const created = await createAssessmentQuestion(assessment.id,{
-        tipo:f.get("tipo"),
-        enunciado:String(f.get("enunciado")||"").trim(),
-        alternativa_a:objetiva ? (String(f.get("alternativa_a")||"").trim() || null) : null,
-        alternativa_b:objetiva ? (String(f.get("alternativa_b")||"").trim() || null) : null,
-        alternativa_c:objetiva ? (String(f.get("alternativa_c")||"").trim() || null) : null,
-        alternativa_d:objetiva ? (String(f.get("alternativa_d")||"").trim() || null) : null,
-        resposta_correta:objetiva ? (f.get("resposta_correta") || null) : null,
-        explicacao:String(f.get("explicacao")||"").trim() || null,
-        dificuldade:f.get("dificuldade"),
-        peso:Number(f.get("peso")||1),
-        categoria:String(f.get("categoria")||"").trim() || null
+      const created = await createAssessmentQuestion(assessment.id, {
+        tipo: f.get("tipo"),
+        enunciado: String(f.get("enunciado") || "").trim(),
+        alternativa_a: objetiva
+          ? (String(f.get("alternativa_a") || "").trim() || null)
+          : null,
+        alternativa_b: objetiva
+          ? (String(f.get("alternativa_b") || "").trim() || null)
+          : null,
+        alternativa_c: objetiva
+          ? (String(f.get("alternativa_c") || "").trim() || null)
+          : null,
+        alternativa_d: objetiva
+          ? (String(f.get("alternativa_d") || "").trim() || null)
+          : null,
+        alternativa_e: objetiva
+          ? (String(f.get("alternativa_e") || "").trim() || null)
+          : null,
+        resposta_correta: objetiva
+          ? (f.get("resposta_correta") || null)
+          : null,
+        explicacao: String(f.get("explicacao") || "").trim() || null,
+        dificuldade: f.get("dificuldade"),
+        peso: Number(f.get("peso") || 1),
+        categoria: String(f.get("categoria") || "").trim() || null
       });
 
       questions.push(created);
-      showToast("Questão adicionada e salva no sistema.","success");
+      showToast("Questão adicionada e salva no sistema.", "success");
       renderQuestionBuilder(container, assessment, subjectName, questions);
     } catch (error) {
-      showToast(error.message || "Não foi possível adicionar a questão.","error");
+      showToast(
+        error.message || "Não foi possível adicionar a questão.",
+        "error"
+      );
     }
   });
 }
 
-export async function renderTeacherAssessmentCreate(container,navigate){
-  const subs=await getMySubjects();
+export async function renderTeacherAssessmentCreate(container, navigate) {
+  const subs = await getMySubjects();
 
-  container.innerHTML=`
+  container.innerHTML = `
     ${pageHeader(
       "Criar avaliação",
       "Monte a avaliação no Mentor Edu ou publique um arquivo pronto."
@@ -266,37 +489,53 @@ export async function renderTeacherAssessmentCreate(container,navigate){
 
     ${surface(`
       <form class="inline-form" data-form>
-        <label>
-          Título
-          <input name="titulo" required>
-        </label>
-
-        <label>
-          Descrição
-          <textarea name="descricao"></textarea>
-        </label>
-
         <div class="form-grid">
-          <label>
-            Tipo
-            <select name="tipo" required>
-              ${ASSESSMENT_TYPES
-                .map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`)
-                .join("")}
-            </select>
-          </label>
-
-          <label>
-            Valor total
-            <input name="valor" type="number" step="0.1" min="0" value="10" required>
-          </label>
-
           <label>
             Disciplina
             <select name="subject_id" required>
               <option value="">Selecione</option>
-              ${subs.map(s=>`<option value="${s.id}">${escapeHtml(s.nome)}</option>`).join('')}
+              ${subs.map(
+                s => `<option value="${s.id}">${escapeHtml(s.nome)}</option>`
+              ).join("")}
             </select>
+          </label>
+
+          <label>
+            Tipo
+            <select name="tipo" required>
+              ${ASSESSMENT_TYPES.map(
+                t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`
+              ).join("")}
+            </select>
+          </label>
+
+          <label class="form-span-2">
+            Título
+            <input
+              name="titulo"
+              required
+              placeholder="Será preenchido automaticamente pela disciplina"
+            >
+            <small>
+              O Mentor Edu sugere o título automaticamente, mas você pode editar.
+            </small>
+          </label>
+
+          <label class="form-span-2">
+            Descrição
+            <textarea name="descricao"></textarea>
+          </label>
+
+          <label>
+            Valor total
+            <input
+              name="valor"
+              type="number"
+              step="0.1"
+              min="0"
+              value="10"
+              required
+            >
           </label>
 
           <label>
@@ -315,35 +554,93 @@ export async function renderTeacherAssessmentCreate(container,navigate){
           </label>
         </div>
 
-        <div style="margin-top:18px;padding:16px;border:1px solid #dbe2ea;border-radius:14px">
+        <div class="assessment-model-box">
+          <div class="assessment-model-title">
+            <div>
+              <strong>Modelo da avaliação</strong>
+              <small>Escolha como a prova será montada para impressão.</small>
+            </div>
+          </div>
+
+          <div class="assessment-model-grid">
+            ${LAYOUTS.map(([value, label], index) => `
+              <label class="assessment-model-option">
+                <input
+                  type="radio"
+                  name="modelo_layout"
+                  value="${value}"
+                  ${index === 0 ? "checked" : ""}
+                >
+                <span>
+                  <strong>${label}</strong>
+                  <small>
+                    ${
+                      value === "duas_colunas"
+                        ? "Ideal para questões objetivas e listas mais compactas."
+                        : value === "coluna_unica"
+                          ? "Ideal para discursivas, textos e respostas abertas."
+                          : "Objetivas em colunas e discursivas ocupando a folha inteira."
+                    }
+                  </small>
+                </span>
+              </label>
+            `).join("")}
+          </div>
+
+          <div class="assessment-extra-options">
+            <label>
+              <input type="checkbox" name="usar_capa">
+              <span>
+                <strong>Usar capa</strong>
+                <small>Adiciona uma página de abertura antes das questões.</small>
+              </span>
+            </label>
+
+            <label>
+              <input type="checkbox" name="gabarito_separado">
+              <span>
+                <strong>Gabarito separado</strong>
+                <small>Gera uma página de gabarito ao final da impressão.</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="assessment-mode-box">
           <strong>Como deseja criar esta avaliação?</strong>
 
-          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px">
-            <label style="display:flex;gap:8px;align-items:center">
+          <div class="assessment-mode-options">
+            <label>
               <input type="radio" name="modo" value="sistema" checked>
               Criar no Mentor Edu e adicionar questões
             </label>
 
-            <label style="display:flex;gap:8px;align-items:center">
+            <label>
               <input type="radio" name="modo" value="arquivo">
               Usar um arquivo pronto
             </label>
           </div>
         </div>
 
-        <div data-file-area style="margin-top:16px;display:none">
+        <div data-file-area class="assessment-file-area" style="display:none">
           <label>
             Arquivo pronto da avaliação
-            <input name="arquivo" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+            <input
+              name="arquivo"
+              type="file"
+              accept=".pdf,.odt,.doc,.docx,.png,.jpg,.jpeg"
+            >
             <small>
-              Use esta opção quando o professor já possuir a prova, atividade,
-              trabalho ou exercício pronto.
+              Arquivos aceitos: PDF, ODT, DOC/DOCX e imagens.
             </small>
           </label>
         </div>
 
         <div class="form-actions" data-create-actions>
-          <button class="mini-button mini-button--primary" type="submit" data-create-system>
+          <button
+            class="mini-button mini-button--primary"
+            type="submit"
+          >
             Criar avaliação e adicionar questões
           </button>
         </div>
@@ -353,12 +650,44 @@ export async function renderTeacherAssessmentCreate(container,navigate){
     <div data-builder></div>
   `;
 
-  const form = container.querySelector('[data-form]');
+  const form = container.querySelector("[data-form]");
+  const subjectSelect = form.querySelector('[name="subject_id"]');
+  const typeSelect = form.querySelector('[name="tipo"]');
+  const titleInput = form.querySelector('[name="titulo"]');
   const fileArea = form.querySelector("[data-file-area]");
   const actions = form.querySelector("[data-create-actions]");
 
+  let titleWasManuallyEdited = false;
+
+  const syncSuggestedTitle = () => {
+    if (titleWasManuallyEdited) return;
+
+    const subject = subs.find(
+      s => Number(s.id) === Number(subjectSelect.value)
+    );
+
+    titleInput.value = titleFor(typeSelect.value, subject?.nome || "");
+  };
+
+  titleInput.addEventListener("input", () => {
+    titleWasManuallyEdited = Boolean(titleInput.value.trim());
+  });
+
+  subjectSelect.addEventListener("change", () => {
+    if (!titleInput.value.trim() || !titleWasManuallyEdited) {
+      titleWasManuallyEdited = false;
+    }
+    syncSuggestedTitle();
+  });
+
+  typeSelect.addEventListener("change", () => {
+    if (!titleWasManuallyEdited) syncSuggestedTitle();
+  });
+
   const renderModeActions = () => {
-    const modo = form.querySelector('[name="modo"]:checked')?.value || "sistema";
+    const modo =
+      form.querySelector('[name="modo"]:checked')?.value || "sistema";
+
     fileArea.style.display = modo === "arquivo" ? "" : "none";
 
     if (modo === "arquivo") {
@@ -366,22 +695,26 @@ export async function renderTeacherAssessmentCreate(container,navigate){
         <button class="mini-button" type="button" data-file-draft>
           Salvar arquivo como rascunho
         </button>
-        <button class="mini-button mini-button--primary" type="button" data-file-publish>
+        <button
+          class="mini-button mini-button--primary"
+          type="button"
+          data-file-publish
+        >
           Publicar arquivo diretamente
         </button>
       `;
 
-      actions.querySelector("[data-file-draft]").addEventListener(
-        "click",
-        () => createFromFile(false)
-      );
-      actions.querySelector("[data-file-publish]").addEventListener(
-        "click",
-        () => createFromFile(true)
-      );
+      actions.querySelector("[data-file-draft]")
+        .addEventListener("click", () => createFromFile(false));
+
+      actions.querySelector("[data-file-publish]")
+        .addEventListener("click", () => createFromFile(true));
     } else {
       actions.innerHTML = `
-        <button class="mini-button mini-button--primary" type="submit">
+        <button
+          class="mini-button mini-button--primary"
+          type="submit"
+        >
           Criar avaliação e adicionar questões
         </button>
       `;
@@ -391,36 +724,47 @@ export async function renderTeacherAssessmentCreate(container,navigate){
   form.querySelectorAll('[name="modo"]').forEach(
     radio => radio.addEventListener("change", renderModeActions)
   );
+
   renderModeActions();
 
   async function buildBasePayload(published, requireFile = false) {
     const f = new FormData(form);
-    let arquivo=null;
-    let arquivo_nome=null;
-    const file=f.get("arquivo");
+
+    let arquivo = null;
+    let arquivo_nome = null;
+    const file = f.get("arquivo");
 
     if (requireFile && (!file || !file.size)) {
       throw new Error("Selecione um arquivo pronto antes de continuar.");
     }
 
-    if(file && file.size){
-      const uploaded=await uploadFile(file);
-      arquivo=uploaded.arquivo;
-      arquivo_nome=uploaded.nome_original || file.name;
+    if (file && file.size) {
+      const uploaded = await uploadFile(file);
+      arquivo = uploaded.arquivo;
+      arquivo_nome = uploaded.nome_original || file.name;
     }
 
     return {
-      titulo:f.get('titulo'),
-      descricao:f.get('descricao')||null,
-      tipo:f.get('tipo'),
-      valor:Number(f.get('valor')),
-      subject_id:Number(f.get('subject_id')),
-      data:f.get('data')?new Date(f.get('data')).toISOString():null,
-      semestre:f.get('semestre')?Number(f.get('semestre')):null,
-      ano_letivo:f.get('ano_letivo')?Number(f.get('ano_letivo')):null,
+      titulo: String(f.get("titulo") || "").trim(),
+      descricao: String(f.get("descricao") || "").trim() || null,
+      tipo: f.get("tipo"),
+      valor: Number(f.get("valor")),
+      subject_id: Number(f.get("subject_id")),
+      data: f.get("data")
+        ? new Date(f.get("data")).toISOString()
+        : null,
+      semestre: f.get("semestre")
+        ? Number(f.get("semestre"))
+        : null,
+      ano_letivo: f.get("ano_letivo")
+        ? Number(f.get("ano_letivo"))
+        : null,
+      modelo_layout: f.get("modelo_layout") || "duas_colunas",
+      usar_capa: f.get("usar_capa") === "on",
+      gabarito_separado: f.get("gabarito_separado") === "on",
       arquivo,
       arquivo_nome,
-      ativa:published
+      ativa: published
     };
   }
 
@@ -437,36 +781,42 @@ export async function renderTeacherAssessmentCreate(container,navigate){
       );
 
       form.querySelectorAll("input,textarea,select,button").forEach(
-        el => el.disabled=true
+        el => el.disabled = true
       );
 
       container.querySelector("[data-builder]").innerHTML = surface(`
         ${statusBox(assessment)}
         <h3>${escapeHtml(assessment.titulo)}</h3>
         <p>
-          O arquivo pronto foi ${published ? "publicado" : "salvo como rascunho"}.
+          O arquivo pronto foi
+          ${published ? "publicado" : "salvo como rascunho"}.
         </p>
         <p style="color:#64748b">
           ${escapeHtml(assessment.arquivo_nome || "Arquivo anexado")}
         </p>
       `);
     } catch (error) {
-      showToast(error.message || "Não foi possível salvar o arquivo.","error");
+      showToast(
+        error.message || "Não foi possível salvar o arquivo.",
+        "error"
+      );
     }
   }
 
-  form.addEventListener('submit',async e=>{
-    e.preventDefault();
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
 
-    const modo=form.querySelector('[name="modo"]:checked')?.value || "sistema";
+    const modo =
+      form.querySelector('[name="modo"]:checked')?.value || "sistema";
+
     if (modo !== "sistema") return;
 
-    const button=form.querySelector('button[type="submit"]');
-    button.disabled=true;
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
 
-    try{
-      const payload=await buildBasePayload(false, false);
-      const assessment=await createAssessment(payload);
+    try {
+      const payload = await buildBasePayload(false, false);
+      const assessment = await createAssessment(payload);
 
       showToast(
         "Avaliação criada como rascunho. Agora adicione as questões.",
@@ -474,16 +824,17 @@ export async function renderTeacherAssessmentCreate(container,navigate){
       );
 
       form.querySelectorAll("input,textarea,select,button").forEach(
-        el=>el.disabled=true
+        el => el.disabled = true
       );
 
-      const subjectName=subs.find(
-        s=>Number(s.id)===Number(assessment.subject_id)
-      )?.nome || "";
+      const subjectName =
+        subs.find(
+          s => Number(s.id) === Number(assessment.subject_id)
+        )?.nome || "";
 
-      const questions=await getTeacherAssessmentQuestions(
+      const questions = await getTeacherAssessmentQuestions(
         assessment.id
-      ).catch(()=>[]);
+      ).catch(() => []);
 
       renderQuestionBuilder(
         container,
@@ -491,12 +842,14 @@ export async function renderTeacherAssessmentCreate(container,navigate){
         subjectName,
         questions
       );
-    }catch(error){
-      button.disabled=false;
+    } catch (error) {
+      button.disabled = false;
       showToast(
-        error.message || 'Não foi possível criar a avaliação.',
-        'error'
+        error.message || "Não foi possível criar a avaliação.",
+        "error"
       );
     }
   });
+
+  syncSuggestedTitle();
 }

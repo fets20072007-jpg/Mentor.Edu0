@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
@@ -23,6 +23,9 @@ class AssessmentCreate(BaseModel):
     ano_letivo: Optional[int] = None
 
     subject_id: int
+    modelo_layout: str = "duas_colunas"
+    usar_capa: bool = False
+    gabarito_separado: bool = False
 
 
 # =========================================================
@@ -82,3 +85,6 @@ class AssessmentUpdate(BaseModel):
     ano_letivo: Optional[int] = None
 
     subject_id: Optional[int] = None
+    modelo_layout: Optional[str] = None
+    usar_capa: Optional[bool] = None
+    gabarito_separado: Optional[bool] = None

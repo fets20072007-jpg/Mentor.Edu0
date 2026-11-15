@@ -1,4 +1,4 @@
-﻿from datetime import date, datetime, time
+from datetime import date, datetime, time
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -77,6 +77,9 @@ def create_assessment(
 
         teacher_id=teacher.id,
         subject_id=subject.id,
+        modelo_layout=assessment.modelo_layout,
+        usar_capa=assessment.usar_capa,
+        gabarito_separado=assessment.gabarito_separado,
 
         # NÃ£o vem mais do formulÃ¡rio
         classroom_id=classroom.id

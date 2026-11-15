@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import (
     CORS_ORIGINS,
@@ -245,7 +245,14 @@ def initialize_database():
     migrations = {
         "users": [("cpf", "VARCHAR"), ("matricula", "VARCHAR"), ("contato1", "VARCHAR"), ("contato2", "VARCHAR")],
         "subjects": [("categoria", "VARCHAR DEFAULT 'Outras' NOT NULL")],
-        "assessments": [("arquivo", "VARCHAR"), ("arquivo_nome", "VARCHAR")],
+        "assessments": [
+            ("arquivo", "VARCHAR"),
+            ("arquivo_nome", "VARCHAR"),
+            ("modelo_layout", "VARCHAR DEFAULT 'duas_colunas' NOT NULL"),
+            ("usar_capa", "BOOLEAN DEFAULT FALSE NOT NULL"),
+            ("gabarito_separado", "BOOLEAN DEFAULT FALSE NOT NULL")
+        ],
+        "questions": [("alternativa_e", "VARCHAR")],
         "study_plans": [("material_url", "VARCHAR"), ("arquivo", "VARCHAR")],
         "tickets": [
             ("destinatario_perfil", "VARCHAR DEFAULT 'Suporte' NOT NULL"),
