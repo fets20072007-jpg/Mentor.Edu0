@@ -1,5 +1,18 @@
 import os
 
+import os
+
+_raw_cors = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5500,http://127.0.0.1:5500,https://mentor-edu0.onrender.com"
+)
+
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in _raw_cors.split(",")
+    if origin.strip()
+]
+
 # Mentor Edu AI
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 AI_MODEL_FAST = os.getenv("AI_MODEL_FAST", "gpt-6-luna").strip()
