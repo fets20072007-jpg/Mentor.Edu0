@@ -776,15 +776,17 @@ def _run_student_tutor(
             + "\n\nPERGUNTA DO ESTUDANTE:\n"
             + mensagem
         ),
-        smart=False,
+        smart=use_smart_model,
     )
 
     return {
-        "tutor_version": "1.3",
+        "tutor_version": "1.3.1",
         "resposta": result["text"],
         "perfil": profile,
         "foco_prioritario": focus,
         "provider": result.get("provider"),
+        "model_route": "smart" if use_smart_model else "fast",
+        "smart_requested": use_smart_model,
         "model": result["model"],
         "response_id": result["response_id"],
     }
@@ -882,8 +884,11 @@ def test_student_tutor_v1(
     try:
         result = _run_student_tutor(
             mensagem=(
-                "Estou estudando velocidade média e não entendi "
-                "quando devo usar ΔS/Δt. Pode me explicar?"
+                "Um objeto se move 10 m para a direita e depois 3 m para "
+                "a esquerda em 5 s. Qual é a velocidade média? "
+                "Alternativas: (A) 1 m/s, (B) 13 m/s, (C) 3 m/s. "
+                "Mostre o cálculo e diga se alguma alternativa corresponde "
+                "exatamente ao resultado."
             ),
             metrics=fake_metrics,
         )
