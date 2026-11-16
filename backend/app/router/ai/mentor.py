@@ -171,7 +171,7 @@ Seu objetivo é ENSINAR.
                 + "\n\nPERGUNTA DO ALUNO:\n"
                 + payload.mensagem
             ),
-            smart=False,
+            smart=use_smart_model,
         )
     except Exception as error:
         _raise_ai_error(error)
@@ -592,6 +592,7 @@ def test_ai_provider(request: Request):
         "status": "ok",
         "service": "Mentor Edu AI",
         "provider": result.get("provider"),
+        "model_route": "smart" if use_smart_model else "fast",
         "model": result["model"],
         "response_id": result["response_id"],
         "resposta": result["text"],
@@ -640,7 +641,14 @@ Antes de responder, confira:
 1. qual grandeza está sendo pedida;
 2. qual definição corresponde a ela;
 3. se as unidades são coerentes;
-4. se a fórmula realmente responde à pergunta.
+4. se a fórmula realmente responde à pergunta;
+5. refaça mentalmente toda conta numérica antes de apresentar o resultado;
+6. se houver alternativas, compare o valor calculado com CADA alternativa;
+7. nunca marque uma alternativa que não corresponda ao resultado calculado;
+8. se nenhuma alternativa corresponder, diga explicitamente:
+   "Nenhuma das alternativas corresponde ao resultado calculado."
+9. não arredonde um valor apenas para fazê-lo caber em uma alternativa;
+10. quando arredondar, informe o valor exato ou aproximado e o critério.
 
 CINEMÁTICA — REGRA OBRIGATÓRIA
 - não confunda deslocamento com distância percorrida;
@@ -690,6 +698,43 @@ Não finalize toda resposta com exercício obrigatoriamente.
 
 # TUTOR_PEDAGOGICO_V1_1
 # TUTOR_PEDAGOGICO_V1_2
+# TUTOR_PEDAGOGICO_V1_3
+
+def _tutor_requires_smart_model(mensagem: str) -> bool:
+    """
+    Usa o modelo mais forte apenas quando a pergunta parece exigir
+    raciocínio matemático/físico, fórmulas, cálculo ou múltipla escolha.
+    """
+    msg = (mensagem or "").lower()
+
+    stem_terms = (
+        "velocidade", "aceleração", "aceleracao", "cinemática", "cinematica",
+        "força", "forca", "energia", "potência", "potencia", "trabalho",
+        "momento", "vetor", "vetores", "física", "fisica",
+        "matemática", "matematica", "equação", "equacao", "função", "funcao",
+        "derivada", "integral", "limite", "fração", "fracao",
+        "porcentagem", "ângulo", "angulo", "trigonometria",
+        "sen", "cos", "tan", "delta", "Δ", "m/s", "km/h",
+        "newton", "joule", "watt",
+    )
+
+    option_terms = (
+        "(a)", "(b)", "(c)", "(d)", "(e)",
+        "alternativa", "alternativas", "múltipla escolha", "multipla escolha",
+    )
+
+    math_symbols = (
+        "=", "+", "-", "*", "/", "^", "√", "²", "³",
+    )
+
+    has_stem_term = any(term in msg for term in stem_terms)
+    has_options = any(term in msg for term in option_terms)
+    has_math = any(symbol in msg for symbol in math_symbols)
+    has_digits = any(ch.isdigit() for ch in msg)
+
+    return has_stem_term or has_options or (has_math and has_digits)
+
+
 def _run_student_tutor(
     *,
     mensagem: str,
@@ -716,6 +761,8 @@ def _run_student_tutor(
         ),
     }
 
+    use_smart_model = _tutor_requires_smart_model(mensagem)
+
     result = ask_text(
         instructions=_tutor_instructions(),
         user_input=(
@@ -733,7 +780,7 @@ def _run_student_tutor(
     )
 
     return {
-        "tutor_version": "1.2",
+        "tutor_version": "1.3",
         "resposta": result["text"],
         "perfil": profile,
         "foco_prioritario": focus,
