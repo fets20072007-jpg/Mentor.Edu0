@@ -165,3 +165,9 @@ AI_MODEL_SMART = os.getenv(
     "gpt-6.1-sol"
 ).strip()
 
+
+
+AI_TEST_TOKEN = os.getenv(
+    "AI_TEST_TOKEN",
+    ""
+).strip()

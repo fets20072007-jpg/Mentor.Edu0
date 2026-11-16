@@ -1,3 +1,4 @@
+from fastapi import Request
 import json
 
 from fastapi import (
@@ -6,6 +7,8 @@ from fastapi import (
     HTTPException,
 )
 from sqlalchemy.orm import Session
+
+from app.core.config import AI_TEST_TOKEN
 
 from app.core.permissions import (
     require_student,
@@ -506,4 +509,46 @@ def classroom_alerts(
         "alertas": alerts,
         "model": model,
         "response_id": response_id,
+    }
+
+
+@router.post("/test-openai")
+def test_openai(request: Request):
+    """Teste técnico protegido da conexão Mentor.Edu -> OpenAI."""
+
+    if not AI_TEST_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="AI_TEST_TOKEN não configurado no servidor.",
+        )
+
+    supplied = request.headers.get("X-Mentor-AI-Test")
+
+    if supplied != AI_TEST_TOKEN:
+        raise HTTPException(
+            status_code=403,
+            detail="Token de teste inválido.",
+        )
+
+    try:
+        result = ask_text(
+            instructions=(
+                "Você está realizando um teste técnico do Mentor.Edu. "
+                "Responda em português brasileiro, em uma única frase curta."
+            ),
+            user_input=(
+                "Confirme que a conexão com a IA está funcionando. "
+                "Comece exatamente com: Mentor.Edu IA online"
+            ),
+            smart=False,
+        )
+    except Exception as error:
+        _raise_ai_error(error)
+
+    return {
+        "status": "ok",
+        "service": "Mentor Edu AI",
+        "model": result["model"],
+        "response_id": result["response_id"],
+        "resposta": result["text"],
     }
