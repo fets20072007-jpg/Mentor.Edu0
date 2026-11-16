@@ -554,3 +554,45 @@ def test_openai(request: Request):
         "response_id": result["response_id"],
         "resposta": result["text"],
     }
+
+
+
+@router.post("/test-ai")
+def test_ai_provider(request: Request):
+    if not AI_TEST_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="AI_TEST_TOKEN não configurado.",
+        )
+
+    supplied = request.headers.get("X-Mentor-AI-Test")
+
+    if supplied != AI_TEST_TOKEN:
+        raise HTTPException(
+            status_code=403,
+            detail="Token de teste inválido.",
+        )
+
+    try:
+        result = ask_text(
+            instructions=(
+                "Você está realizando um teste técnico do Mentor.Edu. "
+                "Responda em português brasileiro em uma única frase curta."
+            ),
+            user_input=(
+                "Confirme que a IA do Mentor.Edu está funcionando. "
+                "Comece exatamente com: Mentor.Edu IA online"
+            ),
+            smart=False,
+        )
+    except Exception as error:
+        _raise_ai_error(error)
+
+    return {
+        "status": "ok",
+        "service": "Mentor Edu AI",
+        "provider": result.get("provider"),
+        "model": result["model"],
+        "response_id": result["response_id"],
+        "resposta": result["text"],
+    }

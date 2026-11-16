@@ -171,3 +171,9 @@ AI_TEST_TOKEN = os.getenv(
     "AI_TEST_TOKEN",
     ""
 ).strip()
+
+
+# PROVEDOR DE IA
+AI_PROVIDER = os.getenv("AI_PROVIDER", "groq").strip().lower()
+AI_API_KEY = os.getenv("AI_API_KEY", "").strip()
+AI_BASE_URL = os.getenv("AI_BASE_URL", "").strip()
