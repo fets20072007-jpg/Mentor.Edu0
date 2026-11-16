@@ -596,3 +596,207 @@ def test_ai_provider(request: Request):
         "response_id": result["response_id"],
         "resposta": result["text"],
     }
+
+# === TUTOR ALUNO V1 ===
+
+def _tutor_focus(metrics: dict) -> list[dict]:
+    subjects = metrics.get("desempenho_por_disciplina") or []
+
+    valid = [
+        item
+        for item in subjects
+        if item.get("media_percentual") is not None
+    ]
+
+    valid.sort(
+        key=lambda item: item["media_percentual"]
+    )
+
+    return valid[:3]
+
+
+def _tutor_instructions() -> str:
+    return """
+Você é o Tutor IA do Mentor.Edu.
+
+Seu objetivo é ajudar o estudante a APRENDER, e não apenas
+entregar respostas prontas.
+
+REGRAS PEDAGÓGICAS:
+- fale em português brasileiro;
+- explique de forma clara e progressiva;
+- adapte o nível ao contexto pedagógico fornecido;
+- priorize os pontos de maior dificuldade do aluno;
+- em Matemática/Física, mostre fórmulas, substituições e contas;
+- quando houver exercício, explique o raciocínio passo a passo;
+- se o aluno pedir somente a resposta, ainda forneça uma explicação curta;
+- use exemplos próximos da realidade escolar e, quando fizer sentido,
+  de cursos técnicos;
+- não invente notas, faltas, disciplinas ou informações do estudante;
+- não faça diagnóstico médico, psicológico ou clínico;
+- não compare o estudante com outros alunos;
+- não revele IDs ou dados internos do sistema;
+- quando os dados forem insuficientes, diga isso naturalmente;
+- seja encorajador sem exagero;
+- finalize, quando útil, com uma pequena pergunta ou exercício de checagem.
+
+O perfil calculado pelo Mentor.Edu é apenas um INDICADOR PEDAGÓGICO
+e deve orientar a adaptação da explicação.
+"""
+
+
+def _run_student_tutor(
+    *,
+    mensagem: str,
+    metrics: dict,
+) -> dict:
+    profile = classify_profile(metrics)
+    focus = _tutor_focus(metrics)
+
+    context = {
+        "perfil_pedagogico": profile,
+        "media_geral_percentual": (
+            metrics.get("media_geral_percentual")
+        ),
+        "frequencia": metrics.get("frequencia"),
+        "foco_prioritario": focus,
+        "objetivo_declarado": (
+            metrics.get("objetivo_declarado")
+        ),
+        "dificuldades_declaradas": (
+            metrics.get("dificuldades_declaradas")
+        ),
+        "horas_estudo_dia": (
+            metrics.get("horas_estudo_dia")
+        ),
+    }
+
+    result = ask_text(
+        instructions=_tutor_instructions(),
+        user_input=(
+            "CONTEXTO PEDAGÓGICO DO ESTUDANTE:\n"
+            + json.dumps(
+                context,
+                ensure_ascii=False,
+            )
+            + "\n\nMENSAGEM DO ESTUDANTE:\n"
+            + mensagem
+        ),
+        smart=False,
+    )
+
+    return {
+        "resposta": result["text"],
+        "perfil": profile,
+        "foco_prioritario": focus,
+        "provider": result.get("provider"),
+        "model": result["model"],
+        "response_id": result["response_id"],
+    }
+
+
+@router.post("/student/tutor")
+def student_tutor_v1(
+    payload: AIChatRequest,
+    current_user: User = Depends(
+        require_student
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Tutor IA personalizado do aluno.
+    Usa somente contexto pedagógico do usuário autenticado.
+    """
+    metrics = build_student_metrics(
+        db,
+        current_user,
+    )
+
+    try:
+        return _run_student_tutor(
+            mensagem=payload.mensagem,
+            metrics=metrics,
+        )
+    except Exception as error:
+        _raise_ai_error(error)
+
+
+@router.post("/test-student-tutor")
+def test_student_tutor_v1(
+    request: Request,
+):
+    """
+    Teste protegido com dados FICTÍCIOS.
+    Não acessa banco nem dados reais de alunos.
+    """
+    if not AI_TEST_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="AI_TEST_TOKEN não configurado.",
+        )
+
+    supplied = request.headers.get(
+        "X-Mentor-AI-Test"
+    )
+
+    if supplied != AI_TEST_TOKEN:
+        raise HTTPException(
+            status_code=403,
+            detail="Token de teste inválido.",
+        )
+
+    fake_metrics = {
+        "media_geral_percentual": 62.0,
+        "desempenho_por_disciplina": [
+            {
+                "disciplina": "Física",
+                "media_percentual": 48.0,
+                "avaliacoes": 3,
+            },
+            {
+                "disciplina": "Matemática",
+                "media_percentual": 58.0,
+                "avaliacoes": 4,
+            },
+            {
+                "disciplina": "Português",
+                "media_percentual": 80.0,
+                "avaliacoes": 3,
+            },
+        ],
+        "frequencia": {
+            "registros": 40,
+            "presentes": 35,
+            "faltas": 5,
+            "atrasos": 0,
+            "taxa_presenca": 87.5,
+        },
+        "objetivo_declarado": (
+            "Melhorar o desempenho em Física."
+        ),
+        "dificuldades_declaradas": (
+            "Cinemática e interpretação de fórmulas."
+        ),
+        "horas_estudo_dia": 1.5,
+        "respostas_avaliadas": {
+            "quantidade": 10,
+            "media_percentual": 60.0,
+        },
+    }
+
+    try:
+        result = _run_student_tutor(
+            mensagem=(
+                "Estou estudando velocidade média e não entendi "
+                "quando devo usar ΔS/Δt. Pode me explicar?"
+            ),
+            metrics=fake_metrics,
+        )
+    except Exception as error:
+        _raise_ai_error(error)
+
+    return {
+        "status": "ok",
+        "modo": "demonstracao",
+        **result,
+    }
