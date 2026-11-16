@@ -45,6 +45,12 @@ router = APIRouter(
 
 
 def _raise_ai_error(error):
+    print(
+        f"[MENTOR AI ERROR] "
+        f"{type(error).__name__}: {error}",
+        flush=True,
+    )
+
     if isinstance(
         error,
         MentorAIUnavailable,
@@ -56,12 +62,8 @@ def _raise_ai_error(error):
 
     raise HTTPException(
         status_code=502,
-        detail=(
-            "Não foi possível obter resposta "
-            "do serviço de IA."
-        ),
+        detail="Não foi possível obter resposta do serviço de IA.",
     ) from error
-
 
 @router.get("/health")
 def ai_health():
