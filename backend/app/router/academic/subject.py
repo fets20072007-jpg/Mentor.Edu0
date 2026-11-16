@@ -13,6 +13,7 @@ from app.database.models import (
 
 from app.schema.subject import (
     SubjectCreate,
+    SubjectUpdate,
     SubjectResponse,
     SubjectTeacherUpdate
 )
@@ -582,6 +583,175 @@ def my_subject_by_id(
             "para acessar esta disciplina."
         )
     )
+
+
+
+# =========================================================
+# ADMINISTRAÇÃO
+# EDITAR / DESFAZER / REATIVAR DISCIPLINA
+# =========================================================
+@router.patch(
+    "/{subject_id}",
+    response_model=SubjectResponse
+)
+def update_subject(
+    subject_id: int,
+    data: SubjectUpdate,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    subject = (
+        db.query(Subject)
+        .filter(Subject.id == subject_id)
+        .first()
+    )
+
+    if not subject:
+        raise HTTPException(
+            status_code=404,
+            detail="Disciplina não encontrada."
+        )
+
+    payload = data.model_dump(exclude_unset=True)
+
+    if not payload:
+        return subject
+
+    new_teacher_id = payload.get("teacher_id", subject.teacher_id)
+    new_classroom_id = payload.get("classroom_id", subject.classroom_id)
+    new_active = payload.get("ativa", subject.ativa)
+    raw_name = payload.get("nome", subject.nome)
+    clean_name = " ".join((raw_name or "").strip().split())
+
+    if not clean_name:
+        raise HTTPException(
+            status_code=400,
+            detail="O nome da disciplina não pode estar vazio."
+        )
+
+    teacher = (
+        db.query(Teacher)
+        .filter(Teacher.id == new_teacher_id)
+        .first()
+    )
+
+    if not teacher:
+        raise HTTPException(
+            status_code=404,
+            detail="Professor não encontrado."
+        )
+
+    if new_active and not teacher.ativo:
+        raise HTTPException(
+            status_code=400,
+            detail="Professor inativo não pode receber uma disciplina ativa."
+        )
+
+    classroom = (
+        db.query(Classroom)
+        .filter(Classroom.id == new_classroom_id)
+        .first()
+    )
+
+    if not classroom:
+        raise HTTPException(
+            status_code=404,
+            detail="Turma não encontrada."
+        )
+
+    if new_active and not classroom.ativa:
+        raise HTTPException(
+            status_code=400,
+            detail="Não é possível manter uma disciplina ativa em turma inativa."
+        )
+
+    if new_active:
+        normalized_name = normalize_subject_name(clean_name)
+
+        other_subjects = (
+            db.query(Subject)
+            .filter(
+                Subject.id != subject.id,
+                Subject.classroom_id == new_classroom_id,
+                Subject.ativa == True
+            )
+            .all()
+        )
+
+        for other in other_subjects:
+            if normalize_subject_name(other.nome) == normalized_name:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Já existe uma disciplina ativa com este nome nesta turma."
+                )
+
+    old_classroom = (
+        db.query(Classroom)
+        .filter(Classroom.id == subject.classroom_id)
+        .first()
+    )
+
+    detaches_old_teacher = (
+        not new_active
+        or new_teacher_id != subject.teacher_id
+        or new_classroom_id != subject.classroom_id
+    )
+
+    if (
+        subject.ativa
+        and old_classroom
+        and old_classroom.teacher_id == subject.teacher_id
+        and detaches_old_teacher
+    ):
+        other_active_subject = (
+            db.query(Subject)
+            .filter(
+                Subject.id != subject.id,
+                Subject.teacher_id == subject.teacher_id,
+                Subject.classroom_id == subject.classroom_id,
+                Subject.ativa == True
+            )
+            .first()
+        )
+
+        if not other_active_subject:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Este professor é Diretor de Turma e esta é sua última "
+                    "disciplina ativa na turma. Troque ou remova o DT antes."
+                )
+            )
+
+    subject.nome = clean_name
+    subject.teacher_id = new_teacher_id
+    subject.classroom_id = new_classroom_id
+    subject.ativa = new_active
+
+    if "categoria" in payload:
+        subject.categoria = (
+            (payload.get("categoria") or "Outras").strip()
+            or "Outras"
+        )
+
+    if "carga_horaria" in payload:
+        carga = payload.get("carga_horaria")
+
+        if carga is None or carga < 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Carga horária inválida."
+            )
+
+        subject.carga_horaria = carga
+
+    if "descricao" in payload:
+        subject.descricao = payload.get("descricao")
+
+    db.commit()
+    db.refresh(subject)
+
+    return subject
 
 
 # =========================================================

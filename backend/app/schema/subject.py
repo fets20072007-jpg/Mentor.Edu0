@@ -9,6 +9,15 @@ class SubjectCreate(BaseModel):
     teacher_id: int
     classroom_id: int
 
+class SubjectUpdate(BaseModel):
+    nome: Optional[str] = None
+    carga_horaria: Optional[int] = None
+    descricao: Optional[str] = None
+    categoria: Optional[str] = None
+    teacher_id: Optional[int] = None
+    classroom_id: Optional[int] = None
+    ativa: Optional[bool] = None
+
 class SubjectResponse(BaseModel):
     id: int
     nome: str
