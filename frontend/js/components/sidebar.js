@@ -7,6 +7,13 @@ const navigation = {
             { route: "subjects", label: "Minhas disciplinas" },
             { route: "library", label: "Conteúdos" },
         ]},
+        // MENTOR_EDU_MENU_ETAPA1
+        { label: "Mentor Edu", icon: "message", children: [
+            { route: "mentor-edu", label: "Conversar com Mentor.Edu" },
+            { route: "study-plans", label: "Meu plano" },
+            { route: "recommendations", label: "Plano indicado" },
+            { route: "study-sessions", label: "Sessões de estudo" },
+        ]},
         { label: "Avaliações", icon: "clipboard", children: [
             { route: "assessments", label: "DisponÃ­veis" },
             { route: "assessment-history", label: "HistÃ³rico" },
@@ -18,15 +25,10 @@ const navigation = {
             { route: "attendance-justifications", label: "Justificativas" },
         ]},
         { route: "record", label: "HistÃ³rico acadêmico", icon: "school" },
-        { label: "Plano de estudos", icon: "activity", children: [
-            { route: "study-plans", label: "Meu plano" },
-            { route: "study-sessions", label: "SessÃµes de estudo" },
-        ]},
-        { label: "Biblioteca", icon: "book", children: [
+                { label: "Biblioteca", icon: "book", children: [
             { route: "library", label: "Explorar biblioteca" },
         ]},
-        { route: "recommendations", label: "RecomendaÃ§Ãµes", icon: "help" },
-        { route: "schedules", label: "Horários", icon: "calendar" },
+                { route: "schedules", label: "Horários", icon: "calendar" },
         { route: "academic-calendar", label: "Calendário acadêmico", icon: "calendar" },
         { route: "notifications", label: "Notificações", icon: "bell", badge: "notifications" },
         { route: "tickets", label: "Chamados", icon: "message" },
