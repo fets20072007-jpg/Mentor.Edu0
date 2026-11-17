@@ -4,6 +4,7 @@ import { setState } from "../state.js";
 
 const titles = {
     overview: "Dashboard",
+    "mentor-edu": "Mentor Edu",
     subjects: "Disciplinas",
     assessments: "Avaliações",
     "assessment-history": "Histórico de avaliações",
