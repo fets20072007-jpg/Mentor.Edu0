@@ -8,7 +8,7 @@ const navigation = {
             { route: "library", label: "Conteúdos" },
         ]},
         // MENTOR_EDU_MENU_ETAPA1
-        { label: "Mentor Edu", icon: "message", children: [
+        { route: "mentor-edu", label: "Mentor Edu", icon: "mentor-ai", children: [
             { route: "mentor-edu", label: "Conversar com Mentor.Edu" },
             { route: "study-plans", label: "Meu plano" },
             { route: "recommendations", label: "Plano indicado" },
@@ -121,12 +121,19 @@ const navigation = {
     ],
 };
 
+function sidebarIcon(item) {
+    if (item.icon === "mentor-ai") {
+        return `<span class="mentor-menu-icon" aria-hidden="true"><img src="assets/brand/mentor-ai-bot.png" alt=""></span>`;
+    }
+    return icon(item.icon);
+}
+
 function itemMarkup(item, unread) {
     const badge = item.badge === "notifications" && unread > 0 ? `<span class="nav-badge">${Math.min(unread, 99)}</span>` : "";
     if (item.children) {
-        return `<div class="nav-group" data-nav-group><button class="nav-group-toggle" type="button" aria-expanded="false">${icon(item.icon)}<span>${item.label}</span>${icon("chevron", "icon chevron")}</button><div class="nav-children">${item.children.map(child => `<button class="nav-item" type="button" data-route="${child.route}"><span>${child.label}</span>${child.badge === "notifications" && unread > 0 ? `<span class="nav-badge">${Math.min(unread, 99)}</span>` : ""}</button>`).join("")}</div></div>`;
+        return `<div class="nav-group" data-nav-group><button class="nav-group-toggle" type="button"${item.route ? ` data-route="${item.route}"` : ""} aria-expanded="false">${sidebarIcon(item)}<span>${item.label}</span>${icon("chevron", "icon chevron")}</button><div class="nav-children">${item.children.map(child => `<button class="nav-item" type="button" data-route="${child.route}"><span>${child.label}</span>${child.badge === "notifications" && unread > 0 ? `<span class="nav-badge">${Math.min(unread, 99)}</span>` : ""}</button>`).join("")}</div></div>`;
     }
-    return `<button class="nav-item" type="button" data-route="${item.route}">${icon(item.icon)}<span>${item.label}</span>${badge}</button>`;
+    return `<button class="nav-item" type="button" data-route="${item.route}">${sidebarIcon(item)}<span>${item.label}</span>${badge}</button>`;
 }
 
 export function renderSidebar({ role, unread = 0, onNavigate, onLogout }) {
@@ -146,7 +153,7 @@ export function renderSidebar({ role, unread = 0, onNavigate, onLogout }) {
 }
 
 export function setActiveSidebarRoute(route) {
-    document.querySelectorAll(".nav-item[data-route]").forEach(item => {
+    document.querySelectorAll(".nav-item[data-route], .nav-group-toggle[data-route]").forEach(item => {
         const active = item.dataset.route === route;
         item.classList.toggle("is-active", active);
         if (active) {

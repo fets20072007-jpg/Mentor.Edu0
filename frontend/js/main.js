@@ -1,4 +1,4 @@
-﻿import { FEATURES } from "./config.js";
+import { FEATURES } from "./config.js";
 import { login, requestPasswordReset } from "./api/auth.js";
 import { getMe } from "./api/users.js";
 import { getUnreadCount } from "./api/notifications.js";
@@ -170,6 +170,12 @@ async function renderRoute(route, role, user) {
             if (role === ROLES.TEACHER) return await renderTeacherDashboard(container, user, navigate);
             if (role === ROLES.ADMIN) return await renderAdminDashboard(container, user, navigate);
             if (role === ROLES.SUPPORT) return await renderSupportDashboard(container, user, navigate);
+        }
+
+        // MENTOR_EDU_DYNAMIC_ETAPA3
+        if (route === "mentor-edu" && role === ROLES.STUDENT) {
+            const module = await import("./pages/student/mentor-edu.js");
+            return await module.renderStudentMentorEdu(container, user, navigate);
         }
 
         if (route === "notifications") return await renderNotifications(container);
