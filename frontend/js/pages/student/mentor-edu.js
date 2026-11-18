@@ -1,6 +1,247 @@
+import { api } from "../../api/client.js";
+
+const PROFILE_CACHE_MS = 5 * 60 * 1000;
+
 function firstName(user) {
     const raw = user?.nome || user?.name || "Aluno";
     return String(raw).trim().split(/\s+/)[0] || "Aluno";
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function humanize(value) {
+    if (value === null || value === undefined || value === "") return "Em análise";
+    return String(value)
+        .replaceAll("_", " ")
+        .replaceAll("-", " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function normalizeList(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === "string") {
+        return value
+            .split(/\n|;/)
+            .map(item => item.replace(/^[\s•\-–—\d.)]+/, "").trim())
+            .filter(Boolean);
+    }
+    if (typeof value === "object") {
+        return Object.values(value).filter(Boolean);
+    }
+    return [value];
+}
+
+function itemParts(item) {
+    if (typeof item === "string" || typeof item === "number") {
+        return { title: String(item), detail: "" };
+    }
+
+    if (item && typeof item === "object") {
+        const title =
+            item.titulo ??
+            item.title ??
+            item.nome ??
+            item.name ??
+            item.ponto ??
+            item.acao ??
+            item.sugestao ??
+            item.disciplina ??
+            item.area ??
+            item.texto ??
+            item.resumo ??
+            "Insight";
+
+        const detail =
+            item.descricao ??
+            item.description ??
+            item.detalhe ??
+            item.detail ??
+            item.motivo ??
+            item.justificativa ??
+            item.explicacao ??
+            "";
+
+        return { title: String(title), detail: String(detail || "") };
+    }
+
+    return { title: String(item ?? "Insight"), detail: "" };
+}
+
+function formatMetric(value, suffix = "") {
+    if (value === null || value === undefined || value === "") return "—";
+    const number = Number(value);
+    if (!Number.isFinite(number)) return `${value}${suffix}`;
+    const rounded = Number.isInteger(number) ? number : Number(number.toFixed(1));
+    return `${rounded}${suffix}`;
+}
+
+function metricNumber(value) {
+    if (typeof value === "number") return value;
+    if (value && typeof value === "object") {
+        const candidate =
+            value.media ??
+            value.percentual ??
+            value.desempenho ??
+            value.nota ??
+            value.valor ??
+            value.score;
+        const parsed = Number(candidate);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getSubjectEntries(metrics) {
+    const source =
+        metrics?.desempenho_por_disciplina ??
+        metrics?.disciplinas ??
+        metrics?.por_disciplina ??
+        metrics?.subjects ??
+        {};
+
+    if (!source || typeof source !== "object" || Array.isArray(source)) return [];
+
+    return Object.entries(source)
+        .map(([name, value]) => ({
+            name,
+            value: metricNumber(value),
+        }))
+        .filter(item => item.value !== null)
+        .sort((a, b) => b.value - a.value);
+}
+
+function listMarkup(items, tone = "good", emptyText = "Nenhum dado disponível ainda.") {
+    const normalized = normalizeList(items);
+
+    if (!normalized.length) {
+        return `
+            <div class="mentor-empty-state">
+                <strong>Ainda não há informação suficiente.</strong>
+                <p>${escapeHtml(emptyText)}</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="mentor-real-list">
+            ${normalized.map((item, index) => {
+                const { title, detail } = itemParts(item);
+                return `
+                    <article class="mentor-real-item">
+                        <span class="mentor-status mentor-status--${tone}">
+                            ${tone === "good" ? "Forte" : tone === "attention" ? "Atenção" : String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div>
+                            <strong>${escapeHtml(title)}</strong>
+                            ${detail ? `<p>${escapeHtml(detail)}</p>` : ""}
+                        </div>
+                    </article>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function suggestionsMarkup(items) {
+    const normalized = normalizeList(items);
+
+    if (!normalized.length) {
+        return `
+            <div class="mentor-empty-state">
+                <strong>Sem sugestões novas por enquanto.</strong>
+                <p>O Mentor vai criar ações assim que houver dados suficientes do seu perfil.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="mentor-suggestion-stack">
+            ${normalized.map((item, index) => {
+                const { title, detail } = itemParts(item);
+                return `
+                    <button
+                        type="button"
+                        class="mentor-suggestion"
+                        data-real-suggestion="${escapeHtml(title)}"
+                    >
+                        <span>${String(index + 1).padStart(2, "0")}</span>
+                        <div>
+                            <strong>${escapeHtml(title)}</strong>
+                            ${detail ? `<p>${escapeHtml(detail)}</p>` : `<p>Sugestão criada a partir do seu perfil.</p>`}
+                        </div>
+                        <b aria-hidden="true">→</b>
+                    </button>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function loadingMarkup(label) {
+    return `
+        <div class="mentor-loading-state">
+            <span class="mentor-loading-spinner" aria-hidden="true"></span>
+            <div>
+                <strong>${escapeHtml(label)}</strong>
+                <p>O Mentor está analisando seus dados.</p>
+            </div>
+        </div>
+    `;
+}
+
+function errorMarkup(message) {
+    return `
+        <div class="mentor-error-state">
+            <strong>Não foi possível carregar esta análise.</strong>
+            <p>${escapeHtml(message || "Confira se o backend está ativo e tente novamente.")}</p>
+        </div>
+    `;
+}
+
+function cacheKey(user) {
+    const identity = user?.id ?? user?.email ?? user?.matricula ?? "student";
+    return `mentor_edu_profile_v1:${identity}`;
+}
+
+function readProfileCache(user) {
+    try {
+        const raw = sessionStorage.getItem(cacheKey(user));
+        if (!raw) return null;
+        const cached = JSON.parse(raw);
+        if (!cached?.at || !cached?.data) return null;
+        if (Date.now() - cached.at > PROFILE_CACHE_MS) return null;
+        return cached.data;
+    } catch {
+        return null;
+    }
+}
+
+function writeProfileCache(user, data) {
+    try {
+        sessionStorage.setItem(
+            cacheKey(user),
+            JSON.stringify({ at: Date.now(), data }),
+        );
+    } catch {
+        // Cache é apenas uma otimização; falha nele não impede a página.
+    }
+}
+
+function clearProfileCache(user) {
+    try {
+        sessionStorage.removeItem(cacheKey(user));
+    } catch {
+        // Sem ação.
+    }
 }
 
 const sections = [
@@ -10,25 +251,7 @@ const sections = [
         title: "Seu perfil de aprendizagem",
         icon: "◎",
         summary: "Uma visão rápida de como você aprende melhor.",
-        body: `
-            <div class="mentor-insight-grid mentor-insight-grid--3">
-                <article class="mentor-mini-card">
-                    <span class="mentor-mini-label">Ritmo</span>
-                    <strong>Equilibrado</strong>
-                    <p>Você poderá acompanhar sua evolução e ajustar o ritmo de estudo.</p>
-                </article>
-                <article class="mentor-mini-card">
-                    <span class="mentor-mini-label">Preferência</span>
-                    <strong>Passo a passo</strong>
-                    <p>Explicações guiadas e exercícios serão organizados aqui.</p>
-                </article>
-                <article class="mentor-mini-card">
-                    <span class="mentor-mini-label">Objetivo</span>
-                    <strong>Evolução contínua</strong>
-                    <p>O Mentor Edu destacará prioridades sem sobrecarregar a tela.</p>
-                </article>
-            </div>
-        `,
+        target: "profile",
     },
     {
         id: "fortes",
@@ -36,12 +259,7 @@ const sections = [
         title: "Pontos fortes",
         icon: "↗",
         summary: "Conteúdos e hábitos em que você vem se destacando.",
-        body: `
-            <div class="mentor-list-preview">
-                <div><span class="mentor-status mentor-status--good">Forte</span><strong>Organização dos estudos</strong><p>Seus melhores indicadores aparecerão aqui quando conectarmos os dados reais.</p></div>
-                <div><span class="mentor-status mentor-status--good">Forte</span><strong>Participação</strong><p>A IA poderá cruzar desempenho, frequência e atividades concluídas.</p></div>
-            </div>
-        `,
+        target: "strengths",
     },
     {
         id: "melhorar",
@@ -49,12 +267,7 @@ const sections = [
         title: "Pontos para melhorar",
         icon: "!",
         summary: "O Mentor destacará primeiro o que merece sua atenção.",
-        body: `
-            <div class="mentor-list-preview">
-                <div><span class="mentor-status mentor-status--attention">Atenção</span><strong>Conteúdo prioritário</strong><p>A disciplina com maior necessidade de revisão aparecerá neste espaço.</p></div>
-                <div><span class="mentor-status mentor-status--attention">Atenção</span><strong>Regularidade</strong><p>O sistema poderá sugerir pequenas sessões para evitar acúmulo.</p></div>
-            </div>
-        `,
+        target: "attention",
     },
     {
         id: "sugestoes",
@@ -62,20 +275,7 @@ const sections = [
         title: "Sugestões do Mentor",
         icon: "✦",
         summary: "Ações curtas e objetivas para o seu próximo estudo.",
-        body: `
-            <div class="mentor-suggestion-stack">
-                <button type="button" class="mentor-suggestion" data-preview-action>
-                    <span>01</span>
-                    <div><strong>Revisar um ponto importante</strong><p>Sugestões reais entrarão na próxima etapa.</p></div>
-                    <b>→</b>
-                </button>
-                <button type="button" class="mentor-suggestion" data-preview-action>
-                    <span>02</span>
-                    <div><strong>Resolver exercícios guiados</strong><p>O Tutor poderá montar uma sequência adequada ao seu nível.</p></div>
-                    <b>→</b>
-                </button>
-            </div>
-        `,
+        target: "suggestions",
     },
     {
         id: "plano",
@@ -113,8 +313,8 @@ const sections = [
             <div class="mentor-alert-preview">
                 <span class="mentor-alert-dot"></span>
                 <div>
-                    <strong>Nenhum alerta real conectado nesta etapa.</strong>
-                    <p>Depois, a IA poderá mostrar avaliações próximas, queda de desempenho e prioridades de estudo.</p>
+                    <strong>Alertas inteligentes entram depois do perfil e do chat.</strong>
+                    <p>Esta área será conectada às avaliações, frequência e prioridades acadêmicas.</p>
                 </div>
             </div>
         `,
@@ -122,6 +322,10 @@ const sections = [
 ];
 
 function sectionMarkup(section) {
+    const body = section.target
+        ? `<div data-profile-target="${section.target}">${loadingMarkup("Preparando análise...")}</div>`
+        : section.body;
+
     return `
         <article class="mentor-collapse-card" data-mentor-section="${section.id}">
             <button class="mentor-collapse-head" type="button" aria-expanded="false">
@@ -129,7 +333,7 @@ function sectionMarkup(section) {
                 <span class="mentor-collapse-copy">
                     <small>${section.eyebrow}</small>
                     <strong>${section.title}</strong>
-                    <em>${section.summary}</em>
+                    <em data-section-summary="${section.id}">${section.summary}</em>
                 </span>
                 <span class="mentor-collapse-action">
                     <span data-toggle-label>Ver mais</span>
@@ -137,10 +341,252 @@ function sectionMarkup(section) {
                 </span>
             </button>
             <div class="mentor-collapse-body" hidden>
-                ${section.body}
+                ${body}
             </div>
         </article>
     `;
+}
+
+function profileMarkup(data) {
+    const analysis = data?.analise ?? data?.analysis ?? {};
+    const metrics = data?.metricas ?? data?.metrics ?? {};
+    const profileRaw = data?.perfil ?? data?.profile ?? analysis?.perfil ?? analysis?.profile ?? "Em análise";
+    const profileLabel =
+        typeof profileRaw === "object"
+            ? profileRaw?.nome ?? profileRaw?.tipo ?? profileRaw?.classificacao ?? "Personalizado"
+            : profileRaw;
+
+    const summary =
+        analysis?.resumo ??
+        analysis?.summary ??
+        (typeof profileRaw === "object" ? profileRaw?.resumo ?? profileRaw?.descricao : "") ??
+        "O Mentor está construindo seu perfil com base nos dados disponíveis.";
+
+    // MENTOR_EDU_METRICS_FIX_V4_1
+    const averageRaw =
+        metrics?.media_geral ??
+        metrics?.media ??
+        metrics?.average ??
+        metrics?.nota_media ??
+        null;
+
+    const attendanceRaw =
+        metrics?.frequencia_percentual ??
+        metrics?.frequencia ??
+        metrics?.attendance ??
+        metrics?.presenca ??
+        null;
+
+    const average = metricNumber(averageRaw);
+    const attendance = metricNumber(attendanceRaw);
+
+    const subjects = getSubjectEntries(metrics);
+    const strongest = subjects[0];
+    const focus = subjects.length > 1 ? subjects[subjects.length - 1] : subjects[0];
+
+    return `
+        <div class="mentor-profile-real">
+            <div class="mentor-profile-summary">
+                <span class="mentor-ai-source">Análise do Mentor</span>
+                <strong>${escapeHtml(humanize(profileLabel))}</strong>
+                <p>${escapeHtml(summary)}</p>
+            </div>
+
+            <div class="mentor-insight-grid mentor-insight-grid--3">
+                <article class="mentor-mini-card">
+                    <span class="mentor-mini-label">Média geral</span>
+                    <strong>${escapeHtml(formatMetric(average))}</strong>
+                    <p>${strongest ? `Destaque atual: ${escapeHtml(humanize(strongest.name))}.` : "Calculada com os dados disponíveis."}</p>
+                </article>
+                <article class="mentor-mini-card">
+                    <span class="mentor-mini-label">Frequência</span>
+                    <strong>${escapeHtml(formatMetric(attendance, "%"))}</strong>
+                    <p>A presença também ajuda o Mentor a entender seu momento acadêmico.</p>
+                </article>
+                <article class="mentor-mini-card">
+                    <span class="mentor-mini-label">Foco atual</span>
+                    <strong>${focus ? escapeHtml(humanize(focus.name)) : "Em análise"}</strong>
+                    <p>${focus ? `Indicador atual: ${escapeHtml(formatMetric(focus.value))}.` : "A prioridade aparecerá quando houver dados suficientes."}</p>
+                </article>
+            </div>
+        </div>
+    `;
+}
+
+function applyProfileData(page, data) {
+    const analysis = data?.analise ?? data?.analysis ?? {};
+
+    const strengths =
+        analysis?.pontos_fortes ??
+        analysis?.strengths ??
+        data?.pontos_fortes ??
+        [];
+
+    const attention =
+        analysis?.pontos_atencao ??
+        analysis?.pontos_melhorar ??
+        analysis?.areas_melhoria ??
+        analysis?.attention_points ??
+        data?.pontos_atencao ??
+        [];
+
+    const suggestions =
+        analysis?.acoes_aluno ??
+        analysis?.sugestoes ??
+        analysis?.recomendacoes ??
+        analysis?.recommendations ??
+        data?.sugestoes ??
+        [];
+
+    const targets = {
+        profile: profileMarkup(data),
+        strengths: listMarkup(
+            strengths,
+            "good",
+            "Continue usando o Mentor e registrando atividades para identificar seus destaques.",
+        ),
+        attention: listMarkup(
+            attention,
+            "attention",
+            "Nenhuma prioridade crítica foi identificada com os dados atuais.",
+        ),
+        suggestions: suggestionsMarkup(suggestions),
+    };
+
+    for (const [key, markup] of Object.entries(targets)) {
+        const target = page.querySelector(`[data-profile-target="${key}"]`);
+        if (target) target.innerHTML = markup;
+    }
+
+    const firstStrength = itemParts(normalizeList(strengths)[0] ?? "").title;
+    const firstAttention = itemParts(normalizeList(attention)[0] ?? "").title;
+    const firstSuggestion = itemParts(normalizeList(suggestions)[0] ?? "").title;
+
+    const summaryStrength = page.querySelector('[data-section-summary="fortes"]');
+    const summaryAttention = page.querySelector('[data-section-summary="melhorar"]');
+    const summarySuggestions = page.querySelector('[data-section-summary="sugestoes"]');
+
+    if (summaryStrength && firstStrength) summaryStrength.textContent = firstStrength;
+    if (summaryAttention && firstAttention) summaryAttention.textContent = firstAttention;
+    if (summarySuggestions && firstSuggestion) summarySuggestions.textContent = firstSuggestion;
+
+    const metrics = data?.metricas ?? data?.metrics ?? {};
+    const subjectCount = getSubjectEntries(metrics).length;
+
+    const weekCount = page.querySelector("[data-profile-count]");
+    const weekText = page.querySelector("[data-profile-count-text]");
+    if (weekCount) weekCount.textContent = subjectCount || "✓";
+    if (weekText) {
+        weekText.textContent = subjectCount
+            ? `${subjectCount} disciplina${subjectCount === 1 ? "" : "s"} analisada${subjectCount === 1 ? "" : "s"} pelo Mentor`
+            : "perfil acadêmico analisado pelo Mentor";
+    }
+
+    const tipTitle = page.querySelector("[data-mentor-tip-title]");
+    const tipText = page.querySelector("[data-mentor-tip-text]");
+    if (tipTitle) {
+        tipTitle.textContent =
+            firstAttention ||
+            firstSuggestion ||
+            "Continue acompanhando seu perfil.";
+    }
+    if (tipText) {
+        tipText.textContent = firstSuggestion
+            ? `Próxima ação sugerida: ${firstSuggestion}`
+            : "Abra seus insights para acompanhar as próximas recomendações.";
+    }
+
+    const badge = page.querySelector("[data-profile-status]");
+    if (badge) {
+        badge.textContent = "IA conectada";
+        badge.classList.remove("is-loading", "is-error");
+        badge.classList.add("is-connected");
+    }
+
+    const heroNote = page.querySelector("[data-profile-hero-note]");
+    if (heroNote) {
+        heroNote.textContent =
+            "Os insights abaixo foram preenchidos com dados reais do seu perfil acadêmico.";
+    }
+
+    page.querySelectorAll("[data-real-suggestion]").forEach(button => {
+        button.addEventListener("click", () => {
+            const chat = page.querySelector("[data-mentor-chat]");
+            chat?.classList.add("is-open");
+            chat?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            const input = chat?.querySelector("input");
+            if (input) {
+                input.value = button.dataset.realSuggestion || "";
+                setTimeout(() => input.focus(), 250);
+            }
+
+            showToast(page, "Sugestão carregada no chat. A conversa real entra na Etapa 5.");
+        });
+    });
+}
+
+function applyProfileError(page, error) {
+    const message =
+        error?.message ||
+        "Confira se o backend está ativo e tente novamente.";
+
+    ["profile", "strengths", "attention", "suggestions"].forEach(key => {
+        const target = page.querySelector(`[data-profile-target="${key}"]`);
+        if (target) target.innerHTML = errorMarkup(message);
+    });
+
+    const badge = page.querySelector("[data-profile-status]");
+    if (badge) {
+        badge.textContent = "Perfil indisponível";
+        badge.classList.remove("is-loading", "is-connected");
+        badge.classList.add("is-error");
+    }
+}
+
+function showToast(page, message) {
+    const toast = page.querySelector("[data-preview-toast]");
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.hidden = false;
+
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => {
+        toast.hidden = true;
+    }, 3000);
+}
+
+async function loadStudentProfile(page, user, { force = false } = {}) {
+    const badge = page.querySelector("[data-profile-status]");
+    const refresh = page.querySelector("[data-refresh-profile]");
+
+    if (refresh) refresh.disabled = true;
+    if (badge) {
+        badge.textContent = "Analisando perfil...";
+        badge.classList.remove("is-connected", "is-error");
+        badge.classList.add("is-loading");
+    }
+
+    if (force) clearProfileCache(user);
+
+    try {
+        let data = !force ? readProfileCache(user) : null;
+
+        if (!data) {
+            data = await api.get("/mentor-ai/student/profile");
+            writeProfileCache(user, data);
+        }
+
+        if (!document.body.contains(page)) return;
+
+        applyProfileData(page, data);
+    } catch (error) {
+        console.error("[Mentor Edu] Falha ao carregar perfil:", error);
+        if (document.body.contains(page)) applyProfileError(page, error);
+    } finally {
+        if (refresh && document.body.contains(page)) refresh.disabled = false;
+    }
 }
 
 export async function renderStudentMentorEdu(container, user, navigate) {
@@ -151,10 +597,18 @@ export async function renderStudentMentorEdu(container, user, navigate) {
             <header class="mentor-page-head">
                 <div>
                     <span class="mentor-page-kicker">MENTOR EDU • INSIGHTS COM IA</span>
-                    <h1>Olá, ${name}! <span aria-hidden="true">👋</span></h1>
+                    <h1>Olá, ${escapeHtml(name)}! <span aria-hidden="true">👋</span></h1>
                     <p>Seu espaço para entender o aprendizado, organizar os estudos e conversar com o Mentor.</p>
                 </div>
-                <span class="mentor-page-badge">Prévia visual</span>
+
+                <div class="mentor-profile-controls">
+                    <span class="mentor-page-badge is-loading" data-profile-status>
+                        Analisando perfil...
+                    </span>
+                    <button type="button" class="mentor-profile-refresh" data-refresh-profile>
+                        Atualizar análise
+                    </button>
+                </div>
             </header>
 
             <article class="mentor-hero">
@@ -164,9 +618,8 @@ export async function renderStudentMentorEdu(container, user, navigate) {
                 <div class="mentor-hero-copy">
                     <span>Seu copiloto de aprendizagem</span>
                     <h2>Insights claros, sem sobrecarregar sua tela.</h2>
-                    <p>
-                        Os detalhes ficam fechados por padrão. Abra somente o que quiser consultar.
-                        Na próxima etapa, estes módulos receberão dados reais do seu perfil.
+                    <p data-profile-hero-note>
+                        O Mentor está preparando seus insights com base nos dados acadêmicos disponíveis.
                     </p>
                 </div>
                 <button class="mentor-primary-button" type="button" data-open-chat>
@@ -183,14 +636,14 @@ export async function renderStudentMentorEdu(container, user, navigate) {
                     <article class="mentor-week-card">
                         <div class="mentor-card-heading">
                             <div>
-                                <small>ESTA SEMANA</small>
-                                <strong>Resumo de estudo</strong>
+                                <small>PERFIL ATUAL</small>
+                                <strong>Resumo da análise</strong>
                             </div>
-                            <span>7 dias</span>
+                            <span>IA</span>
                         </div>
                         <div class="mentor-week-stat">
-                            <strong>3</strong>
-                            <span>áreas organizadas no Mentor Edu</span>
+                            <strong data-profile-count>...</strong>
+                            <span data-profile-count-text>preparando análise acadêmica</span>
                         </div>
                         <div class="mentor-week-bars" aria-hidden="true">
                             <i style="height:34%"></i>
@@ -201,15 +654,15 @@ export async function renderStudentMentorEdu(container, user, navigate) {
                             <i style="height:88%"></i>
                             <i style="height:70%"></i>
                         </div>
-                        <p>Os dados reais de estudo entram quando conectarmos a IA ao seu perfil.</p>
+                        <p>O perfil é armazenado temporariamente por 5 minutos para evitar análises repetidas.</p>
                     </article>
 
                     <article class="mentor-tip-card">
                         <span>✦</span>
                         <div>
                             <small>DICA DO MENTOR</small>
-                            <strong>Comece pelo que mais precisa de atenção.</strong>
-                            <p>Depois, use o chat para pedir uma explicação passo a passo.</p>
+                            <strong data-mentor-tip-title>Analisando sua próxima prioridade...</strong>
+                            <p data-mentor-tip-text>As recomendações serão atualizadas com o seu perfil.</p>
                         </div>
                     </article>
                 </aside>
@@ -222,7 +675,7 @@ export async function renderStudentMentorEdu(container, user, navigate) {
                         <div>
                             <small>ASSISTENTE DE ESTUDOS</small>
                             <strong>Conversar com Mentor.Edu</strong>
-                            <span><i></i> Interface pronta • IA será conectada na próxima etapa</span>
+                            <span><i></i> Perfil conectado • chat real entra na Etapa 5</span>
                         </div>
                     </div>
                     <div class="mentor-chat-actions">
@@ -235,10 +688,10 @@ export async function renderStudentMentorEdu(container, user, navigate) {
                     <div class="mentor-chat-welcome">
                         <img src="assets/brand/mentor-ai-bot.png" alt="">
                         <div>
-                            <strong>Olá, ${name}! Eu sou o Mentor.Edu.</strong>
+                            <strong>Olá, ${escapeHtml(name)}! Eu sou o Mentor.Edu.</strong>
                             <p>
-                                Nesta etapa o chat é apenas visual. Na próxima, eu vou responder usando
-                                o Tutor IA que já está funcionando no backend.
+                                Já consigo analisar seu perfil acadêmico. Na próxima etapa,
+                                este chat será conectado ao Tutor IA do backend.
                             </p>
                         </div>
                     </div>
@@ -256,25 +709,12 @@ export async function renderStudentMentorEdu(container, user, navigate) {
                 </form>
             </section>
 
-            <div class="mentor-preview-toast" data-preview-toast hidden>
-                A IA real será conectada na próxima etapa.
-            </div>
+            <div class="mentor-preview-toast" data-preview-toast hidden></div>
         </section>
     `;
 
     const page = container.querySelector(".mentor-page");
     const chat = page.querySelector("[data-mentor-chat]");
-    const toast = page.querySelector("[data-preview-toast]");
-
-    function showPreviewToast(message = "A IA real será conectada na próxima etapa.") {
-        if (!toast) return;
-        toast.textContent = message;
-        toast.hidden = false;
-        clearTimeout(showPreviewToast.timer);
-        showPreviewToast.timer = setTimeout(() => {
-            toast.hidden = true;
-        }, 2600);
-    }
 
     page.querySelectorAll(".mentor-collapse-head").forEach(button => {
         button.addEventListener("click", () => {
@@ -320,14 +760,24 @@ export async function renderStudentMentorEdu(container, user, navigate) {
 
     page.querySelector("[data-chat-form]")?.addEventListener("submit", event => {
         event.preventDefault();
-        showPreviewToast();
+        showToast(page, "O chat real será ativado na Etapa 5.");
     });
 
-    page.querySelectorAll("[data-preview-message], [data-preview-action]").forEach(button => {
+    page.querySelectorAll("[data-preview-message]").forEach(button => {
         button.addEventListener("click", () => {
             openChat();
-            showPreviewToast();
+            const input = chat.querySelector("input");
+            if (input) input.value = button.textContent.trim();
+            showToast(page, "Mensagem preparada. O envio real entra na Etapa 5.");
         });
+    });
+
+    page.querySelector("[data-refresh-profile]")?.addEventListener("click", () => {
+        ["profile", "strengths", "attention", "suggestions"].forEach(key => {
+            const target = page.querySelector(`[data-profile-target="${key}"]`);
+            if (target) target.innerHTML = loadingMarkup("Atualizando análise...");
+        });
+        loadStudentProfile(page, user, { force: true });
     });
 
     const onKeyDown = event => {
@@ -339,14 +789,17 @@ export async function renderStudentMentorEdu(container, user, navigate) {
         }
     };
 
-    document.addEventListener("keydown", onKeyDown, { signal: page._mentorAbort?.signal });
+    document.addEventListener("keydown", onKeyDown);
 
-    // Evita deixar o body travado se o usuário navegar enquanto o chat estiver expandido.
     const observer = new MutationObserver(() => {
         if (!document.body.contains(page)) {
             document.body.classList.remove("mentor-chat-fullscreen-open");
+            document.removeEventListener("keydown", onKeyDown);
             observer.disconnect();
         }
     });
+
     observer.observe(container, { childList: true });
+
+    loadStudentProfile(page, user);
 }
