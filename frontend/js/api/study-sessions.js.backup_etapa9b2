@@ -1,0 +1,28 @@
+import { api } from "./client.js";
+export const getMyStudySessions = () => api.get("/study-sessions/");
+export const createStudySession = data => api.post("/study-sessions/", data);
+export const updateStudySession = (id, data) => api.put(`/study-sessions/${id}`, data);
+export const deleteStudySession = id => api.delete(`/study-sessions/${id}`);
+
+// MENTOR_EDU_FOCUS_API_V9B1
+export async function syncStudyFocusAlert(payload) {
+    return api.post(
+        "/mentor-ai/student/focus-alert",
+        payload,
+    );
+}
+
+export async function getStudyFocusAlerts() {
+    return api.get(
+        "/mentor-ai/student/focus-alerts",
+    );
+}
+
+export async function clearStudyFocusAlert(sessionId) {
+    return api.post(
+        "/mentor-ai/student/focus-alert/clear",
+        {
+            session_id: sessionId,
+        },
+    );
+}

@@ -1199,7 +1199,174 @@ export async function renderStudentMentorEdu(container, user, navigate) {
         if (fullscreen) setTimeout(() => chat.querySelector("input")?.focus(), 100);
     });
 
-    async function sendTutorMessage(rawMessage) {
+    // MENTOR_EDU_SESSION_CONTEXT_V9C
+const MENTOR_SESSION_HELP_KEY =
+    "mentor_edu_session_help_context_v1";
+
+function mentorSessionContextRead() {
+    try {
+        const raw = sessionStorage.getItem(
+            MENTOR_SESSION_HELP_KEY,
+        );
+
+        if (!raw) return null;
+
+        sessionStorage.removeItem(
+            MENTOR_SESSION_HELP_KEY,
+        );
+
+        const data = JSON.parse(raw);
+
+        const createdAt = Number(
+            data?.createdAt || 0,
+        );
+
+        const age = Date.now() - createdAt;
+
+        // Evita reabrir contexto antigo.
+        if (
+            !createdAt
+            || age < 0
+            || age > 15 * 60 * 1000
+        ) {
+            return null;
+        }
+
+        return data;
+    } catch {
+        try {
+            sessionStorage.removeItem(
+                MENTOR_SESSION_HELP_KEY,
+            );
+        } catch {
+            // Sem ação.
+        }
+
+        return null;
+    }
+}
+
+function mentorSessionContextPrompt(data) {
+    const materia =
+        String(
+            data?.materia
+            || "Não informada",
+        ).trim();
+
+    const assunto =
+        String(
+            data?.assunto
+            || "Não informado",
+        ).trim();
+
+    const duration =
+        Number(
+            data?.duracao_minutos
+            || 0,
+        );
+
+    const difficulty =
+        data?.dificuldade
+        ?? "não informada";
+
+    const notes =
+        String(
+            data?.observacoes
+            || "",
+        ).trim();
+
+    const focusMinutes =
+        Number(
+            data?.foco_computado_minutos
+            || 0,
+        );
+
+    const pendingMinutes =
+        Number(
+            data?.tempo_pendente_minutos
+            || duration
+            || 0,
+        );
+
+    const awayMinutes =
+        Number(
+            data?.tempo_fora_minutos
+            || 0,
+        );
+
+    const status =
+        String(
+            data?.timer_status
+            || "não iniciado",
+        );
+
+    const notesPart = notes
+        ? `\nObservação do aluno: ${notes}`
+        : "";
+
+    return (
+        "Quero sua ajuda durante uma sessão de estudo que já está cadastrada no Mentor.Edu."
+        + "\n\nContexto da sessão:"
+        + `\nDisciplina: ${materia}`
+        + `\nConteúdo/assunto: ${assunto}`
+        + (
+            duration > 0
+                ? `\nDuração planejada: ${duration} minutos`
+                : ""
+        )
+        + `\nDificuldade percebida: ${difficulty}/5`
+        + `\nStatus do temporizador: ${status}`
+        + (
+            focusMinutes > 0
+                ? `\nFoco já computado: ${focusMinutes} minutos`
+                : ""
+        )
+        + (
+            pendingMinutes > 0
+                ? `\nTempo de estudo ainda disponível/pendente: ${pendingMinutes} minutos`
+                : ""
+        )
+        + (
+            awayMinutes > 0
+                ? `\nTempo fora da aba até agora: ${awayMinutes} minutos`
+                : ""
+        )
+        + notesPart
+        + "\n\nAtue como um orientador de estudo para ESTA sessão."
+        + " Escolha um método de aprendizagem adequado à disciplina, ao conteúdo,"
+        + " à dificuldade e ao tempo disponível."
+        + " Organize a sessão em etapas curtas e realistas."
+        + " Comece me dizendo como devo usar o tempo desta sessão e qual é o primeiro passo."
+        + " Depois explique somente o necessário para eu executar esse primeiro passo."
+        + " Inclua uma prática curta ou pergunta de verificação e espere minha resposta antes de avançar."
+        + " Não me entregue um texto enorme nem um plano genérico."
+    );
+}
+
+function mentorConsumeSessionContext(
+    sendTutorMessage,
+) {
+    const data =
+        mentorSessionContextRead();
+
+    if (!data) return;
+
+    const prompt =
+        mentorSessionContextPrompt(
+            data,
+        );
+
+    setTimeout(
+        () => {
+            sendTutorMessage(
+                prompt,
+            );
+        },
+        100,
+    );
+}
+
+async function sendTutorMessage(rawMessage) {
         const message = String(rawMessage ?? "").trim();
         if (!message || chatBusy) return;
 
@@ -1371,5 +1538,6 @@ export async function renderStudentMentorEdu(container, user, navigate) {
     observer.observe(container, { childList: true });
 
     loadStudentProfile(page, user, navigate);
+    mentorConsumeSessionContext(sendTutorMessage);
     loadStudentAlerts(page, navigate);
 }

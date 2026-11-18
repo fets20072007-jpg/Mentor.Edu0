@@ -1,0 +1,150 @@
+// MENTOR_EDU_FOCUS_BACKEND_V9B1
+function mentorFocusLateMinutes(state) {
+    return Math.max(
+        0,
+        Math.floor(
+            (
+                mentorFocusNow()
+                - mentorFocusPlannedEnd(state)
+            ) / 60000,
+        ),
+    );
+}
+
+function mentorFocusBackendPayload(state) {
+    return {
+        session_id: Number(state?.sessionId || 0),
+        title: String(
+            state?.title || "Sessão de estudo",
+        ),
+        planned_minutes: Number(
+            state?.plannedMinutes || 0,
+        ),
+        active_ms: Math.floor(
+            Number(state?.activeMs || 0),
+        ),
+        away_ms: Math.floor(
+            Number(state?.awayMs || 0),
+        ),
+        remaining_minutes: Math.ceil(
+            mentorFocusRemainingMs(state) / 60000,
+        ),
+        late_minutes: mentorFocusLateMinutes(state),
+    };
+}
+
+async function mentorFocusSyncBackend(state) {
+    if (!state?.sessionId) return null;
+
+    try {
+        return await syncStudyFocusAlert(
+            mentorFocusBackendPayload(state),
+        );
+    } catch (error) {
+        console.warn(
+            "[Mentor Edu] Falha ao sincronizar alerta de foco:",
+            error,
+        );
+        return null;
+    }
+}
+
+async function mentorFocusClearBackend(sessionId) {
+    if (!sessionId) return;
+
+    try {
+        await clearStudyFocusAlert(sessionId);
+    } catch (error) {
+        console.warn(
+            "[Mentor Edu] Falha ao limpar alerta de foco:",
+            error,
+        );
+    }
+}
+
+function mentorFocusServerLabel(level) {
+    if (level === "critico") return "CRÍTICO";
+    if (level === "alto") return "ALTO";
+    if (level === "medio") return "MÉDIO";
+    return "LEMBRETE";
+}
+
+function mentorFocusBackendAlertMarkup(item) {
+    const allowed = [
+        "baixo",
+        "medio",
+        "alto",
+        "critico",
+    ];
+
+    const level = allowed.includes(item?.level)
+        ? item.level
+        : "baixo";
+
+    return `
+        <article
+            class="mentor-focus-server-alert is-${level}"
+        >
+            <span>
+                ${mentorFocusServerLabel(level)}
+            </span>
+
+            <div>
+                <strong>
+                    ${escapeHtml(
+                        item?.title || "Sessão pendente",
+                    )}
+                </strong>
+
+                <p>
+                    ${escapeHtml(
+                        item?.message
+                        || "Há tempo de foco pendente.",
+                    )}
+                </p>
+            </div>
+        </article>
+    `;
+}
+
+async function mentorFocusLoadBackendAlerts(shell) {
+    const target = shell?.querySelector(
+        "[data-focus-server-alerts]",
+    );
+
+    if (!target) return;
+
+    try {
+        const data = await getStudyFocusAlerts();
+
+        const items =
+            Array.isArray(data?.alertas)
+                ? data.alertas
+                : [];
+
+        if (!items.length) {
+            target.hidden = true;
+            target.innerHTML = "";
+            return;
+        }
+
+        target.hidden = false;
+        target.innerHTML = `
+            <div class="mentor-focus-server-title">
+                <strong>Pendências sincronizadas</strong>
+                <span>${items.length}</span>
+            </div>
+
+            <div class="mentor-focus-server-list">
+                ${items
+                    .map(mentorFocusBackendAlertMarkup)
+                    .join("")}
+            </div>
+        `;
+    } catch (error) {
+        console.warn(
+            "[Mentor Edu] Falha ao carregar alertas persistentes:",
+            error,
+        );
+    }
+}

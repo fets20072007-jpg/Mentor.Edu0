@@ -1,3 +1,5 @@
+import { getStudyPushConfig, saveStudyPushSubscription, removeStudyPushSubscription } from "../../api/study-sessions.js";
+import { syncStudyFocusAlert, getStudyFocusAlerts, clearStudyFocusAlert } from "../../api/study-sessions.js";
 import { getMyStudySessions, createStudySession, updateStudySession, deleteStudySession } from "../../api/study-sessions.js";
 import { escapeHtml } from "../../core/format.js";
 import { pageHeader, surface, emptyBlock, statusPill } from "../shared/page-ui.js";
@@ -85,6 +87,1449 @@ function applyMentorSessionPrefill(container) {
     );
 }
 
+// MENTOR_EDU_FOCUS_TIMER_V9A
+const MENTOR_FOCUS_TIMER_KEY = "mentor_edu_focus_timer_v1";
+
+function mentorFocusNow() {
+    return Date.now();
+}
+
+function mentorFocusIsPageActive() {
+    return (
+        document.visibilityState === "visible"
+        && document.hasFocus()
+    );
+}
+
+function mentorFocusReadState() {
+    try {
+        const raw = localStorage.getItem(
+            MENTOR_FOCUS_TIMER_KEY,
+        );
+
+        if (!raw) return null;
+
+        const state = JSON.parse(raw);
+
+        if (!state?.sessionId) {
+            return null;
+        }
+
+        return state;
+    } catch {
+        return null;
+    }
+}
+
+function mentorFocusWriteState(state) {
+    try {
+        localStorage.setItem(
+            MENTOR_FOCUS_TIMER_KEY,
+            JSON.stringify(state),
+        );
+    } catch {
+        // O temporizador continua funcionando em memória.
+    }
+}
+
+function mentorFocusClearState() {
+    try {
+        localStorage.removeItem(
+            MENTOR_FOCUS_TIMER_KEY,
+        );
+    } catch {
+        // Sem ação.
+    }
+}
+
+function mentorFocusFormatMs(value) {
+    const total = Math.max(
+        0,
+        Math.floor(Number(value || 0) / 1000),
+    );
+
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor(
+        (total % 3600) / 60,
+    );
+    const seconds = total % 60;
+
+    if (hours > 0) {
+        return [
+            String(hours).padStart(2, "0"),
+            String(minutes).padStart(2, "0"),
+            String(seconds).padStart(2, "0"),
+        ].join(":");
+    }
+
+    return [
+        String(minutes).padStart(2, "0"),
+        String(seconds).padStart(2, "0"),
+    ].join(":");
+}
+
+function mentorFocusRemainingMs(state) {
+    const plannedMs =
+        Number(state?.plannedMinutes || 0)
+        * 60
+        * 1000;
+
+    return Math.max(
+        0,
+        plannedMs - Number(state?.activeMs || 0),
+    );
+}
+
+function mentorFocusPlannedEnd(state) {
+    return (
+        Number(state?.startedAt || 0)
+        + Number(state?.plannedMinutes || 0)
+        * 60
+        * 1000
+    );
+}
+
+function mentorFocusUrgency(state) {
+    const remainingMs =
+        mentorFocusRemainingMs(state);
+
+    if (remainingMs <= 0) {
+        return {
+            level: "concluido",
+            label: "Concluído",
+            score: 0,
+        };
+    }
+
+    const now = mentorFocusNow();
+    const plannedEnd =
+        mentorFocusPlannedEnd(state);
+
+    if (now <= plannedEnd) {
+        return {
+            level: "em-dia",
+            label: "Em andamento",
+            score: 0,
+        };
+    }
+
+    const lateMinutes =
+        (now - plannedEnd) / 60000;
+
+    const remainingMinutes =
+        remainingMs / 60000;
+
+    const score = Math.max(
+        lateMinutes,
+        remainingMinutes,
+    );
+
+    if (score > 30) {
+        return {
+            level: "critico",
+            label: "Urgência crítica",
+            score,
+        };
+    }
+
+    if (score > 15) {
+        return {
+            level: "alto",
+            label: "Urgência alta",
+            score,
+        };
+    }
+
+    if (score > 5) {
+        return {
+            level: "medio",
+            label: "Urgência média",
+            score,
+        };
+    }
+
+    return {
+        level: "baixo",
+        label: "Lembrete",
+        score,
+    };
+}
+
+function mentorFocusNotificationBody(
+    state,
+    urgency,
+) {
+    const remainingMinutes = Math.ceil(
+        mentorFocusRemainingMs(state) / 60000,
+    );
+
+    const now = mentorFocusNow();
+    const lateMinutes = Math.max(
+        0,
+        Math.floor(
+            (
+                now
+                - mentorFocusPlannedEnd(state)
+            ) / 60000,
+        ),
+    );
+
+    if (urgency.level === "concluido") {
+        return (
+            `Você completou o tempo de foco de `
+            + `${state.title}.`
+        );
+    }
+
+    return (
+        `${state.title}: ainda faltam `
+        + `${remainingMinutes} min de foco. `
+        + (
+            lateMinutes > 0
+                ? `O horário previsto terminou há ${lateMinutes} min.`
+                : "Continue a sessão para cumprir o tempo planejado."
+        )
+    );
+}
+
+function mentorFocusCanNotify() {
+    return (
+        "Notification" in window
+        && Notification.permission === "granted"
+    );
+}
+
+async function mentorFocusRequestNotifications() {
+    if (!("Notification" in window)) {
+        return "unsupported";
+    }
+
+    try {
+        return await Notification.requestPermission();
+    } catch {
+        return Notification.permission;
+    }
+}
+
+function mentorFocusNotify(
+    state,
+    urgency,
+) {
+    if (!mentorFocusCanNotify()) {
+        return;
+    }
+
+    const tag =
+        `mentor-study-session-${state.sessionId}`;
+
+    try {
+        new Notification(
+            urgency.level === "concluido"
+                ? "Sessão de estudo concluída"
+                : urgency.label,
+            {
+                body: mentorFocusNotificationBody(
+                    state,
+                    urgency,
+                ),
+                tag,
+                renotify: true,
+                requireInteraction:
+                    urgency.level === "critico",
+            },
+        );
+    } catch {
+        // Notificação do SO é complementar.
+    }
+}
+
+function mentorFocusRestoreGap(state) {
+    if (!state) return state;
+
+    const now = mentorFocusNow();
+    const lastTick =
+        Number(state.lastTickAt || now);
+
+    if (
+        state.status === "running"
+        && now > lastTick
+    ) {
+        state.awayMs =
+            Number(state.awayMs || 0)
+            + (now - lastTick);
+
+        state.lastTickAt = now;
+        mentorFocusWriteState(state);
+    }
+
+    return state;
+}
+
+function mentorFocusSessionLabel(session) {
+    return (
+        `${session?.materia || "Matéria"}`
+        + (
+            session?.assunto
+                ? ` · ${session.assunto}`
+                : ""
+        )
+    );
+}
+
+// MENTOR_EDU_FOCUS_BACKEND_V9B1
+function mentorFocusLateMinutes(state) {
+    return Math.max(
+        0,
+        Math.floor(
+            (
+                mentorFocusNow()
+                - mentorFocusPlannedEnd(state)
+            ) / 60000,
+        ),
+    );
+}
+
+function mentorFocusBackendPayload(state) {
+    return {
+        session_id: Number(state?.sessionId || 0),
+        title: String(
+            state?.title || "Sessão de estudo",
+        ),
+        planned_minutes: Number(
+            state?.plannedMinutes || 0,
+        ),
+        active_ms: Math.floor(
+            Number(state?.activeMs || 0),
+        ),
+        away_ms: Math.floor(
+            Number(state?.awayMs || 0),
+        ),
+        remaining_minutes: Math.ceil(
+            mentorFocusRemainingMs(state) / 60000,
+        ),
+        late_minutes: mentorFocusLateMinutes(state),
+    };
+}
+
+async function mentorFocusSyncBackend(state) {
+    if (!state?.sessionId) return null;
+
+    try {
+        return await syncStudyFocusAlert(
+            mentorFocusBackendPayload(state),
+        );
+    } catch (error) {
+        console.warn(
+            "[Mentor Edu] Falha ao sincronizar alerta de foco:",
+            error,
+        );
+        return null;
+    }
+}
+
+async function mentorFocusClearBackend(sessionId) {
+    if (!sessionId) return;
+
+    try {
+        await clearStudyFocusAlert(sessionId);
+    } catch (error) {
+        console.warn(
+            "[Mentor Edu] Falha ao limpar alerta de foco:",
+            error,
+        );
+    }
+}
+
+function mentorFocusServerLabel(level) {
+    if (level === "critico") return "CRÍTICO";
+    if (level === "alto") return "ALTO";
+    if (level === "medio") return "MÉDIO";
+    return "LEMBRETE";
+}
+
+function mentorFocusBackendAlertMarkup(item) {
+    const allowed = [
+        "baixo",
+        "medio",
+        "alto",
+        "critico",
+    ];
+
+    const level = allowed.includes(item?.level)
+        ? item.level
+        : "baixo";
+
+    return `
+        <article
+            class="mentor-focus-server-alert is-${level}"
+        >
+            <span>
+                ${mentorFocusServerLabel(level)}
+            </span>
+
+            <div>
+                <strong>
+                    ${escapeHtml(
+                        item?.title || "Sessão pendente",
+                    )}
+                </strong>
+
+                <p>
+                    ${escapeHtml(
+                        item?.message
+                        || "Há tempo de foco pendente.",
+                    )}
+                </p>
+            </div>
+        </article>
+    `;
+}
+
+async function mentorFocusLoadBackendAlerts(shell) {
+    const target = shell?.querySelector(
+        "[data-focus-server-alerts]",
+    );
+
+    if (!target) return;
+
+    try {
+        const data = await getStudyFocusAlerts();
+
+        const items =
+            Array.isArray(data?.alertas)
+                ? data.alertas
+                : [];
+
+        if (!items.length) {
+            target.hidden = true;
+            target.innerHTML = "";
+            return;
+        }
+
+        target.hidden = false;
+        target.innerHTML = `
+            <div class="mentor-focus-server-title">
+                <strong>Pendências sincronizadas</strong>
+                <span>${items.length}</span>
+            </div>
+
+            <div class="mentor-focus-server-list">
+                ${items
+                    .map(mentorFocusBackendAlertMarkup)
+                    .join("")}
+            </div>
+        `;
+    } catch (error) {
+        console.warn(
+            "[Mentor Edu] Falha ao carregar alertas persistentes:",
+            error,
+        );
+    }
+}
+
+// MENTOR_EDU_WEB_PUSH_V9B2
+function mentorPushBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+async function mentorPushCurrentSubscription() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        return null;
+    }
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        return await registration.pushManager.getSubscription();
+    } catch {
+        return null;
+    }
+}
+
+async function mentorPushEnable() {
+    if (
+        !("serviceWorker" in navigator)
+        || !("PushManager" in window)
+        || !("Notification" in window)
+    ) {
+        throw new Error("Este navegador não oferece Web Push.");
+    }
+
+    const config = await getStudyPushConfig();
+    if (!config?.enabled || !config?.public_key) {
+        throw new Error("Web Push ainda não está configurado no servidor.");
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        throw new Error("Permissão de notificações não concedida.");
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: mentorPushBase64ToUint8Array(config.public_key),
+        });
+    }
+
+    const payload = subscription.toJSON();
+    payload.device_label = (navigator.userAgent || "Navegador").slice(0, 180);
+    await saveStudyPushSubscription(payload);
+    return subscription;
+}
+
+async function mentorPushDisable() {
+    const subscription = await mentorPushCurrentSubscription();
+    if (!subscription) return;
+    try {
+        await removeStudyPushSubscription(subscription.endpoint);
+    } finally {
+        await subscription.unsubscribe();
+    }
+}
+
+async function mentorPushRefreshButton(button) {
+    if (!button) return;
+    const subscription = await mentorPushCurrentSubscription();
+    if (subscription) {
+        button.textContent = "Push em segundo plano ativo";
+        button.dataset.pushEnabled = "true";
+    } else {
+        button.textContent = "Ativar push em segundo plano";
+        button.dataset.pushEnabled = "false";
+    }
+}
+
+// MENTOR_EDU_SESSION_MENTOR_HELP_V9C
+const MENTOR_SESSION_HELP_KEY =
+    "mentor_edu_session_help_context_v1";
+
+function mentorSessionHelpSelected(
+    container,
+    current,
+) {
+    const items = Array.isArray(current)
+        ? current
+        : [];
+
+    const timerState =
+        typeof mentorFocusReadState === "function"
+            ? mentorFocusReadState()
+            : null;
+
+    if (timerState?.sessionId) {
+        const active = items.find(
+            item =>
+                Number(item?.id)
+                === Number(timerState.sessionId),
+        );
+
+        if (active) {
+            return {
+                session: active,
+                timerState,
+            };
+        }
+    }
+
+    const select = container.querySelector(
+        "[data-focus-session]",
+    );
+
+    const selectedId = Number(
+        select?.value || 0,
+    );
+
+    if (selectedId) {
+        const selected = items.find(
+            item =>
+                Number(item?.id)
+                === selectedId,
+        );
+
+        if (selected) {
+            return {
+                session: selected,
+                timerState: null,
+            };
+        }
+    }
+
+    const pending = items.find(
+        item => !item?.concluida,
+    );
+
+    if (pending) {
+        return {
+            session: pending,
+            timerState: null,
+        };
+    }
+
+    return null;
+}
+
+function mentorSessionHelpContext(
+    container,
+    current,
+) {
+    const selected =
+        mentorSessionHelpSelected(
+            container,
+            current,
+        );
+
+    if (!selected?.session) {
+        return null;
+    }
+
+    const session = selected.session;
+    const timer = selected.timerState;
+
+    const plannedMinutes = Number(
+        session?.duracao_minutos
+        ?? timer?.plannedMinutes
+        ?? 0,
+    );
+
+    const activeMs = Number(
+        timer?.activeMs
+        ?? 0,
+    );
+
+    const awayMs = Number(
+        timer?.awayMs
+        ?? 0,
+    );
+
+    const remainingMs =
+        timer
+        && typeof mentorFocusRemainingMs === "function"
+            ? mentorFocusRemainingMs(timer)
+            : Math.max(
+                0,
+                plannedMinutes
+                * 60
+                * 1000
+                - activeMs,
+            );
+
+    return {
+        source: "study-sessions",
+        createdAt: Date.now(),
+
+        session_id:
+            Number(session?.id || 0),
+
+        materia:
+            String(
+                session?.materia
+                || "Não informada",
+            ).trim(),
+
+        assunto:
+            String(
+                session?.assunto
+                || "Não informado",
+            ).trim(),
+
+        duracao_minutos:
+            plannedMinutes,
+
+        dificuldade:
+            session?.dificuldade
+            ?? session?.nivel_dificuldade
+            ?? null,
+
+        observacoes:
+            String(
+                session?.observacoes
+                || "",
+            ).trim(),
+
+        concluida:
+            Boolean(session?.concluida),
+
+        timer_status:
+            String(
+                timer?.status
+                || "não iniciado",
+            ),
+
+        foco_computado_minutos:
+            Math.floor(
+                activeMs / 60000,
+            ),
+
+        tempo_fora_minutos:
+            Math.floor(
+                awayMs / 60000,
+            ),
+
+        tempo_pendente_minutos:
+            Math.ceil(
+                remainingMs / 60000,
+            ),
+    };
+}
+
+function mentorSessionHelpMarkup() {
+    return `
+        <div
+            class="mentor-session-help-cta"
+            data-mentor-session-help-wrap
+        >
+            <button
+                type="button"
+                class="mentor-session-help-button"
+                data-mentor-session-help
+            >
+                <span aria-hidden="true">✦</span>
+                <span>
+                    Pedir ajuda ao Mentor para esta sessão
+                </span>
+            </button>
+
+            <p>
+                O Mentor usará disciplina, conteúdo,
+                dificuldade e tempo disponível para orientar seu estudo.
+            </p>
+        </div>
+    `;
+}
+
+function bindMentorSessionHelp(
+    container,
+    current,
+) {
+    let wrap = container.querySelector(
+        "[data-mentor-session-help-wrap]",
+    );
+
+    if (!wrap) {
+        container.insertAdjacentHTML(
+            "beforeend",
+            mentorSessionHelpMarkup(),
+        );
+
+        wrap = container.querySelector(
+            "[data-mentor-session-help-wrap]",
+        );
+    }
+
+    const button = wrap?.querySelector(
+        "[data-mentor-session-help]",
+    );
+
+    if (!button) return;
+
+    const selected =
+        mentorSessionHelpSelected(
+            container,
+            current,
+        );
+
+    button.disabled = !selected;
+
+    if (!selected) {
+        button.title =
+            "Crie uma sessão pendente para pedir orientação ao Mentor.";
+    } else {
+        button.title =
+            "Abrir o Mentor já com o contexto desta sessão.";
+    }
+
+    button.addEventListener(
+        "click",
+        () => {
+            const context =
+                mentorSessionHelpContext(
+                    container,
+                    current,
+                );
+
+            if (!context) {
+                showToast(
+                    "Selecione ou crie uma sessão antes de pedir ajuda ao Mentor.",
+                    "error",
+                );
+                return;
+            }
+
+            try {
+                sessionStorage.setItem(
+                    MENTOR_SESSION_HELP_KEY,
+                    JSON.stringify(context),
+                );
+            } catch {
+                showToast(
+                    "Não foi possível preparar o contexto da sessão.",
+                    "error",
+                );
+                return;
+            }
+
+            location.hash =
+                "#/mentor-edu";
+        },
+    );
+}
+
+function mentorFocusTimerPanel(current) {
+    const pending = (current || [])
+        .filter(item => !item?.concluida);
+
+    const state = mentorFocusRestoreGap(
+        mentorFocusReadState(),
+    );
+
+    if (!pending.length && !state) {
+        return `
+            <section class="mentor-focus-shell">
+                <div class="mentor-focus-title">
+                    <div>
+                        <span>FOCO</span>
+                        <strong>Temporizador de estudo</strong>
+                        <p>Registre uma sessão pendente para iniciar o acompanhamento.</p>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    const selectedId =
+        Number(state?.sessionId || pending[0]?.id || 0);
+
+    const options = pending
+        .map(session => `
+            <option
+                value="${session.id}"
+                ${
+                    Number(session.id) === selectedId
+                        ? "selected"
+                        : ""
+                }
+            >
+                ${escapeHtml(mentorFocusSessionLabel(session))}
+                · ${escapeHtml(session.duracao_minutos)} min
+            </option>
+        `)
+        .join("");
+
+    const hasTimer = Boolean(state);
+    const remainingMs =
+        hasTimer
+            ? mentorFocusRemainingMs(state)
+            : 0;
+
+    const urgency =
+        hasTimer
+            ? mentorFocusUrgency(state)
+            : {
+                level: "em-dia",
+                label: "Pronto",
+            };
+
+    return `
+        <section
+            class="mentor-focus-shell is-${escapeHtml(urgency.level)}"
+            data-focus-shell
+        >
+            <div class="mentor-focus-title">
+                <div>
+                    <span>FOCO</span>
+                    <strong>Temporizador de estudo</strong>
+                    <p>
+                        O Mentor conta apenas o tempo em que esta página está ativa.
+                        Se você sair da aba, o período fica registrado como tempo fora.
+                    </p>
+                </div>
+
+                <span
+                    class="mentor-focus-urgency"
+                    data-focus-urgency
+                >
+                    ${escapeHtml(urgency.label)}
+                </span>
+            </div>
+
+            <div class="mentor-focus-picker">
+                <label>
+                    Sessão
+                    <select
+                        data-focus-session
+                        ${hasTimer ? "disabled" : ""}
+                    >
+                        ${options}
+                    </select>
+                </label>
+
+                <button
+                    type="button"
+                    class="mini-button mini-button--primary"
+                    data-focus-start
+                    ${hasTimer ? "hidden" : ""}
+                >
+                    Iniciar foco
+                </button>
+
+                <button
+                    type="button"
+                    class="mini-button"
+                    data-focus-pause
+                    ${hasTimer ? "" : "hidden"}
+                >
+                    ${
+                        state?.status === "paused"
+                            ? "Retomar"
+                            : "Pausar"
+                    }
+                </button>
+
+                <button
+                    type="button"
+                    class="mini-button mini-button--danger"
+                    data-focus-stop
+                    ${hasTimer ? "" : "hidden"}
+                >
+                    Encerrar
+                </button>
+
+                <button
+                    type="button"
+                    class="mini-button"
+                    data-focus-notifications
+                >
+                    ${
+                        mentorFocusCanNotify()
+                            ? "Notificações ativas"
+                            : "Ativar notificações"
+                    }
+                </button>
+
+                <button
+                    type="button"
+                    class="mini-button"
+                    data-focus-push
+                >
+                    Ativar push em segundo plano
+                </button>
+            </div>
+
+            <div class="mentor-focus-clock">
+                <div>
+                    <span>Tempo pendente</span>
+                    <strong data-focus-remaining>
+                        ${
+                            hasTimer
+                                ? mentorFocusFormatMs(remainingMs)
+                                : "--:--"
+                        }
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Foco computado</span>
+                    <strong data-focus-active>
+                        ${
+                            hasTimer
+                                ? mentorFocusFormatMs(state.activeMs)
+                                : "00:00"
+                        }
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Tempo fora da aba</span>
+                    <strong data-focus-away>
+                        ${
+                            hasTimer
+                                ? mentorFocusFormatMs(state.awayMs)
+                                : "00:00"
+                        }
+                    </strong>
+                </div>
+            </div>
+
+            <div
+                class="mentor-focus-message"
+                data-focus-message
+            ></div>
+        </section>
+    `;
+}
+
+function bindFocusTimer(
+    container,
+    current,
+) {
+    const shell = container.querySelector(
+        "[data-focus-shell]",
+    );
+
+    if (!shell) return;
+
+    const select = shell.querySelector(
+        "[data-focus-session]",
+    );
+
+    const startButton = shell.querySelector(
+        "[data-focus-start]",
+    );
+
+    const pauseButton = shell.querySelector(
+        "[data-focus-pause]",
+    );
+
+    const stopButton = shell.querySelector(
+        "[data-focus-stop]",
+    );
+
+    const notificationButton = shell.querySelector(
+        "[data-focus-notifications]",
+    );
+
+    const pushButton = shell.querySelector(
+        "[data-focus-push]",
+    );
+
+    mentorPushRefreshButton(pushButton);
+
+    pushButton?.addEventListener(
+        "click",
+        async () => {
+            pushButton.disabled = true;
+            try {
+                const currentPush = await mentorPushCurrentSubscription();
+                if (currentPush) {
+                    const confirmDisable = window.confirm(
+                        "Desativar os lembretes push neste dispositivo?"
+                    );
+                    if (confirmDisable) {
+                        await mentorPushDisable();
+                        showToast("Push desativado neste dispositivo.");
+                    }
+                } else {
+                    await mentorPushEnable();
+                    showToast("Push em segundo plano ativado.", "success");
+                }
+            } catch (error) {
+                showToast(
+                    error?.message || "Não foi possível configurar o push.",
+                    "error",
+                );
+            } finally {
+                pushButton.disabled = false;
+                mentorPushRefreshButton(pushButton);
+            }
+        },
+    );
+
+    const remaining = shell.querySelector(
+        "[data-focus-remaining]",
+    );
+
+    const active = shell.querySelector(
+        "[data-focus-active]",
+    );
+
+    const away = shell.querySelector(
+        "[data-focus-away]",
+    );
+
+    const urgencyNode = shell.querySelector(
+        "[data-focus-urgency]",
+    );
+
+    const message = shell.querySelector(
+        "[data-focus-message]",
+    );
+
+    let state = mentorFocusRestoreGap(
+        mentorFocusReadState(),
+    );
+
+    let intervalId = null;
+
+    const sessionForState = () => {
+        if (!state) return null;
+
+        return (current || []).find(
+            item =>
+                Number(item.id)
+                === Number(state.sessionId),
+        ) || null;
+    };
+
+    const syncState = () => {
+        if (!state) return;
+
+        const now = mentorFocusNow();
+        const lastTick =
+            Number(state.lastTickAt || now);
+
+        const delta = Math.max(
+            0,
+            Math.min(
+                now - lastTick,
+                60 * 1000,
+            ),
+        );
+
+        if (state.status === "running") {
+            if (mentorFocusIsPageActive()) {
+                state.activeMs =
+                    Number(state.activeMs || 0)
+                    + delta;
+            } else {
+                state.awayMs =
+                    Number(state.awayMs || 0)
+                    + delta;
+            }
+        } else if (
+            state.status === "paused"
+            && now > lastTick
+        ) {
+            state.awayMs =
+                Number(state.awayMs || 0)
+                + delta;
+        }
+
+        state.lastTickAt = now;
+    };
+
+    const renderState = () => {
+        if (!state) return;
+
+        const pendingMs =
+            mentorFocusRemainingMs(state);
+
+        const urgency =
+            mentorFocusUrgency(state);
+
+        if (remaining) {
+            remaining.textContent =
+                mentorFocusFormatMs(pendingMs);
+        }
+
+        if (active) {
+            active.textContent =
+                mentorFocusFormatMs(state.activeMs);
+        }
+
+        if (away) {
+            away.textContent =
+                mentorFocusFormatMs(state.awayMs);
+        }
+
+        if (urgencyNode) {
+            urgencyNode.textContent =
+                urgency.label;
+        }
+
+        shell.className =
+            `mentor-focus-shell is-${urgency.level}`;
+
+        if (
+            urgency.level !== "em-dia"
+            && urgency.level !== state.lastUrgency
+        ) {
+            mentorFocusNotify(
+                state,
+                urgency,
+            );
+
+            state.lastUrgency =
+                urgency.level;
+        }
+
+        if (message) {
+            if (urgency.level === "concluido") {
+                message.innerHTML = `
+                    <strong>Tempo de foco cumprido.</strong>
+                    <span>
+                        Agora você pode marcar a sessão como concluída na lista abaixo.
+                    </span>
+                `;
+            } else if (
+                ["baixo", "medio", "alto", "critico"]
+                    .includes(urgency.level)
+            ) {
+                const lateMinutes = Math.max(
+                    0,
+                    Math.floor(
+                        (
+                            mentorFocusNow()
+                            - mentorFocusPlannedEnd(state)
+                        ) / 60000,
+                    ),
+                );
+
+                const pendingMinutes = Math.ceil(
+                    pendingMs / 60000,
+                );
+
+                message.innerHTML = `
+                    <strong>
+                        ${escapeHtml(urgency.label)}
+                    </strong>
+                    <span>
+                        Horário previsto encerrado há
+                        ${lateMinutes} min.
+                        Ainda faltam
+                        ${pendingMinutes} min
+                        de foco ativo.
+                    </span>
+                `;
+            } else {
+                message.innerHTML = `
+                    <strong>Sessão em andamento.</strong>
+                    <span>
+                        O tempo só conta como foco enquanto o Mentor.Edu estiver ativo na tela.
+                    </span>
+                `;
+            }
+        }
+
+        const backendNow = mentorFocusNow();
+
+        const shouldSyncBackend = (
+            backendNow
+            - Number(state.lastBackendSyncAt || 0)
+            >= 30000
+        ) || (
+            urgency.level
+            !== state.lastBackendLevel
+        );
+
+        if (shouldSyncBackend) {
+            state.lastBackendSyncAt = backendNow;
+            state.lastBackendLevel = urgency.level;
+
+            mentorFocusSyncBackend(state).then(() => {
+                mentorFocusLoadBackendAlerts(shell);
+            });
+        }
+
+        mentorFocusWriteState(state);
+    };
+
+    const tick = () => {
+        if (!state) return;
+
+        syncState();
+        renderState();
+    };
+
+    const startInterval = () => {
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+
+        intervalId = setInterval(
+            tick,
+            1000,
+        );
+    };
+
+    startButton?.addEventListener(
+        "click",
+        () => {
+            const id = Number(
+                select?.value || 0,
+            );
+
+            const session = (current || []).find(
+                item =>
+                    Number(item.id) === id,
+            );
+
+            if (!session) {
+                showToast(
+                    "Selecione uma sessão pendente.",
+                    "error",
+                );
+                return;
+            }
+
+            const now = mentorFocusNow();
+
+            state = {
+                sessionId: Number(session.id),
+                title: mentorFocusSessionLabel(session),
+                plannedMinutes: Math.max(
+                    1,
+                    Number(session.duracao_minutos || 30),
+                ),
+                startedAt: now,
+                lastTickAt: now,
+                activeMs: 0,
+                awayMs: 0,
+                status: "running",
+                lastUrgency: "em-dia",
+            };
+
+            mentorFocusWriteState(state);
+
+            showToast(
+                "Temporizador iniciado.",
+                "success",
+            );
+
+            const renderCurrent =
+                container.querySelector(
+                    "[data-focus-shell]",
+                );
+
+            if (renderCurrent) {
+                // A renderização completa ocorrerá no próximo carregamento.
+                location.reload();
+            }
+        },
+    );
+
+    pauseButton?.addEventListener(
+        "click",
+        () => {
+            if (!state) return;
+
+            syncState();
+
+            if (state.status === "paused") {
+                state.status = "running";
+                state.lastTickAt =
+                    mentorFocusNow();
+
+                pauseButton.textContent =
+                    "Pausar";
+            } else {
+                state.status = "paused";
+                state.lastTickAt =
+                    mentorFocusNow();
+
+                pauseButton.textContent =
+                    "Retomar";
+            }
+
+            mentorFocusWriteState(state);
+            renderState();
+        },
+    );
+
+    stopButton?.addEventListener(
+        "click",
+        () => {
+            if (!state) return;
+
+            const ok = window.confirm(
+                "Encerrar este temporizador de foco?"
+            );
+
+            if (!ok) return;
+
+                        const closingSessionId = state.sessionId;
+            mentorFocusClearBackend(closingSessionId).then(() => {
+                mentorFocusLoadBackendAlerts(shell);
+            });
+
+mentorFocusClearState();
+            state = null;
+
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+
+            showToast(
+                "Temporizador encerrado.",
+            );
+
+            location.reload();
+        },
+    );
+
+    notificationButton?.addEventListener(
+        "click",
+        async () => {
+            const permission =
+                await mentorFocusRequestNotifications();
+
+            if (permission === "granted") {
+                notificationButton.textContent =
+                    "Notificações ativas";
+
+                showToast(
+                    "Notificações do temporizador ativadas.",
+                    "success",
+                );
+            } else if (
+                permission === "unsupported"
+            ) {
+                showToast(
+                    "Este navegador não oferece notificações deste tipo.",
+                    "error",
+                );
+            } else {
+                showToast(
+                    "Permissão de notificações não concedida.",
+                    "error",
+                );
+            }
+        },
+    );
+
+    if (state) {
+        const currentSession =
+            sessionForState();
+
+        if (
+            currentSession?.concluida
+        ) {
+            mentorFocusClearState();
+            state = null;
+            return;
+        }
+
+        renderState();
+        startInterval();
+    }
+
+    const onVisibility = () => {
+        if (!state) return;
+
+        syncState();
+        mentorFocusWriteState(state);
+    };
+
+    document.addEventListener(
+        "visibilitychange",
+        onVisibility,
+    );
+
+    window.addEventListener(
+        "blur",
+        onVisibility,
+    );
+
+    window.addEventListener(
+        "focus",
+        onVisibility,
+    );
+
+    window.addEventListener(
+        "beforeunload",
+        onVisibility,
+        {
+            once: true,
+        },
+    );
+}
+
 function sessionForm() {
     return `<form class="inline-form" data-session-form hidden><div class="form-grid"><label>Matéria<input name="materia" required></label><label>Assunto<input name="assunto" required></label><label>Duração (min)<input name="duracao_minutos" type="number" min="1" required value="30"></label><label>Dificuldade sentida<select name="dificuldade_sentida"><option value="">Não informar</option><option value="1">1 - Muito baixa</option><option value="2">2</option><option value="3">3 - Média</option><option value="4">4</option><option value="5">5 - Muito alta</option></select></label><label>Data<input name="data_sessao" type="date"></label><label class="form-span-2">Observações<textarea name="observacoes" rows="3"></textarea></label></div><div class="form-actions"><button class="mini-button" type="button" data-cancel-session>Cancelar</button><button class="mini-button mini-button--primary" type="submit">Registrar sessão</button></div></form>`;
 }
@@ -92,10 +1537,12 @@ function sessionForm() {
 export async function renderStudentStudySessions(container) {
     const sessions = await getMyStudySessions();
     const render = current => {
-        container.innerHTML = `${pageHeader("Sessões de estudo", "Registre o que estudou e acompanhe sua rotina.", `<button class="mini-button mini-button--primary" type="button" data-new-session>Nova sessão</button>`)}${sessionForm()}${surface(current.length ? `<div class="compact-list">${current.map(session => `<article class="compact-row compact-row--actions"><div><strong>${escapeHtml(session.materia)} · ${escapeHtml(session.assunto)}</strong><p>${escapeHtml(session.duracao_minutos)} min${session.data_sessao ? ` · ${escapeHtml(session.data_sessao)}` : ""}${session.dificuldade_sentida ? ` · dificuldade ${escapeHtml(session.dificuldade_sentida)}/5` : ""}</p>${session.observacoes ? `<p>${escapeHtml(session.observacoes)}</p>` : ""}</div><div class="row-actions">${statusPill(session.concluida ? "Concluída" : "Pendente", session.concluida ? "success" : "warning")}<button class="mini-button" type="button" data-toggle-session="${session.id}">${session.concluida ? "Reabrir" : "Concluir"}</button><button class="mini-button mini-button--danger" type="button" data-delete-session="${session.id}">Excluir</button></div></article>`).join("")}</div>` : emptyBlock("Nenhuma sessão registrada", "Registre sua primeira sessão de estudo para começar o acompanhamento.", "clock"))}`;
+        container.innerHTML = `${pageHeader("Sessões de estudo", "Registre o que estudou e acompanhe sua rotina.", `<button class="mini-button mini-button--primary" type="button" data-new-session>Nova sessão</button>`)}${sessionForm()}${mentorFocusTimerPanel(current)}${surface(current.length ? `<div class="compact-list">${current.map(session => `<article class="compact-row compact-row--actions"><div><strong>${escapeHtml(session.materia)} · ${escapeHtml(session.assunto)}</strong><p>${escapeHtml(session.duracao_minutos)} min${session.data_sessao ? ` · ${escapeHtml(session.data_sessao)}` : ""}${session.dificuldade_sentida ? ` · dificuldade ${escapeHtml(session.dificuldade_sentida)}/5` : ""}</p>${session.observacoes ? `<p>${escapeHtml(session.observacoes)}</p>` : ""}</div><div class="row-actions">${statusPill(session.concluida ? "Concluída" : "Pendente", session.concluida ? "success" : "warning")}<button class="mini-button" type="button" data-toggle-session="${session.id}">${session.concluida ? "Reabrir" : "Concluir"}</button><button class="mini-button mini-button--danger" type="button" data-delete-session="${session.id}">Excluir</button></div></article>`).join("")}</div>` : emptyBlock("Nenhuma sessão registrada", "Registre sua primeira sessão de estudo para começar o acompanhamento.", "clock"))}`;
         bind(current);
     };
     const bind = current => {
+        bindFocusTimer(container, current);
+        bindMentorSessionHelp(container, current);
         const form = container.querySelector("[data-session-form]");
         container.querySelector("[data-new-session]")?.addEventListener("click", () => { form.hidden = false; form.scrollIntoView({ behavior: "smooth", block: "center" }); });
         container.querySelector("[data-cancel-session]")?.addEventListener("click", () => { form.hidden = true; form.reset(); });

@@ -1,0 +1,19 @@
+        const backendNow = mentorFocusNow();
+
+        const shouldSyncBackend = (
+            backendNow
+            - Number(state.lastBackendSyncAt || 0)
+            >= 30000
+        ) || (
+            urgency.level
+            !== state.lastBackendLevel
+        );
+
+        if (shouldSyncBackend) {
+            state.lastBackendSyncAt = backendNow;
+            state.lastBackendLevel = urgency.level;
+
+            mentorFocusSyncBackend(state).then(() => {
+                mentorFocusLoadBackendAlerts(shell);
+            });
+        }

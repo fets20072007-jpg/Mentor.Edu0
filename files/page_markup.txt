@@ -1,0 +1,5 @@
+            <div
+                class="mentor-focus-server-alerts"
+                data-focus-server-alerts
+                hidden
+            ></div>

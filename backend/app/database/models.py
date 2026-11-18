@@ -1104,3 +1104,110 @@ class AcademicEvent(Base):
     visibilidade = Column(String, default="todos", nullable=False)
     data_inicio = Column(DateTime, nullable=False)
     ativo = Column(Boolean, default=True, nullable=False)
+
+# === MENTOR EDU V9B1 - ALERTA PERSISTENTE DE FOCO ===
+from sqlalchemy import (
+    Column as _MEColumn,
+    Integer as _MEInteger,
+    String as _MEString,
+    DateTime as _MEDateTime,
+    UniqueConstraint as _MEUniqueConstraint,
+)
+from sqlalchemy.sql import func as _MEFunc
+
+
+class StudyFocusAlert(Base):
+    __tablename__ = "study_focus_alerts"
+
+    id = _MEColumn(_MEInteger, primary_key=True, index=True)
+    user_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    session_id = _MEColumn(_MEInteger, nullable=False, index=True)
+
+    title = _MEColumn(
+        _MEString(255),
+        nullable=False,
+        default="Sessão de estudo",
+    )
+
+    planned_minutes = _MEColumn(_MEInteger, nullable=False, default=0)
+    active_ms = _MEColumn(_MEInteger, nullable=False, default=0)
+    away_ms = _MEColumn(_MEInteger, nullable=False, default=0)
+    remaining_minutes = _MEColumn(_MEInteger, nullable=False, default=0)
+    late_minutes = _MEColumn(_MEInteger, nullable=False, default=0)
+
+    level = _MEColumn(
+        _MEString(24),
+        nullable=False,
+        default="baixo",
+    )
+
+    message = _MEColumn(
+        _MEString(500),
+        nullable=False,
+        default="",
+    )
+
+    created_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        nullable=False,
+    )
+
+    updated_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        onupdate=_MEFunc.now(),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        _MEUniqueConstraint(
+            "user_id",
+            "session_id",
+            name="uq_study_focus_alert_user_session",
+        ),
+    )
+
+# === MENTOR EDU V9B2 - WEB PUSH ===
+from sqlalchemy import Text as _METext
+
+
+class StudyPushSubscription(Base):
+    __tablename__ = "study_push_subscriptions"
+
+    id = _MEColumn(_MEInteger, primary_key=True, index=True)
+    user_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    endpoint = _MEColumn(_METext, nullable=False, unique=True)
+    p256dh = _MEColumn(_METext, nullable=False)
+    auth = _MEColumn(_METext, nullable=False)
+    device_label = _MEColumn(_MEString(180), nullable=True)
+
+    created_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        nullable=False,
+    )
+    updated_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        onupdate=_MEFunc.now(),
+        nullable=False,
+    )
+
+
+class StudyFocusPushState(Base):
+    __tablename__ = "study_focus_push_states"
+
+    id = _MEColumn(_MEInteger, primary_key=True, index=True)
+    user_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    session_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    last_level = _MEColumn(_MEString(24), nullable=False, default="")
+    last_sent_at = _MEColumn(_MEDateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        _MEUniqueConstraint(
+            "user_id",
+            "session_id",
+            name="uq_focus_push_state_user_session",
+        ),
+    )

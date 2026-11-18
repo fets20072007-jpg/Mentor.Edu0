@@ -307,5 +307,16 @@ applyUiPreferences();
 if (page === "login") bootLogin();
 if (page === "dashboard") bootDashboard();
 
-
-
+// MENTOR_EDU_REGISTER_SW_V9B2
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker
+            .register("/sw.js")
+            .catch(error => {
+                console.warn(
+                    "[Mentor Edu] Service Worker não registrado:",
+                    error,
+                );
+            });
+    });
+}

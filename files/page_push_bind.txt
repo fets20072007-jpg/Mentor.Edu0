@@ -1,0 +1,35 @@
+    const pushButton = shell.querySelector(
+        "[data-focus-push]",
+    );
+
+    mentorPushRefreshButton(pushButton);
+
+    pushButton?.addEventListener(
+        "click",
+        async () => {
+            pushButton.disabled = true;
+            try {
+                const currentPush = await mentorPushCurrentSubscription();
+                if (currentPush) {
+                    const confirmDisable = window.confirm(
+                        "Desativar os lembretes push neste dispositivo?"
+                    );
+                    if (confirmDisable) {
+                        await mentorPushDisable();
+                        showToast("Push desativado neste dispositivo.");
+                    }
+                } else {
+                    await mentorPushEnable();
+                    showToast("Push em segundo plano ativado.", "success");
+                }
+            } catch (error) {
+                showToast(
+                    error?.message || "Não foi possível configurar o push.",
+                    "error",
+                );
+            } finally {
+                pushButton.disabled = false;
+                mentorPushRefreshButton(pushButton);
+            }
+        },
+    );

@@ -1,3 +1,15 @@
+# === MENTOR EDU V9B2 - IMPORTS WEB PUSH ===
+import asyncio as _me_asyncio
+import os as _me_os
+import secrets as _me_secrets
+from datetime import datetime as _me_datetime, timezone as _me_timezone
+
+try:
+    from pywebpush import webpush as _me_webpush, WebPushException as _MEWebPushException
+except Exception:
+    _me_webpush = None
+    _MEWebPushException = Exception
+
 from fastapi import Request
 import json
 
@@ -23,6 +35,8 @@ from app.database.models import (
     Subject,
     Enrollment,
 )
+from app.database.models import StudyFocusAlert
+from app.database.models import StudyPushSubscription, StudyFocusPushState
 from app.schema.ai_mentor import (
     AIChatRequest,
     AIQuestionRequest,
@@ -1282,6 +1296,232 @@ def student_alerts_v1(
         "gerado_por": "regras_pedagogicas_v1",
     }
 
+# === MENTOR EDU V9B1 - SINCRONIZAÇÃO DE FOCO ===
+
+def _focus_alert_table(db: Session):
+    StudyFocusAlert.__table__.create(
+        bind=db.get_bind(),
+        checkfirst=True,
+    )
+
+
+def _focus_alert_level(
+    remaining_minutes: int,
+    late_minutes: int,
+) -> str:
+    remaining = max(0, int(remaining_minutes or 0))
+    late = max(0, int(late_minutes or 0))
+
+    if remaining <= 0:
+        return "concluido"
+
+    if late <= 0:
+        return "em-dia"
+
+    score = max(remaining, late)
+
+    if score > 30:
+        return "critico"
+    if score > 15:
+        return "alto"
+    if score > 5:
+        return "medio"
+    return "baixo"
+
+
+def _focus_alert_message(
+    title: str,
+    remaining_minutes: int,
+    late_minutes: int,
+) -> str:
+    safe_title = (
+        str(title or "Sessão de estudo").strip()
+        or "Sessão de estudo"
+    )
+
+    return (
+        f"{safe_title}: ainda faltam {remaining_minutes} min de foco. "
+        f"O horário previsto terminou há {late_minutes} min."
+    )
+
+
+def _focus_alert_dict(item: StudyFocusAlert) -> dict:
+    return {
+        "id": item.id,
+        "session_id": item.session_id,
+        "title": item.title,
+        "planned_minutes": item.planned_minutes,
+        "active_ms": item.active_ms,
+        "away_ms": item.away_ms,
+        "remaining_minutes": item.remaining_minutes,
+        "late_minutes": item.late_minutes,
+        "level": item.level,
+        "message": item.message,
+        "updated_at": (
+            item.updated_at.isoformat()
+            if item.updated_at
+            else None
+        ),
+    }
+
+
+@router.post("/student/focus-alert")
+def student_focus_alert_upsert(
+    payload: dict,
+    current_user: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    _focus_alert_table(db)
+
+    try:
+        session_id = int(payload.get("session_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=422,
+            detail="session_id inválido.",
+        )
+
+    if session_id <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail="session_id inválido.",
+        )
+
+    def safe_int(name: str) -> int:
+        try:
+            return max(
+                0,
+                int(float(payload.get(name, 0) or 0)),
+            )
+        except (TypeError, ValueError):
+            return 0
+
+    title = (
+        str(payload.get("title") or "Sessão de estudo")
+        .strip()[:255]
+        or "Sessão de estudo"
+    )
+
+    planned_minutes = safe_int("planned_minutes")
+    active_ms = safe_int("active_ms")
+    away_ms = safe_int("away_ms")
+    remaining_minutes = safe_int("remaining_minutes")
+    late_minutes = safe_int("late_minutes")
+
+    existing = (
+        db.query(StudyFocusAlert)
+        .filter(
+            StudyFocusAlert.user_id == current_user.id,
+            StudyFocusAlert.session_id == session_id,
+        )
+        .first()
+    )
+
+    # Sem atraso ou sem tempo pendente = sem cobrança.
+    if remaining_minutes <= 0 or late_minutes <= 0:
+        if existing:
+            db.delete(existing)
+            db.commit()
+
+        return {
+            "status": "clear",
+            "session_id": session_id,
+        }
+
+    level = _focus_alert_level(
+        remaining_minutes,
+        late_minutes,
+    )
+
+    if existing is None:
+        existing = StudyFocusAlert(
+            user_id=current_user.id,
+            session_id=session_id,
+        )
+        db.add(existing)
+
+    existing.title = title
+    existing.planned_minutes = planned_minutes
+    existing.active_ms = active_ms
+    existing.away_ms = away_ms
+    existing.remaining_minutes = remaining_minutes
+    existing.late_minutes = late_minutes
+    existing.level = level
+    existing.message = _focus_alert_message(
+        title,
+        remaining_minutes,
+        late_minutes,
+    )
+
+    db.commit()
+    db.refresh(existing)
+
+    return {
+        "status": "active",
+        "alert": _focus_alert_dict(existing),
+    }
+
+
+@router.get("/student/focus-alerts")
+def student_focus_alerts(
+    current_user: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    _focus_alert_table(db)
+
+    items = (
+        db.query(StudyFocusAlert)
+        .filter(
+            StudyFocusAlert.user_id == current_user.id,
+        )
+        .order_by(StudyFocusAlert.updated_at.desc())
+        .all()
+    )
+
+    return {
+        "alerts_version": "9B.1",
+        "alertas": [
+            _focus_alert_dict(item)
+            for item in items
+        ],
+        "quantidade": len(items),
+    }
+
+
+@router.post("/student/focus-alert/clear")
+def student_focus_alert_clear(
+    payload: dict,
+    current_user: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    _focus_alert_table(db)
+
+    try:
+        session_id = int(payload.get("session_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=422,
+            detail="session_id inválido.",
+        )
+
+    existing = (
+        db.query(StudyFocusAlert)
+        .filter(
+            StudyFocusAlert.user_id == current_user.id,
+            StudyFocusAlert.session_id == session_id,
+        )
+        .first()
+    )
+
+    if existing:
+        db.delete(existing)
+        db.commit()
+
+    return {
+        "status": "ok",
+        "session_id": session_id,
+    }
+
 @router.post("/test-student-tutor")
 def test_student_tutor_v1(
     request: Request,
@@ -1364,3 +1604,340 @@ def test_student_tutor_v1(
         "modo": "demonstracao",
         **result,
     }
+
+# === MENTOR EDU V9B2 - SERVIÇO WEB PUSH ===
+
+_ME_VAPID_PUBLIC_KEY = _me_os.getenv("VAPID_PUBLIC_KEY", "").strip()
+_ME_VAPID_PRIVATE_KEY = _me_os.getenv("VAPID_PRIVATE_KEY", "").strip()
+_ME_VAPID_SUBJECT = _me_os.getenv(
+    "VAPID_SUBJECT",
+    "mailto:contato@mentor.edu",
+).strip()
+_ME_PUSH_CRON_TOKEN = _me_os.getenv("FOCUS_PUSH_CRON_TOKEN", "").strip()
+
+try:
+    _ME_PUSH_INTERVAL_SECONDS = max(
+        30,
+        int(_me_os.getenv("FOCUS_PUSH_INTERVAL_SECONDS", "60")),
+    )
+except (TypeError, ValueError):
+    _ME_PUSH_INTERVAL_SECONDS = 60
+
+
+def _focus_push_tables(db: Session):
+    StudyPushSubscription.__table__.create(bind=db.get_bind(), checkfirst=True)
+    StudyFocusPushState.__table__.create(bind=db.get_bind(), checkfirst=True)
+
+
+def _focus_push_enabled() -> bool:
+    return bool(
+        _ME_VAPID_PUBLIC_KEY
+        and _ME_VAPID_PRIVATE_KEY
+        and _me_webpush is not None
+    )
+
+
+def _focus_push_level_rank(level: str) -> int:
+    return {
+        "baixo": 1,
+        "medio": 2,
+        "alto": 3,
+        "critico": 4,
+    }.get(str(level or "").strip(), 0)
+
+
+def _focus_push_level_label(level: str) -> str:
+    return {
+        "baixo": "Lembrete",
+        "medio": "Urgência média",
+        "alto": "Urgência alta",
+        "critico": "Urgência crítica",
+    }.get(str(level or "").strip(), "Lembrete")
+
+
+def _focus_push_now():
+    return _me_datetime.now(_me_timezone.utc)
+
+
+def _focus_push_aware(value):
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=_me_timezone.utc)
+    return value.astimezone(_me_timezone.utc)
+
+
+def _focus_push_effective_late(alert: StudyFocusAlert) -> int:
+    base = max(0, int(alert.late_minutes or 0))
+    updated = _focus_push_aware(alert.updated_at)
+    if updated is None:
+        return base
+    elapsed = max(
+        0,
+        int((_focus_push_now() - updated).total_seconds() // 60),
+    )
+    return base + elapsed
+
+
+def _focus_push_payload(alert: StudyFocusAlert, level: str, effective_late: int) -> dict:
+    remaining = max(0, int(alert.remaining_minutes or 0))
+    title = str(alert.title or "Sessão de estudo").strip() or "Sessão de estudo"
+    return {
+        "title": f"Mentor.Edu • {_focus_push_level_label(level)}",
+        "body": (
+            f"{title}: ainda faltam {remaining} min de foco. "
+            f"O horário previsto terminou há {effective_late} min."
+        ),
+        "tag": f"mentor-study-session-{alert.session_id}",
+        "requireInteraction": level == "critico",
+        "data": {
+            "url": "/dashboard.html",
+            "session_id": alert.session_id,
+            "level": level,
+        },
+    }
+
+
+def _focus_push_send_one(subscription: StudyPushSubscription, payload: dict):
+    if not _focus_push_enabled():
+        return False, False
+
+    import json as _me_json
+
+    try:
+        _me_webpush(
+            subscription_info={
+                "endpoint": subscription.endpoint,
+                "keys": {
+                    "p256dh": subscription.p256dh,
+                    "auth": subscription.auth,
+                },
+            },
+            data=_me_json.dumps(payload, ensure_ascii=False),
+            vapid_private_key=_ME_VAPID_PRIVATE_KEY,
+            vapid_claims={"sub": _ME_VAPID_SUBJECT},
+            ttl=3600,
+            timeout=12,
+        )
+        return True, False
+    except _MEWebPushException as exc:
+        response = getattr(exc, "response", None)
+        status = getattr(response, "status_code", None) if response is not None else None
+        if status in (404, 410):
+            return False, True
+        print(f"[MENTOR PUSH ERROR] {type(exc).__name__}: {exc}", flush=True)
+        return False, False
+    except Exception as exc:
+        print(f"[MENTOR PUSH ERROR] {type(exc).__name__}: {exc}", flush=True)
+        return False, False
+
+
+def _focus_push_process_due(db: Session) -> dict:
+    _focus_alert_table(db)
+    _focus_push_tables(db)
+
+    alerts = db.query(StudyFocusAlert).all()
+    active_pairs = {(int(x.user_id), int(x.session_id)) for x in alerts}
+
+    for state in db.query(StudyFocusPushState).all():
+        pair = (int(state.user_id), int(state.session_id))
+        if pair not in active_pairs:
+            db.delete(state)
+
+    sent = 0
+    expired = 0
+    evaluated = 0
+
+    for alert in alerts:
+        remaining = max(0, int(alert.remaining_minutes or 0))
+        if remaining <= 0:
+            continue
+
+        effective_late = _focus_push_effective_late(alert)
+        if effective_late <= 0:
+            continue
+
+        level = _focus_alert_level(remaining, effective_late)
+        if level not in ("baixo", "medio", "alto", "critico"):
+            continue
+
+        evaluated += 1
+        alert.late_minutes = effective_late
+        alert.level = level
+        alert.message = _focus_alert_message(
+            alert.title,
+            remaining,
+            effective_late,
+        )
+
+        state = (
+            db.query(StudyFocusPushState)
+            .filter(
+                StudyFocusPushState.user_id == alert.user_id,
+                StudyFocusPushState.session_id == alert.session_id,
+            )
+            .first()
+        )
+
+        if state is None:
+            state = StudyFocusPushState(
+                user_id=alert.user_id,
+                session_id=alert.session_id,
+                last_level="",
+            )
+            db.add(state)
+            db.flush()
+
+        if _focus_push_level_rank(level) <= _focus_push_level_rank(state.last_level):
+            continue
+
+        subscriptions = (
+            db.query(StudyPushSubscription)
+            .filter(StudyPushSubscription.user_id == alert.user_id)
+            .all()
+        )
+        if not subscriptions:
+            continue
+
+        payload = _focus_push_payload(alert, level, effective_late)
+        delivered = False
+
+        for subscription in list(subscriptions):
+            ok, is_expired = _focus_push_send_one(subscription, payload)
+            if ok:
+                sent += 1
+                delivered = True
+            if is_expired:
+                expired += 1
+                db.delete(subscription)
+
+        if delivered:
+            state.last_level = level
+            state.last_sent_at = _focus_push_now()
+
+    db.commit()
+    return {
+        "status": "ok",
+        "enabled": _focus_push_enabled(),
+        "avaliados": evaluated,
+        "enviados": sent,
+        "assinaturas_expiradas": expired,
+    }
+
+
+def _focus_push_process_from_dependency():
+    generator = get_db()
+    try:
+        db = next(generator)
+    except StopIteration:
+        return {"status": "no-db"}
+    try:
+        return _focus_push_process_due(db)
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+
+async def mentor_focus_push_background_loop():
+    while True:
+        try:
+            await _me_asyncio.to_thread(_focus_push_process_from_dependency)
+        except Exception as exc:
+            print(
+                f"[MENTOR PUSH LOOP ERROR] {type(exc).__name__}: {exc}",
+                flush=True,
+            )
+        await _me_asyncio.sleep(_ME_PUSH_INTERVAL_SECONDS)
+
+
+@router.get("/student/push/config")
+def student_push_config(
+    current_user: User = Depends(require_student),
+):
+    return {
+        "enabled": _focus_push_enabled(),
+        "public_key": _ME_VAPID_PUBLIC_KEY if _focus_push_enabled() else None,
+    }
+
+
+@router.post("/student/push/subscribe")
+def student_push_subscribe(
+    payload: dict,
+    current_user: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    _focus_push_tables(db)
+
+    endpoint = str(payload.get("endpoint") or "").strip()
+    keys = payload.get("keys") or {}
+    p256dh = str(keys.get("p256dh") or "").strip()
+    auth = str(keys.get("auth") or "").strip()
+    device_label = str(payload.get("device_label") or "").strip()[:180]
+
+    if not endpoint or not p256dh or not auth:
+        raise HTTPException(status_code=422, detail="Assinatura push incompleta.")
+
+    existing = (
+        db.query(StudyPushSubscription)
+        .filter(StudyPushSubscription.endpoint == endpoint)
+        .first()
+    )
+    if existing is None:
+        existing = StudyPushSubscription(user_id=current_user.id, endpoint=endpoint)
+        db.add(existing)
+
+    existing.user_id = current_user.id
+    existing.p256dh = p256dh
+    existing.auth = auth
+    existing.device_label = device_label
+    db.commit()
+    db.refresh(existing)
+
+    return {"status": "subscribed", "id": existing.id}
+
+
+@router.post("/student/push/unsubscribe")
+def student_push_unsubscribe(
+    payload: dict,
+    current_user: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    _focus_push_tables(db)
+    endpoint = str(payload.get("endpoint") or "").strip()
+    if not endpoint:
+        return {"status": "ok"}
+
+    existing = (
+        db.query(StudyPushSubscription)
+        .filter(
+            StudyPushSubscription.user_id == current_user.id,
+            StudyPushSubscription.endpoint == endpoint,
+        )
+        .first()
+    )
+    if existing:
+        db.delete(existing)
+        db.commit()
+
+    return {"status": "ok"}
+
+
+@router.post("/system/focus-push/run")
+def system_focus_push_run(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    supplied = request.headers.get("X-Mentor-Push-Cron", "")
+
+    if not _ME_PUSH_CRON_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="FOCUS_PUSH_CRON_TOKEN não configurado.",
+        )
+
+    if not _me_secrets.compare_digest(supplied, _ME_PUSH_CRON_TOKEN):
+        raise HTTPException(status_code=403, detail="Token de cron inválido.")
+
+    return _focus_push_process_due(db)

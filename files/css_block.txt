@@ -1,0 +1,85 @@
+
+/* MENTOR_EDU_SESSION_MENTOR_HELP_V9C */
+.mentor-session-help-cta {
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    width: min(100%, 720px);
+    margin: 28px auto 12px;
+    padding: 0 14px;
+    text-align: center;
+}
+
+.mentor-session-help-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 42px;
+    max-width: 100%;
+    padding: 10px 22px;
+    border: 0;
+    border-radius: 999px;
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed 0%,
+            #6d28d9 55%,
+            #8b5cf6 100%
+        );
+    color: #fff;
+    box-shadow:
+        0 10px 25px
+        rgba(109, 40, 217, .18);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    transition:
+        transform .16s ease,
+        box-shadow .16s ease,
+        opacity .16s ease;
+}
+
+.mentor-session-help-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+        0 13px 30px
+        rgba(109, 40, 217, .24);
+}
+
+.mentor-session-help-button:focus-visible {
+    outline: 3px solid
+        rgba(124, 58, 237, .24);
+    outline-offset: 3px;
+}
+
+.mentor-session-help-button:disabled {
+    cursor: not-allowed;
+    opacity: .48;
+    box-shadow: none;
+}
+
+.mentor-session-help-button > span:first-child {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.mentor-session-help-cta p {
+    margin: 0;
+    color: #817788;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+@media (max-width: 620px) {
+    .mentor-session-help-cta {
+        margin-top: 20px;
+    }
+
+    .mentor-session-help-button {
+        width: 100%;
+        padding-inline: 16px;
+    }
+}

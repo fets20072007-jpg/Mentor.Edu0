@@ -1,0 +1,15 @@
+// MENTOR_EDU_WEB_PUSH_API_V9B2
+export async function getStudyPushConfig() {
+    return api.get("/mentor-ai/student/push/config");
+}
+
+export async function saveStudyPushSubscription(subscription) {
+    return api.post("/mentor-ai/student/push/subscribe", subscription);
+}
+
+export async function removeStudyPushSubscription(endpoint) {
+    return api.post(
+        "/mentor-ai/student/push/unsubscribe",
+        { endpoint },
+    );
+}

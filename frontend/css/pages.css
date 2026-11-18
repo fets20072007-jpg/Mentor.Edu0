@@ -376,3 +376,370 @@ body[data-role="suporte"] .content-surface { overflow: visible; }
 .library-admin-card { min-height: 210px; }
 /* Revisão 1 — Aluno/Login */
 .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;padding:24px;z-index:1000}.modal-card{width:min(520px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 24px 70px rgba(15,23,42,.28);position:relative}.modal-card h3{margin:0 0 8px;font-size:1.35rem}.modal-card>p{color:var(--text-muted);margin:0 0 20px}.modal-close{position:absolute;right:16px;top:14px;border:0;background:transparent;font-size:28px;cursor:pointer}.subject-grade-grid,.subject-hub-grid,.justification-list{display:grid;gap:16px}.subject-grade-card,.subject-hub-card,.justification-card{background:#fff;border:1px solid var(--border-color,#dbe3ea);border-radius:18px;padding:0;box-shadow:0 10px 28px rgba(15,23,42,.05)}.subject-grade-card>summary,.subject-hub-card>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px;cursor:pointer}.subject-grade-card>summary::-webkit-details-marker,.subject-hub-card>summary::-webkit-details-marker,.recommendation-card>summary::-webkit-details-marker{display:none}.subject-grade-average{text-align:right}.subject-grade-average small{display:block;color:var(--text-muted);font-size:.75rem}.subject-grade-average strong{font-size:1.8rem}.subject-grade-groups,.subject-hub-body,.recommendation-detail{border-top:1px solid var(--border-color,#e5e7eb);padding:18px 20px;display:grid;gap:18px}.subject-grade-groups h4,.subject-hub-body h4,.recommendation-detail h4{margin:0 0 8px}.content-item{padding:12px 0;border-bottom:1px solid #edf1f5;display:grid;gap:4px}.content-item:last-child{border-bottom:0}.content-item small,.muted{color:var(--text-muted)}.justification-card{padding:20px}.justification-card>header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}.file-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#eef6ff;color:#1769aa;font-weight:600;text-decoration:none;margin:8px 0}.justification-form{margin-top:14px}.recommendation-card--expandable{cursor:pointer}.recommendation-card--expandable>summary{list-style:none}.video-link-list{display:grid;gap:8px}.video-link-list a{font-weight:600}.dashboard-shortcuts-section{margin-top:24px}.subject-hub-card h3,.subject-grade-card h3{margin:4px 0 0}
+
+/* MENTOR_EDU_FOCUS_TIMER_V9A */
+.mentor-focus-shell {
+    margin: 14px 0;
+    padding: 18px;
+    border: 1px solid #ddd6fe;
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fcfaff 100%
+        );
+}
+
+.mentor-focus-title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.mentor-focus-title > div > span {
+    display: block;
+    margin-bottom: 4px;
+    color: #7c3aed;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.mentor-focus-title strong {
+    display: block;
+    color: #241b2f;
+    font-size: 17px;
+}
+
+.mentor-focus-title p {
+    max-width: 720px;
+    margin: 5px 0 0;
+    color: #776d80;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.mentor-focus-urgency {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #ede9fe;
+    color: #6d28d9;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.mentor-focus-shell.is-baixo {
+    border-color: #fde68a;
+}
+
+.mentor-focus-shell.is-baixo .mentor-focus-urgency {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.mentor-focus-shell.is-medio {
+    border-color: #fdba74;
+}
+
+.mentor-focus-shell.is-medio .mentor-focus-urgency {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.mentor-focus-shell.is-alto,
+.mentor-focus-shell.is-critico {
+    border-color: #fca5a5;
+}
+
+.mentor-focus-shell.is-alto .mentor-focus-urgency,
+.mentor-focus-shell.is-critico .mentor-focus-urgency {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.mentor-focus-shell.is-concluido {
+    border-color: #86efac;
+}
+
+.mentor-focus-shell.is-concluido .mentor-focus-urgency {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.mentor-focus-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.mentor-focus-picker label {
+    display: grid;
+    min-width: min(100%, 320px);
+    gap: 5px;
+    color: #665d70;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.mentor-focus-picker select {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid #ddd3e8;
+    border-radius: 10px;
+    background: #fff;
+    color: #2e2636;
+    font: inherit;
+}
+
+.mentor-focus-clock {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.mentor-focus-clock > div {
+    padding: 13px;
+    border: 1px solid #eee8f4;
+    border-radius: 13px;
+    background: #fff;
+}
+
+.mentor-focus-clock span {
+    display: block;
+    color: #817788;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.mentor-focus-clock strong {
+    display: block;
+    margin-top: 5px;
+    color: #2f2637;
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+}
+
+.mentor-focus-message {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    background: #f7f3fb;
+    color: #655b6f;
+    font-size: 10px;
+}
+
+.mentor-focus-message strong {
+    color: #3b3046;
+}
+
+@media (max-width: 700px) {
+    .mentor-focus-title {
+        display: grid;
+    }
+
+    .mentor-focus-urgency {
+        justify-self: start;
+    }
+
+    .mentor-focus-clock {
+        grid-template-columns: 1fr;
+    }
+
+    .mentor-focus-picker {
+        align-items: stretch;
+    }
+
+    .mentor-focus-picker label,
+    .mentor-focus-picker button {
+        width: 100%;
+    }
+}
+
+/* MENTOR_EDU_FOCUS_BACKEND_V9B1 */
+.mentor-focus-server-alerts {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #eee8f4;
+}
+
+.mentor-focus-server-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.mentor-focus-server-title strong {
+    color: #45384f;
+    font-size: 11px;
+}
+
+.mentor-focus-server-title span {
+    display: grid;
+    place-items: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #ede9fe;
+    color: #6d28d9;
+    font-size: 9px;
+    font-weight: 900;
+}
+
+.mentor-focus-server-list {
+    display: grid;
+    gap: 8px;
+}
+
+.mentor-focus-server-alert {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding: 11px 12px;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    background: #fffdf5;
+}
+
+.mentor-focus-server-alert > span {
+    padding: 5px 7px;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 8px;
+    font-weight: 900;
+}
+
+.mentor-focus-server-alert strong {
+    display: block;
+    color: #342a3d;
+    font-size: 10px;
+}
+
+.mentor-focus-server-alert p {
+    margin: 3px 0 0;
+    color: #786d80;
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+.mentor-focus-server-alert.is-medio {
+    border-color: #fdba74;
+    background: #fffaf5;
+}
+
+.mentor-focus-server-alert.is-medio > span {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.mentor-focus-server-alert.is-alto,
+.mentor-focus-server-alert.is-critico {
+    border-color: #fca5a5;
+    background: #fff8f8;
+}
+
+.mentor-focus-server-alert.is-alto > span,
+.mentor-focus-server-alert.is-critico > span {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* MENTOR_EDU_SESSION_MENTOR_HELP_V9C */
+.mentor-session-help-cta {
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    width: min(100%, 720px);
+    margin: 28px auto 12px;
+    padding: 0 14px;
+    text-align: center;
+}
+
+.mentor-session-help-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 42px;
+    max-width: 100%;
+    padding: 10px 22px;
+    border: 0;
+    border-radius: 999px;
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed 0%,
+            #6d28d9 55%,
+            #8b5cf6 100%
+        );
+    color: #fff;
+    box-shadow:
+        0 10px 25px
+        rgba(109, 40, 217, .18);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    transition:
+        transform .16s ease,
+        box-shadow .16s ease,
+        opacity .16s ease;
+}
+
+.mentor-session-help-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+        0 13px 30px
+        rgba(109, 40, 217, .24);
+}
+
+.mentor-session-help-button:focus-visible {
+    outline: 3px solid
+        rgba(124, 58, 237, .24);
+    outline-offset: 3px;
+}
+
+.mentor-session-help-button:disabled {
+    cursor: not-allowed;
+    opacity: .48;
+    box-shadow: none;
+}
+
+.mentor-session-help-button > span:first-child {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.mentor-session-help-cta p {
+    margin: 0;
+    color: #817788;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+@media (max-width: 620px) {
+    .mentor-session-help-cta {
+        margin-top: 20px;
+    }
+
+    .mentor-session-help-button {
+        width: 100%;
+        padding-inline: 16px;
+    }
+}

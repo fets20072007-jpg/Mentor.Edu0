@@ -1,0 +1,7 @@
+                <button
+                    type="button"
+                    class="mini-button"
+                    data-focus-push
+                >
+                    Ativar push em segundo plano
+                </button>

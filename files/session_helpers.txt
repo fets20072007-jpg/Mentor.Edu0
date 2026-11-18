@@ -1,0 +1,275 @@
+
+// MENTOR_EDU_SESSION_MENTOR_HELP_V9C
+const MENTOR_SESSION_HELP_KEY =
+    "mentor_edu_session_help_context_v1";
+
+function mentorSessionHelpSelected(
+    container,
+    current,
+) {
+    const items = Array.isArray(current)
+        ? current
+        : [];
+
+    const timerState =
+        typeof mentorFocusReadState === "function"
+            ? mentorFocusReadState()
+            : null;
+
+    if (timerState?.sessionId) {
+        const active = items.find(
+            item =>
+                Number(item?.id)
+                === Number(timerState.sessionId),
+        );
+
+        if (active) {
+            return {
+                session: active,
+                timerState,
+            };
+        }
+    }
+
+    const select = container.querySelector(
+        "[data-focus-session]",
+    );
+
+    const selectedId = Number(
+        select?.value || 0,
+    );
+
+    if (selectedId) {
+        const selected = items.find(
+            item =>
+                Number(item?.id)
+                === selectedId,
+        );
+
+        if (selected) {
+            return {
+                session: selected,
+                timerState: null,
+            };
+        }
+    }
+
+    const pending = items.find(
+        item => !item?.concluida,
+    );
+
+    if (pending) {
+        return {
+            session: pending,
+            timerState: null,
+        };
+    }
+
+    return null;
+}
+
+function mentorSessionHelpContext(
+    container,
+    current,
+) {
+    const selected =
+        mentorSessionHelpSelected(
+            container,
+            current,
+        );
+
+    if (!selected?.session) {
+        return null;
+    }
+
+    const session = selected.session;
+    const timer = selected.timerState;
+
+    const plannedMinutes = Number(
+        session?.duracao_minutos
+        ?? timer?.plannedMinutes
+        ?? 0,
+    );
+
+    const activeMs = Number(
+        timer?.activeMs
+        ?? 0,
+    );
+
+    const awayMs = Number(
+        timer?.awayMs
+        ?? 0,
+    );
+
+    const remainingMs =
+        timer
+        && typeof mentorFocusRemainingMs === "function"
+            ? mentorFocusRemainingMs(timer)
+            : Math.max(
+                0,
+                plannedMinutes
+                * 60
+                * 1000
+                - activeMs,
+            );
+
+    return {
+        source: "study-sessions",
+        createdAt: Date.now(),
+
+        session_id:
+            Number(session?.id || 0),
+
+        materia:
+            String(
+                session?.materia
+                || "Não informada",
+            ).trim(),
+
+        assunto:
+            String(
+                session?.assunto
+                || "Não informado",
+            ).trim(),
+
+        duracao_minutos:
+            plannedMinutes,
+
+        dificuldade:
+            session?.dificuldade
+            ?? session?.nivel_dificuldade
+            ?? null,
+
+        observacoes:
+            String(
+                session?.observacoes
+                || "",
+            ).trim(),
+
+        concluida:
+            Boolean(session?.concluida),
+
+        timer_status:
+            String(
+                timer?.status
+                || "não iniciado",
+            ),
+
+        foco_computado_minutos:
+            Math.floor(
+                activeMs / 60000,
+            ),
+
+        tempo_fora_minutos:
+            Math.floor(
+                awayMs / 60000,
+            ),
+
+        tempo_pendente_minutos:
+            Math.ceil(
+                remainingMs / 60000,
+            ),
+    };
+}
+
+function mentorSessionHelpMarkup() {
+    return `
+        <div
+            class="mentor-session-help-cta"
+            data-mentor-session-help-wrap
+        >
+            <button
+                type="button"
+                class="mentor-session-help-button"
+                data-mentor-session-help
+            >
+                <span aria-hidden="true">✦</span>
+                <span>
+                    Pedir ajuda ao Mentor para esta sessão
+                </span>
+            </button>
+
+            <p>
+                O Mentor usará disciplina, conteúdo,
+                dificuldade e tempo disponível para orientar seu estudo.
+            </p>
+        </div>
+    `;
+}
+
+function bindMentorSessionHelp(
+    container,
+    current,
+) {
+    let wrap = container.querySelector(
+        "[data-mentor-session-help-wrap]",
+    );
+
+    if (!wrap) {
+        container.insertAdjacentHTML(
+            "beforeend",
+            mentorSessionHelpMarkup(),
+        );
+
+        wrap = container.querySelector(
+            "[data-mentor-session-help-wrap]",
+        );
+    }
+
+    const button = wrap?.querySelector(
+        "[data-mentor-session-help]",
+    );
+
+    if (!button) return;
+
+    const selected =
+        mentorSessionHelpSelected(
+            container,
+            current,
+        );
+
+    button.disabled = !selected;
+
+    if (!selected) {
+        button.title =
+            "Crie uma sessão pendente para pedir orientação ao Mentor.";
+    } else {
+        button.title =
+            "Abrir o Mentor já com o contexto desta sessão.";
+    }
+
+    button.addEventListener(
+        "click",
+        () => {
+            const context =
+                mentorSessionHelpContext(
+                    container,
+                    current,
+                );
+
+            if (!context) {
+                showToast(
+                    "Selecione ou crie uma sessão antes de pedir ajuda ao Mentor.",
+                    "error",
+                );
+                return;
+            }
+
+            try {
+                sessionStorage.setItem(
+                    MENTOR_SESSION_HELP_KEY,
+                    JSON.stringify(context),
+                );
+            } catch {
+                showToast(
+                    "Não foi possível preparar o contexto da sessão.",
+                    "error",
+                );
+                return;
+            }
+
+            location.hash =
+                "#/mentor-edu";
+        },
+    );
+}

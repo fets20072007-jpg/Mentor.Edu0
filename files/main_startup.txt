@@ -1,0 +1,27 @@
+# === MENTOR EDU V9B2 - STARTUP WEB PUSH ===
+import asyncio as _mentor_push_asyncio
+from app.router.ai.mentor import (
+    mentor_focus_push_background_loop as _mentor_focus_push_background_loop,
+)
+
+
+async def _mentor_focus_push_startup():
+    current = getattr(app.state, "mentor_focus_push_task", None)
+    if current is None or current.done():
+        app.state.mentor_focus_push_task = _mentor_push_asyncio.create_task(
+            _mentor_focus_push_background_loop()
+        )
+
+
+async def _mentor_focus_push_shutdown():
+    current = getattr(app.state, "mentor_focus_push_task", None)
+    if current is not None:
+        current.cancel()
+        try:
+            await current
+        except _mentor_push_asyncio.CancelledError:
+            pass
+
+
+app.add_event_handler("startup", _mentor_focus_push_startup)
+app.add_event_handler("shutdown", _mentor_focus_push_shutdown)
