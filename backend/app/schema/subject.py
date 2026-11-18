@@ -27,6 +27,7 @@ class SubjectResponse(BaseModel):
     ativa: bool
     teacher_id: int
     classroom_id: int
+    classroom_nome: Optional[str] = None
     class Config:
         from_attributes = True
 

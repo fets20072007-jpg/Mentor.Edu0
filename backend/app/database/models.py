@@ -532,6 +532,15 @@ class Subject(Base):
         back_populates="subjects"
 
     )
+
+    @property
+    def classroom_nome(self):
+        return (
+            self.classroom.nome
+            if self.classroom
+            else None
+        )
+
 class Enrollment(Base):
     __tablename__ = "enrollments"
 

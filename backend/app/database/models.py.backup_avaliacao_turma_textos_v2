@@ -1,0 +1,1213 @@
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    DateTime,
+    Float,
+    UniqueConstraint
+)
+from app.database.database import Base
+from datetime import datetime
+from sqlalchemy.orm import relationship
+from sqlalchemy import Time
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String)
+    email = Column(String, unique=True, index=True)
+    senha = Column(String)
+
+    tipo = Column(String, nullable=False)
+    ativo = Column(Boolean, default=True, nullable=False)
+    cargo_administrativo = Column(String, nullable=True)
+    cpf = Column(String, nullable=True)
+    matricula = Column(String, nullable=True)
+    contato1 = Column(String, nullable=True)
+    contato2 = Column(String, nullable=True)
+
+    bio = Column(String, nullable=True)
+    escola = Column(String, nullable=True)
+    serie = Column(String, nullable=True)
+    idade = Column(Integer, nullable=True)
+
+    objetivo = Column(String, nullable=True)
+    materias_favoritas = Column(String, nullable=True)
+    dificuldades = Column(String, nullable=True)
+    horas_estudo = Column(Integer, nullable=True)
+
+
+    # seus campos jÃ¡ existentes...
+
+    classroom_id = Column(
+        Integer,
+        ForeignKey("classrooms.id"),
+        nullable=True
+    )
+    enrollments = relationship(
+        "Enrollment",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    answers = relationship(
+        "StudentAnswer",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    histories = relationship(
+        "LearningHistory",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+class StudyPlan(Base):
+    __tablename__ = "study_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String)
+    meta = Column(String)
+    horas_dia = Column(Integer)
+    materias = Column(String)
+    dificuldade = Column(String)
+    material_url = Column(String, nullable=True)
+    arquivo = Column(String, nullable=True)
+    status = Column(String, default="ativo")
+
+    user_id = Column(Integer, ForeignKey("users.id"))
+
+
+class StudySession(Base):
+    __tablename__ = "study_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    materia = Column(String, nullable=False)
+    assunto = Column(String, nullable=False)
+    duracao_minutos = Column(Integer, nullable=False)
+    dificuldade_sentida = Column(Integer, nullable=True)
+    concluida = Column(Boolean, default=False)
+    data_sessao = Column(String, nullable=True)
+    observacoes = Column(String, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+class LibraryBook(Base):
+    __tablename__ = "library_books"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+
+    autor = Column(String, nullable=False)
+
+    disciplina = Column(String, nullable=False)
+
+    serie = Column(String, nullable=True)
+
+    descricao = Column(String, nullable=True)
+
+    arquivo_pdf = Column(String, nullable=True)
+
+    ativo = Column(Boolean, default=True)
+
+class Book(Base):
+    __tablename__ = "books"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+
+    disciplina = Column(String, nullable=False)
+
+    autor = Column(String, nullable=False)
+
+    editora = Column(String, nullable=True)
+
+    ano = Column(Integer, nullable=True)
+
+    quantidade_capitulos = Column(Integer, default=0)
+
+    pdf_url = Column(String, nullable=True)
+
+    descricao = Column(String, nullable=True)
+
+    chapters = relationship(
+        "Chapter",
+        back_populates="book",
+        cascade="all, delete-orphan"
+    )
+
+class Chapter(Base):
+    __tablename__ = "chapters"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+
+    numero = Column(Integer, nullable=False)
+
+    pagina_inicio = Column(Integer)
+
+    pagina_fim = Column(Integer)
+
+    descricao = Column(String)
+
+    book_id = Column(
+        Integer,
+        ForeignKey("books.id"),
+        nullable=False
+    )
+
+    book = relationship(
+        "Book",
+        back_populates="chapters"
+    )
+
+    questions = relationship(
+        "Question",
+        back_populates="chapter",
+        cascade="all, delete-orphan"
+    )
+
+    videos = relationship(
+        "Video",
+        back_populates="chapter",
+        cascade="all, delete-orphan"
+    )
+
+    pdfs = relationship(
+        "PDFMaterial",
+        back_populates="chapter",
+        cascade="all, delete-orphan"
+    )
+
+    examples = relationship(
+        "PracticalExample",
+        back_populates="chapter",
+        cascade="all, delete-orphan"
+    )
+    
+
+class Exercise(Base):
+    __tablename__ = "exercises"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    pergunta = Column(String, nullable=False)
+
+    alternativa_a = Column(String)
+
+    alternativa_b = Column(String)
+
+    alternativa_c = Column(String)
+
+    alternativa_d = Column(String)
+
+    resposta_correta = Column(String)
+
+    explicacao = Column(String)
+
+    dificuldade = Column(String, default="MÃ©dia")
+
+    chapter_id = Column(
+        Integer,
+        ForeignKey("chapters.id"),
+        nullable=False
+    )
+
+class Video(Base):
+    __tablename__ = "videos"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+
+    descricao = Column(String, nullable=True)
+
+    url = Column(String, nullable=False)
+
+    duracao = Column(String, nullable=True)
+
+    plataforma = Column(String, default="YouTube")
+
+    chapter_id = Column(
+        Integer,
+        ForeignKey("chapters.id"),
+        nullable=False
+    )
+
+    chapter = relationship(
+        "Chapter",
+        back_populates="videos"
+    )
+
+    
+class PDFMaterial(Base):
+    __tablename__ = "pdf_materials"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+
+    descricao = Column(String, nullable=True)
+
+    arquivo = Column(String, nullable=False)
+
+    paginas = Column(Integer, nullable=True)
+
+    chapter_id = Column(
+        Integer,
+        ForeignKey("chapters.id"),
+        nullable=False
+    )
+
+    chapter = relationship(
+        "Chapter",
+        back_populates="pdfs"
+    )
+
+   
+
+class PracticalExample(Base):
+    __tablename__ = "practical_examples"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+
+    contexto = Column(String, nullable=False)
+
+    explicacao = Column(String, nullable=False)
+
+    curso_relacionado = Column(String, nullable=True)
+
+    chapter_id = Column(
+        Integer,
+        ForeignKey("chapters.id"),
+        nullable=False
+    )
+
+
+    chapter = relationship(
+        "Chapter",
+        back_populates="examples"
+    )
+
+class Question(Base):
+    __tablename__ = "questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    tipo = Column(String, default="Objetiva")
+
+    enunciado = Column(String, nullable=False)
+
+    alternativa_a = Column(String, nullable=True)
+    alternativa_b = Column(String, nullable=True)
+    alternativa_c = Column(String, nullable=True)
+    alternativa_d = Column(String, nullable=True)
+    alternativa_e = Column(String, nullable=True)
+    imagem = Column(String, nullable=True)
+    ordem = Column(Integer, default=0, nullable=False)
+
+    resposta_correta = Column(String, nullable=True)
+
+    explicacao = Column(String)
+
+    dificuldade = Column(String, default="MÃ©dio")
+
+    peso = Column(Float, default=1.0)
+
+    categoria = Column(String, nullable=True)
+
+    criterio_0 = Column(String, nullable=True)
+    criterio_25 = Column(String, nullable=True)
+    criterio_50 = Column(String, nullable=True)
+    criterio_75 = Column(String, nullable=True)
+    criterio_100 = Column(String, nullable=True)
+
+    chapter_id = Column(
+        Integer,
+        ForeignKey("chapters.id"),
+        nullable=True
+    )
+
+    assessment_id = Column(
+        Integer,
+        ForeignKey("assessments.id"),
+        nullable=True
+    )
+
+    chapter = relationship(
+        "Chapter",
+        back_populates="questions"
+    )
+
+    assessment = relationship(
+        "Assessment",
+        back_populates="questions"
+    )
+
+    answers = relationship(
+        "StudentAnswer",
+        back_populates="question",
+        cascade="all, delete-orphan"
+    )
+
+class LearningHistory(Base):
+    __tablename__ = "learning_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    materia = Column(String, nullable=False)
+
+    percentual = Column(Integer)
+
+    tempo_medio = Column(Integer)
+
+    observacao = Column(String)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    user = relationship(
+        "User",
+        back_populates="histories"
+    )
+
+class Teacher(Base):
+    __tablename__ = "teachers"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        unique=True,
+        nullable=False
+    )
+
+    user = relationship("User")
+
+    nome = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    cpf = Column(String, unique=True, nullable=True)
+    matricula = Column(String, unique=True, nullable=False)
+    telefone = Column(String)
+    especialidade = Column(String, nullable=False)
+    carga_horaria = Column(Integer, default=40)
+    ativo = Column(Boolean, default=True)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    subjects = relationship(
+        "Subject",
+        back_populates="teacher",
+        cascade="all, delete-orphan"
+    )
+
+    assessments = relationship(
+        "Assessment",
+        back_populates="teacher"
+    )
+
+    classrooms = relationship(
+    "Classroom",
+    back_populates="teacher"
+    )
+    
+    attendances = relationship(
+    "Attendance",
+    back_populates="teacher"
+    )
+    user = relationship("User")
+   
+
+   
+
+class Classroom(Base):
+    __tablename__ = "classrooms"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    nome = Column(String, nullable=False)
+
+    serie = Column(String, nullable=False)
+
+    turno = Column(String, nullable=False)
+
+    sala = Column(String, nullable=False)
+
+    ano = Column(Integer, nullable=False)
+
+    capacidade = Column(Integer, default=40)
+
+    ativa = Column(Boolean, default=True)
+
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id")
+    )
+
+    teacher = relationship(
+        "Teacher",
+        back_populates="classrooms"
+    )
+
+    subjects = relationship(
+        "Subject",
+        back_populates="classroom",
+        cascade="all, delete-orphan"
+    )
+    
+    assessments = relationship(
+        "Assessment",
+        back_populates="classroom"
+    )
+
+    enrollments = relationship(
+        "Enrollment",
+        back_populates="classroom",
+        cascade="all, delete-orphan"
+    )
+
+    attendances = relationship(
+    "Attendance",
+    back_populates="classroom",
+    cascade="all, delete-orphan"
+    )
+
+    
+
+class Subject(Base):
+    __tablename__ = "subjects"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    nome = Column(String, nullable=False)
+
+    carga_horaria = Column(Integer, default=80)
+
+    descricao = Column(String)
+
+    categoria = Column(String, default="Outras", nullable=False)
+
+    ativa = Column(Boolean, default=True)
+
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id"),
+        nullable=False
+    )
+
+    classroom_id = Column(
+        Integer,
+        ForeignKey("classrooms.id"),
+        nullable=False
+    )
+
+    assessments = relationship(
+        "Assessment",
+        back_populates="subject"
+    )
+
+    teacher = relationship(
+        "Teacher",
+        back_populates="subjects"
+    )
+
+    attendances = relationship(
+    "Attendance",
+    back_populates="subject",
+    cascade="all, delete-orphan"
+    )
+
+    classroom = relationship(
+        "Classroom",
+        back_populates="subjects"
+
+    )
+class Enrollment(Base):
+    __tablename__ = "enrollments"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    data_matricula = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    ativo = Column(
+        Boolean,
+        default=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    classroom_id = Column(
+        Integer,
+        ForeignKey("classrooms.id"),
+        nullable=False
+    )
+
+    user = relationship(
+        "User",
+        back_populates="enrollments"
+    )
+
+    classroom = relationship(
+        "Classroom",
+        back_populates="enrollments"
+    )
+
+class Attendance(Base):
+    __tablename__ = "attendance"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    data = Column(DateTime, default=datetime.utcnow)
+
+    status = Column(String, nullable=False)
+    # Presente | Falta | Atraso
+
+    justificada = Column(Boolean, default=False)
+
+    motivo = Column(String, nullable=True)
+
+    arquivo = Column(String, nullable=True)
+
+    observacao = Column(String, nullable=True)
+
+    justificativa_status = Column(String, nullable=True)
+    justificativa_enviada_em = Column(DateTime, nullable=True)
+    justificativa_analisada_em = Column(DateTime, nullable=True)
+    justificativa_analisada_por = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id"),
+        nullable=False
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    classroom_id = Column(
+        Integer,
+        ForeignKey("classrooms.id"),
+        nullable=False
+    )
+
+    subject_id = Column(
+        Integer,
+        ForeignKey("subjects.id"),
+        nullable=False
+    )
+
+    teacher = relationship(
+        "Teacher",
+        back_populates="attendances"
+    )
+
+    student = relationship(
+        "User",
+        foreign_keys=[student_id]
+    )
+
+    justificativa_analisador = relationship(
+        "User",
+        foreign_keys=[justificativa_analisada_por]
+    )
+
+    classroom = relationship(
+        "Classroom",
+        back_populates="attendances"
+    )
+
+    subject = relationship(
+        "Subject",
+        back_populates="attendances"
+    )
+
+class Assessment(Base):
+    __tablename__ = "assessments"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    titulo = Column(String, nullable=False)
+    descricao = Column(String, nullable=True)
+    tipo = Column(String, nullable=False)
+    arquivo = Column(String, nullable=True)
+    arquivo_nome = Column(String, nullable=True)
+    modelo_layout = Column(String, default="duas_colunas", nullable=False)
+    usar_capa = Column(Boolean, default=False, nullable=False)
+    gabarito_separado = Column(Boolean, default=False, nullable=False)
+
+    data = Column(DateTime)
+
+    valor = Column(Float, default=10)
+
+    ativa = Column(Boolean, default=True)
+
+        # =====================================================
+    # JANELA DE APLICACAO
+    # =====================================================
+
+    data_abertura = Column(
+        DateTime,
+        nullable=True
+    )
+
+    data_encerramento = Column(
+        DateTime,
+        nullable=True
+    )
+
+    # =====================================================
+    # LIBERACAO PARA O ALUNO
+    # =====================================================
+
+    liberar_resultado = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    liberar_prova = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    liberar_gabarito = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+    
+    semestre = Column(Integer, nullable=True)
+    ano_letivo = Column(Integer, nullable=True)
+
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id"),
+        nullable=False
+    )
+
+    classroom_id = Column(
+        Integer,
+        ForeignKey("classrooms.id"),
+        nullable=False
+    )
+
+    subject_id = Column(
+        Integer,
+        ForeignKey("subjects.id"),
+        nullable=False
+    )
+
+    teacher = relationship(
+        "Teacher",
+        back_populates="assessments"
+    )
+
+    classroom = relationship(
+        "Classroom",
+        back_populates="assessments"
+    )
+
+    subject = relationship(
+        "Subject",
+        back_populates="assessments"
+    )
+
+    grades = relationship(
+        "Grade",
+        back_populates="assessment"
+    )
+
+    questions = relationship(
+        "Question",
+        back_populates="assessment",
+        cascade="all, delete-orphan"
+    )
+
+class Grade(Base):
+    __tablename__ = "grades"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    nota = Column(Float, nullable=False)
+
+    observacao = Column(String, nullable=True)
+
+    assessment_id = Column(
+        Integer,
+        ForeignKey("assessments.id"),
+        nullable=False
+    )
+
+    student_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    assessment = relationship(
+        "Assessment",
+        back_populates="grades"
+    )
+
+    student = relationship("User")
+
+class StudentAnswer(Base):
+    __tablename__ = "student_answers"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "question_id",
+            name="uq_student_answer_user_question"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    resposta = Column(String, nullable=False)
+
+    tempo_resposta = Column(Integer)
+
+    percentual_ia = Column(Float, nullable=True)
+
+    justificativa_ia = Column(String, nullable=True)
+
+    percentual_professor = Column(Float, nullable=True)
+
+    percentual_final = Column(Float, nullable=True)
+
+    pontuacao_obtida = Column(Float, nullable=True)
+
+    corrigida_ia = Column(Boolean, default=False)
+
+    revisada_professor = Column(Boolean, default=False)
+
+    question_id = Column(
+        Integer,
+        ForeignKey("questions.id"),
+        nullable=False
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    question = relationship(
+        "Question",
+        back_populates="answers"
+    )
+
+    user = relationship(
+        "User",
+        back_populates="answers"
+    )
+
+class LibraryQuestion(Base):
+    __tablename__ = "library_questions"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id"),
+        nullable=False
+    )
+
+    subject_id = Column(
+        Integer,
+        ForeignKey("subjects.id"),
+        nullable=False
+    )
+
+    tipo = Column(
+        String,
+        default="Objetiva"
+    )
+
+    enunciado = Column(
+        String,
+        nullable=False
+    )
+
+    alternativa_a = Column(String, nullable=True)
+    alternativa_b = Column(String, nullable=True)
+    alternativa_c = Column(String, nullable=True)
+    alternativa_d = Column(String, nullable=True)
+
+    resposta_correta = Column(
+        String,
+        nullable=True
+    )
+
+    explicacao = Column(
+        String,
+        nullable=True
+    )
+
+    dificuldade = Column(
+        String,
+        default="MÃ©dio"
+    )
+
+    categoria = Column(
+        String,
+        nullable=True
+    )
+
+    criterio_0 = Column(String, nullable=True)
+    criterio_25 = Column(String, nullable=True)
+    criterio_50 = Column(String, nullable=True)
+    criterio_75 = Column(String, nullable=True)
+    criterio_100 = Column(String, nullable=True)
+
+    compartilhada = Column(
+        Boolean,
+        default=False
+    )
+
+    ativa = Column(
+        Boolean,
+        default=True
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+# =========================================================
+# CHAMADOS
+# =========================================================
+
+class Ticket(Base):
+
+    __tablename__ = "tickets"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    titulo = Column(
+        String,
+        nullable=False
+    )
+
+    descricao = Column(
+        String,
+        nullable=False
+    )
+
+    categoria = Column(
+        String,
+        default="Sistema",
+        nullable=False
+    )
+
+    prioridade = Column(
+        String,
+        default="Media",
+        nullable=False
+    )
+
+    status = Column(
+        String,
+        default="Aberto",
+        nullable=False
+    )
+
+    solucao = Column(
+        String,
+        nullable=True
+    )
+
+    destinatario_perfil = Column(
+        String,
+        default="Suporte",
+        nullable=False
+    )
+
+    destinatario_user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    destinatario_nome = Column(
+        String,
+        nullable=True
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    atualizado_em = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    requester_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    assigned_support_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+
+# =========================================================
+# NOTIFICAÃ‡Ã•ES
+# =========================================================
+
+class Notification(Base):
+
+    __tablename__ = "notifications"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    titulo = Column(
+        String,
+        nullable=False
+    )
+
+    mensagem = Column(
+        String,
+        nullable=False
+    )
+
+    tipo = Column(
+        String,
+        default="Sistema",
+        nullable=False
+    )
+
+    link = Column(
+        String,
+        nullable=True
+    )
+
+    lida = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    criado_em = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    lida_em = Column(
+        DateTime,
+        nullable=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+
+# =========================================================
+# HORARIOS DE AULA
+# =========================================================
+
+class ClassSchedule(Base):
+
+    __tablename__ = "class_schedules"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    dia_semana = Column(
+        String,
+        nullable=False
+    )
+
+    hora_inicio = Column(
+        Time,
+        nullable=False
+    )
+
+    hora_fim = Column(
+        Time,
+        nullable=False
+    )
+
+    ativo = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    subject_id = Column(
+        Integer,
+        ForeignKey("subjects.id"),
+        nullable=False
+    )
+
+    subject = relationship(
+        "Subject"
+    )
+
+
+class AcademicEvent(Base):
+    __tablename__ = "academic_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titulo = Column(String, nullable=False)
+    descricao = Column(String, nullable=True)
+    tipo = Column(String, default="Evento", nullable=False)
+    visibilidade = Column(String, default="todos", nullable=False)
+    data_inicio = Column(DateTime, nullable=False)
+    ativo = Column(Boolean, default=True, nullable=False)
+
+# === MENTOR EDU V9B1 - ALERTA PERSISTENTE DE FOCO ===
+from sqlalchemy import (
+    Column as _MEColumn,
+    Integer as _MEInteger,
+    String as _MEString,
+    DateTime as _MEDateTime,
+    UniqueConstraint as _MEUniqueConstraint,
+)
+from sqlalchemy.sql import func as _MEFunc
+
+
+class StudyFocusAlert(Base):
+    __tablename__ = "study_focus_alerts"
+
+    id = _MEColumn(_MEInteger, primary_key=True, index=True)
+    user_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    session_id = _MEColumn(_MEInteger, nullable=False, index=True)
+
+    title = _MEColumn(
+        _MEString(255),
+        nullable=False,
+        default="Sessão de estudo",
+    )
+
+    planned_minutes = _MEColumn(_MEInteger, nullable=False, default=0)
+    active_ms = _MEColumn(_MEInteger, nullable=False, default=0)
+    away_ms = _MEColumn(_MEInteger, nullable=False, default=0)
+    remaining_minutes = _MEColumn(_MEInteger, nullable=False, default=0)
+    late_minutes = _MEColumn(_MEInteger, nullable=False, default=0)
+
+    level = _MEColumn(
+        _MEString(24),
+        nullable=False,
+        default="baixo",
+    )
+
+    message = _MEColumn(
+        _MEString(500),
+        nullable=False,
+        default="",
+    )
+
+    created_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        nullable=False,
+    )
+
+    updated_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        onupdate=_MEFunc.now(),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        _MEUniqueConstraint(
+            "user_id",
+            "session_id",
+            name="uq_study_focus_alert_user_session",
+        ),
+    )
+
+# === MENTOR EDU V9B2 - WEB PUSH ===
+from sqlalchemy import Text as _METext
+
+
+class StudyPushSubscription(Base):
+    __tablename__ = "study_push_subscriptions"
+
+    id = _MEColumn(_MEInteger, primary_key=True, index=True)
+    user_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    endpoint = _MEColumn(_METext, nullable=False, unique=True)
+    p256dh = _MEColumn(_METext, nullable=False)
+    auth = _MEColumn(_METext, nullable=False)
+    device_label = _MEColumn(_MEString(180), nullable=True)
+
+    created_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        nullable=False,
+    )
+    updated_at = _MEColumn(
+        _MEDateTime(timezone=True),
+        server_default=_MEFunc.now(),
+        onupdate=_MEFunc.now(),
+        nullable=False,
+    )
+
+
+class StudyFocusPushState(Base):
+    __tablename__ = "study_focus_push_states"
+
+    id = _MEColumn(_MEInteger, primary_key=True, index=True)
+    user_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    session_id = _MEColumn(_MEInteger, nullable=False, index=True)
+    last_level = _MEColumn(_MEString(24), nullable=False, default="")
+    last_sent_at = _MEColumn(_MEDateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        _MEUniqueConstraint(
+            "user_id",
+            "session_id",
+            name="uq_focus_push_state_user_session",
+        ),
+    )

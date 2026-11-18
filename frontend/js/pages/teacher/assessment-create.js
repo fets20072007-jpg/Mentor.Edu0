@@ -26,6 +26,22 @@ const LAYOUTS = [
   ["hibrido", "Híbrido"]
 ];
 
+function subjectOptionLabel(subject) {
+  const subjectName = String(subject?.nome || "").trim();
+  const classroomName = String(
+    subject?.classroom_nome
+    || subject?.turma_nome
+    || subject?.classroom?.nome
+    || ""
+  ).trim();
+
+  if (!classroomName) {
+    return subjectName || "Disciplina";
+  }
+
+  return `${subjectName} — ${classroomName}`;
+}
+
 function titleFor(type, subjectName) {
   const subject = String(subjectName || "").trim();
   if (!subject) return type || "Avaliação";
@@ -867,7 +883,7 @@ export async function renderTeacherAssessmentCreate(container, navigate) {
             Disciplina
             <select name="subject_id" required>
               <option value="">Selecione</option>
-              ${subs.map(s => `<option value="${s.id}">${escapeHtml(s.nome)}</option>`).join("")}
+              ${subs.map(s => `<option value="${s.id}">${escapeHtml(subjectOptionLabel(s))}</option>`).join("")}
             </select>
           </label>
 

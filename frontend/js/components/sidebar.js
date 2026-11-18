@@ -16,8 +16,8 @@ const navigation = {
             { route: "study-sessions", label: "Sessões de estudo" },
         ]},
         { label: "Avaliações", icon: "clipboard", children: [
-            { route: "assessments", label: "DisponÃ­veis" },
-            { route: "assessment-history", label: "HistÃ³rico" },
+            { route: "assessments", label: "Disponíveis" },
+            { route: "assessment-history", label: "Histórico" },
             { route: "assessment-results", label: "Resultados" },
         ]},
         { route: "grades", label: "Notas", icon: "chart" },
@@ -25,7 +25,7 @@ const navigation = {
             { route: "attendance", label: "Resumo" },
             { route: "attendance-justifications", label: "Justificativas" },
         ]},
-        { route: "record", label: "HistÃ³rico acadêmico", icon: "school" },
+        { route: "record", label: "Histórico acadêmico", icon: "school" },
                 { label: "Biblioteca", icon: "book", children: [
             { route: "library", label: "Explorar biblioteca" },
         ]},
