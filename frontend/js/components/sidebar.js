@@ -8,7 +8,8 @@ const navigation = {
             { route: "library", label: "Conteúdos" },
         ]},
         // MENTOR_EDU_MENU_ETAPA1
-        { route: "mentor-edu", label: "Mentor Edu", icon: "mentor-ai", children: [
+        /* MENTOR_EDU_COLLAPSIBLE_FIX_V5_1 */
+        { label: "Mentor Edu", icon: "mentor-ai", children: [
             { route: "mentor-edu", label: "Conversar com Mentor.Edu" },
             { route: "study-plans", label: "Meu plano" },
             { route: "recommendations", label: "Plano indicado" },
@@ -141,11 +142,24 @@ export function renderSidebar({ role, unread = 0, onNavigate, onLogout }) {
     const items = navigation[role] || [];
     root.innerHTML = `<div class="sidebar-head"><div class="brand-lockup brand-lockup--light"><img class="brand-symbol" src="assets/brand/logo-symbol.png" alt=""><span class="brand-name">Mentor<span>.Edu</span></span></div></div><nav class="sidebar-nav">${items.map(item => itemMarkup(item, unread)).join("")}</nav><div class="sidebar-footer"><button id="sidebarLogout" type="button" class="nav-item">${icon("logout")}<span>Sair</span></button></div>`;
 
+    // MENTOR_EDU_MANUAL_COLLAPSE_V5_1_1
     root.querySelectorAll("[data-nav-group]").forEach(group => {
         const button = group.querySelector(".nav-group-toggle");
-        button.addEventListener("click", () => {
-            const open = group.classList.toggle("is-open");
-            button.setAttribute("aria-expanded", String(open));
+
+        button?.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const willOpen = !group.classList.contains("is-open");
+
+            group.classList.toggle("is-open", willOpen);
+            button.setAttribute("aria-expanded", String(willOpen));
+
+            if (willOpen) {
+                delete group.dataset.manualClosed;
+            } else {
+                group.dataset.manualClosed = "true";
+            }
         });
     });
     root.querySelectorAll("[data-route]").forEach(button => button.addEventListener("click", () => onNavigate(button.dataset.route)));
@@ -158,8 +172,13 @@ export function setActiveSidebarRoute(route) {
         item.classList.toggle("is-active", active);
         if (active) {
             const group = item.closest("[data-nav-group]");
-            group?.classList.add("is-open");
-            group?.querySelector(".nav-group-toggle")?.setAttribute("aria-expanded", "true");
+
+            if (group && group.dataset.manualClosed !== "true") {
+                group.classList.add("is-open");
+                group
+                    .querySelector(".nav-group-toggle")
+                    ?.setAttribute("aria-expanded", "true");
+            }
         }
     });
 }

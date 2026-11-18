@@ -1,0 +1,704 @@
+
+(() => {
+  "use strict";
+
+  const CFG = {
+    profileUrl: "/mentor-ai/student/profile",
+    tutorUrl: "/mentor-ai/student/tutor",
+    storageHistory: "mentorEdu.ai.student.history.v1",
+    storageSettings: "mentorEdu.ai.student.settings.v1"
+  };
+
+  const $ = (s, root=document) => root.querySelector(s);
+  const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
+
+  function textOf(el){ return (el?.textContent || "").trim(); }
+  function normalize(s){
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  }
+
+  function detectRole(){
+    const stores = [localStorage, sessionStorage];
+    const directKeys = ["role","user_role","perfil","tipo_usuario","userType","user_type"];
+    for(const store of stores){
+      for(const key of directKeys){
+        const v = normalize(store.getItem(key));
+        if(v.includes("student") || v.includes("aluno")) return "student";
+        if(v.includes("professor") || v.includes("teacher")) return "teacher";
+        if(v.includes("admin")) return "admin";
+      }
+      for(let i=0;i<store.length;i++){
+        const key = store.key(i);
+        const raw = store.getItem(key);
+        if(!raw || raw.length > 12000) continue;
+        try{
+          const obj = JSON.parse(raw);
+          const pool = normalize(JSON.stringify({
+            role: obj?.role,
+            perfil: obj?.perfil,
+            type: obj?.type,
+            user_type: obj?.user_type,
+            tipo_usuario: obj?.tipo_usuario
+          }));
+          if(pool.includes("student") || pool.includes("aluno")) return "student";
+          if(pool.includes("professor") || pool.includes("teacher")) return "teacher";
+          if(pool.includes("admin")) return "admin";
+        }catch{}
+      }
+    }
+    return "unknown";
+  }
+
+  function isLoginPage(){
+    const body = normalize(document.body?.innerText || "");
+    const hasPassword = !!document.querySelector('input[type="password"]');
+    const hasEmail = !!document.querySelector('input[type="email"]');
+    const loginWords =
+      body.includes("entre na sua conta") ||
+      body.includes("bem-vindo ao mentor") ||
+      body.includes("seu e-mail institucional");
+
+    const signals = [
+      "inicio","disciplinas","avaliacoes","notas","frequencia",
+      "historico academico","plano de estudos","biblioteca",
+      "horarios","notificacoes","chamados","perfil"
+    ];
+    const count = signals.filter(x => body.includes(x)).length;
+    return (hasPassword && (hasEmail || loginWords)) && count < 4;
+  }
+
+  function looksLikeStudentDashboard(){
+    if(isLoginPage()) return false;
+    const body = normalize(document.body?.innerText || "");
+    const signals = [
+      "inicio","disciplinas","avaliacoes","notas","frequencia",
+      "historico academico","plano de estudos","biblioteca",
+      "horarios","notificacoes","chamados","perfil"
+    ];
+    const count = signals.filter(x => body.includes(x)).length;
+    return count >= 4;
+  }
+
+  function shouldMount(){
+    if(isLoginPage()) return false;
+    const role = detectRole();
+    if(role === "teacher" || role === "admin") return false;
+    if(looksLikeStudentDashboard()) return true;
+    return role === "student";
+  }
+
+  function findToken(){
+    const stores = [localStorage, sessionStorage];
+    const keys = [
+      "access_token","accessToken","token","auth_token","authToken",
+      "jwt","mentor_token","mentorEduToken"
+    ];
+    for(const store of stores){
+      for(const key of keys){
+        const v = store.getItem(key);
+        if(v && v.length > 20 && !v.startsWith("{")) return v.replace(/^Bearer\s+/i,"");
+      }
+      for(let i=0;i<store.length;i++){
+        const raw = store.getItem(store.key(i));
+        if(!raw || raw.length > 12000) continue;
+        try{
+          const obj = JSON.parse(raw);
+          for(const key of keys){
+            const v = obj?.[key];
+            if(typeof v === "string" && v.length > 20) return v.replace(/^Bearer\s+/i,"");
+          }
+        }catch{}
+      }
+    }
+    return "";
+  }
+
+  function apiHeaders(){
+    const token = findToken();
+    const h = {"Content-Type":"application/json"};
+    if(token) h.Authorization = `Bearer ${token}`;
+    return h;
+  }
+
+  function safeJsonParse(raw, fallback){
+    try{return JSON.parse(raw)}catch{return fallback}
+  }
+
+  function loadSettings(){
+    return safeJsonParse(localStorage.getItem(CFG.storageSettings), {
+      floatingEnabled:true,
+      nudgeSeen:false
+    });
+  }
+
+  function saveSettings(v){
+    localStorage.setItem(CFG.storageSettings, JSON.stringify(v));
+  }
+
+  function loadHistory(){
+    const data = safeJsonParse(localStorage.getItem(CFG.storageHistory), []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  function saveHistory(data){
+    localStorage.setItem(CFG.storageHistory, JSON.stringify(data.slice(-20)));
+  }
+
+  let state = {
+    settings: loadSettings(),
+    history: loadHistory(),
+    currentId: null,
+    profile: null,
+    lowestSubject: null
+  };
+
+  function escapeHtml(s){
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function findHeading(text){
+    const wanted = normalize(text);
+    return $$("h1,h2,h3,h4,h5,h6,p,span,strong,div").find(el => {
+      const t = normalize(textOf(el));
+      return t === wanted;
+    });
+  }
+
+  function findShortcutsSection(){
+    const h = findHeading("Atalhos rápidos") || findHeading("Atalhos rapidos");
+    if(!h) return null;
+    let el = h;
+    for(let i=0;i<5 && el;i++,el=el.parentElement){
+      const t = normalize(textOf(el));
+      if(t.includes("atalhos rapidos") && (t.includes("disciplinas") || t.includes("avaliacoes"))) return el;
+    }
+    return h.parentElement;
+  }
+
+  function createHomeCard(){
+    if($("#mentor-ai-home-card")) return;
+    const shortcuts = findShortcutsSection();
+    if(!shortcuts) return;
+
+    const card = document.createElement("section");
+    card.id = "mentor-ai-home-card";
+    card.innerHTML = `
+      <div class="mentor-ai-home-left">
+        <div class="mentor-ai-mascot" aria-hidden="true">🤖</div>
+        <div class="mentor-ai-home-copy">
+          <p class="mentor-ai-home-title">Mentor Edu</p>
+          <p class="mentor-ai-home-subtitle">Converse, tire dúvidas e receba orientação personalizada de estudos.</p>
+        </div>
+      </div>
+      <button class="mentor-ai-home-action" type="button">💬 Conversar com o Mentor</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => openMentor("chat"));
+    shortcuts.parentElement.insertBefore(card, shortcuts);
+  }
+
+  function createFloating(){
+    if($("#mentor-ai-floating")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "mentor-ai-floating";
+    btn.type = "button";
+    btn.innerHTML = `
+      <span class="mentor-ai-float-avatar">🤖</span>
+      <span class="mentor-ai-float-copy">O que vamos<br>fazer hoje?</span>
+      <span class="mentor-ai-badge">1</span>
+    `;
+    btn.addEventListener("click", toggleNudge);
+    document.body.appendChild(btn);
+
+    if(!state.settings.floatingEnabled) btn.classList.add("mentor-ai-hidden");
+  }
+
+  function toggleNudge(){
+    let nudge = $("#mentor-ai-nudge");
+    if(nudge){ nudge.remove(); return; }
+
+    const subject = state.lowestSubject || "uma disciplina";
+    nudge = document.createElement("div");
+    nudge.id = "mentor-ai-nudge";
+    nudge.innerHTML = `
+      <h4>✨ Sugestão do Mentor</h4>
+      <p>Percebi que <strong>${escapeHtml(subject)}</strong> pode merecer mais atenção. Quer estudar isso comigo?</p>
+      <div class="mentor-ai-nudge-actions">
+        <button type="button" data-action="close">Agora não</button>
+        <button type="button" class="primary" data-action="open">Conversar</button>
+      </div>
+    `;
+    nudge.addEventListener("click", e => {
+      const action = e.target?.dataset?.action;
+      if(action === "close") nudge.remove();
+      if(action === "open"){ nudge.remove(); openMentor("chat"); }
+    });
+    document.body.appendChild(nudge);
+  }
+
+  function createNavItem(){
+    if($("#mentor-ai-nav-item")) return;
+
+    const candidates = $$("a,button,li,div").filter(el => {
+      const t = normalize(textOf(el));
+      return t === "desempenho" || t === "disciplinas";
+    });
+
+    let ref = candidates.find(el => {
+      const parentText = normalize(textOf(el.parentElement));
+      return parentText.includes("inicio") && parentText.includes("configuracoes");
+    }) || candidates[0];
+
+    if(!ref) return;
+
+    const clickable = ref.matches("a,button,li") ? ref : ref.closest("a,button,li") || ref;
+    const parent = clickable.parentElement;
+    if(!parent) return;
+
+    let item;
+    if(clickable.tagName === "A"){
+      item = clickable.cloneNode(true);
+      item.removeAttribute("href");
+      item.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
+      const txtNodes = Array.from(item.querySelectorAll("*")).reverse();
+      const label = txtNodes.find(n => normalize(textOf(n)) === normalize(textOf(clickable)));
+      if(label) label.textContent = "Mentor Edu";
+      else item.textContent = "🤖 Mentor Edu";
+    }else{
+      item = document.createElement(clickable.tagName === "LI" ? "li" : "button");
+      item.type = item.tagName === "BUTTON" ? "button" : undefined;
+      item.innerHTML = `<span class="mentor-ai-nav-icon">🤖</span><span>Mentor Edu</span>`;
+    }
+
+    item.id = "mentor-ai-nav-item";
+    item.addEventListener("click", e => {
+      e.preventDefault();
+      openMentor("chat");
+    });
+
+    clickable.insertAdjacentElement("afterend", item);
+  }
+
+  function createOverlay(){
+    if($("#mentor-ai-overlay")) return;
+
+    const overlay = document.createElement("div");
+    overlay.id = "mentor-ai-overlay";
+    overlay.className = "mentor-ai-hidden";
+    overlay.innerHTML = `
+      <section id="mentor-ai-panel" role="dialog" aria-modal="true" aria-label="Mentor Edu">
+        <header class="mentor-ai-panel-head">
+          <div class="mentor-ai-panel-title">
+            <div class="mentor-ai-mascot">🤖</div>
+            <div><strong>Mentor Edu</strong><small>Seu tutor inteligente</small></div>
+          </div>
+          <button class="mentor-ai-close" type="button" aria-label="Fechar">×</button>
+        </header>
+
+        <nav class="mentor-ai-tabs">
+          <button class="mentor-ai-tab active" data-view="chat" type="button">💬 Chat</button>
+          <button class="mentor-ai-tab" data-view="insights" type="button">✨ Meu aprendizado</button>
+          <button class="mentor-ai-tab" data-view="history" type="button">🕘 Conversas</button>
+        </nav>
+
+        <div>
+          <section class="mentor-ai-view active" data-view-panel="chat">
+            <div class="mentor-ai-chat-layout">
+              <aside class="mentor-ai-history">
+                <div class="mentor-ai-history-head">
+                  <strong>Conversas</strong>
+                  <button class="mentor-ai-new-chat" type="button">+ Novo</button>
+                </div>
+                <div id="mentor-ai-history-list"></div>
+              </aside>
+              <main class="mentor-ai-chat-main">
+                <div id="mentor-ai-messages"></div>
+                <form class="mentor-ai-composer" id="mentor-ai-form">
+                  <textarea id="mentor-ai-input" rows="1" placeholder="Digite sua dúvida..."></textarea>
+                  <button id="mentor-ai-send" type="submit" aria-label="Enviar">➤</button>
+                </form>
+              </main>
+            </div>
+          </section>
+
+          <section class="mentor-ai-view" data-view-panel="insights">
+            <div class="mentor-ai-insights">
+              <div class="mentor-ai-summary-grid">
+                <article class="mentor-ai-summary-card">
+                  <h4>👍 Pontos fortes</h4>
+                  <p id="mentor-ai-strong">Carregando seu perfil...</p>
+                </article>
+                <article class="mentor-ai-summary-card">
+                  <h4>🎯 Pontos para melhorar</h4>
+                  <p id="mentor-ai-improve">Carregando seu perfil...</p>
+                </article>
+                <article class="mentor-ai-summary-card">
+                  <h4>💡 Sugestão do Mentor</h4>
+                  <p id="mentor-ai-suggestion">Vou usar seu desempenho para sugerir o próximo passo.</p>
+                </article>
+              </div>
+
+              <div class="mentor-ai-accordion">
+                <button type="button"><span>📅 Plano de estudos da semana</span><span>⌄</span></button>
+                <div class="mentor-ai-accordion-content">
+                  Aqui ficará o plano semanal personalizado. A IA do cronograma será conectada em uma etapa posterior.
+                </div>
+              </div>
+
+              <div class="mentor-ai-accordion">
+                <button type="button"><span>🔔 Alertas inteligentes <span class="mentor-ai-dot">1</span></span><span>⌄</span></button>
+                <div class="mentor-ai-accordion-content" id="mentor-ai-alert-content">
+                  Assim que os dados do aluno forem analisados, os alertas aparecem aqui sem poluir a tela inicial.
+                </div>
+              </div>
+
+              <div class="mentor-ai-accordion">
+                <button type="button"><span>📊 Recomendações da IA</span><span>⌄</span></button>
+                <div class="mentor-ai-accordion-content" id="mentor-ai-recommend-content">
+                  Recomendações pedagógicas personalizadas com base em notas, frequência e dificuldades.
+                </div>
+              </div>
+
+              <div class="mentor-ai-accordion">
+                <button type="button"><span>⚙️ Assistente flutuante com IA</span><span>⌄</span></button>
+                <div class="mentor-ai-accordion-content">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                    <input id="mentor-ai-floating-toggle" type="checkbox">
+                    Mostrar sugestões flutuantes enquanto navego
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="mentor-ai-view" data-view-panel="history">
+            <div class="mentor-ai-insights">
+              <h3 style="margin-top:0;color:#17203a">Histórico de conversas</h3>
+              <div id="mentor-ai-history-full"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+    `;
+
+    overlay.addEventListener("click", e => {
+      if(e.target === overlay) closeMentor();
+    });
+    overlay.querySelector(".mentor-ai-close").addEventListener("click", closeMentor);
+    overlay.querySelectorAll(".mentor-ai-tab").forEach(btn => {
+      btn.addEventListener("click", () => setView(btn.dataset.view));
+    });
+    overlay.querySelectorAll(".mentor-ai-accordion > button").forEach(btn => {
+      btn.addEventListener("click", () => btn.parentElement.classList.toggle("open"));
+    });
+    overlay.querySelector(".mentor-ai-new-chat").addEventListener("click", newChat);
+    overlay.querySelector("#mentor-ai-form").addEventListener("submit", sendMessage);
+
+    document.body.appendChild(overlay);
+    syncFloatingToggle();
+    renderHistory();
+    renderMessages();
+  }
+
+  function openMentor(view="chat"){
+    createOverlay();
+    $("#mentor-ai-overlay")?.classList.remove("mentor-ai-hidden");
+    document.body.style.overflow = "hidden";
+    setView(view);
+    renderHistory();
+    renderMessages();
+    fetchProfile();
+    setTimeout(() => $("#mentor-ai-input")?.focus(), 80);
+  }
+
+  function closeMentor(){
+    $("#mentor-ai-overlay")?.classList.add("mentor-ai-hidden");
+    document.body.style.overflow = "";
+  }
+
+  function setView(view){
+    $$(".mentor-ai-tab").forEach(x => x.classList.toggle("active", x.dataset.view === view));
+    $$("[data-view-panel]").forEach(x => x.classList.toggle("active", x.dataset.viewPanel === view));
+    if(view === "history") renderFullHistory();
+  }
+
+  function newChat(){
+    state.currentId = `c_${Date.now()}`;
+    state.history.push({
+      id:state.currentId,
+      title:"Nova conversa",
+      createdAt:new Date().toISOString(),
+      messages:[]
+    });
+    saveHistory(state.history);
+    renderHistory();
+    renderMessages();
+    $("#mentor-ai-input")?.focus();
+  }
+
+  function currentConversation(){
+    let conv = state.history.find(c => c.id === state.currentId);
+    if(!conv){
+      if(state.history.length){
+        conv = state.history[state.history.length - 1];
+        state.currentId = conv.id;
+      }else{
+        newChat();
+        conv = state.history[state.history.length - 1];
+      }
+    }
+    return conv;
+  }
+
+  function renderHistory(){
+    const box = $("#mentor-ai-history-list");
+    if(!box) return;
+    const list = [...state.history].reverse();
+    box.innerHTML = list.length ? list.map(c => `
+      <button class="mentor-ai-history-item ${c.id===state.currentId?"active":""}" data-id="${escapeHtml(c.id)}" type="button">
+        <b>${escapeHtml(c.title || "Conversa")}</b>
+        <small>${new Date(c.createdAt).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small>
+      </button>
+    `).join("") : `<p style="color:#8a91a1;font-size:13px">Nenhuma conversa ainda.</p>`;
+
+    box.querySelectorAll("[data-id]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.currentId = btn.dataset.id;
+        renderHistory();
+        renderMessages();
+      });
+    });
+  }
+
+  function renderFullHistory(){
+    const box = $("#mentor-ai-history-full");
+    if(!box) return;
+    const list = [...state.history].reverse();
+    box.innerHTML = list.length ? list.map(c => `
+      <button class="mentor-ai-history-item" data-full-id="${escapeHtml(c.id)}" type="button">
+        <b>${escapeHtml(c.title || "Conversa")}</b>
+        <small>${c.messages?.length || 0} mensagens • ${new Date(c.createdAt).toLocaleString("pt-BR")}</small>
+      </button>
+    `).join("") : `<p style="color:#8a91a1">Nenhuma conversa salva neste navegador.</p>`;
+    box.querySelectorAll("[data-full-id]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.currentId = btn.dataset.fullId;
+        setView("chat");
+        renderHistory();
+        renderMessages();
+      });
+    });
+  }
+
+  function renderMessages(){
+    const box = $("#mentor-ai-messages");
+    if(!box) return;
+    const conv = currentConversation();
+    if(!conv.messages.length){
+      box.innerHTML = `
+        <div class="mentor-ai-welcome">
+          <div class="mentor-ai-big-mascot">🤖</div>
+          <h2>Olá! Sou o Mentor Edu.</h2>
+          <p>Posso explicar conteúdos, analisar seu desempenho e ajudar a organizar seus estudos.</p>
+          <div class="mentor-ai-quick-actions">
+            <button class="mentor-ai-quick-action" data-prompt="Explique um conteúdo que estou com dificuldade." type="button">📘 Explicar um conteúdo</button>
+            <button class="mentor-ai-quick-action" data-prompt="Analise meu desempenho e diga onde devo focar." type="button">📊 Analisar meu desempenho</button>
+            <button class="mentor-ai-quick-action" data-prompt="Monte uma sessão de estudos para hoje." type="button">🎯 Montar uma sessão de estudos</button>
+            <button class="mentor-ai-quick-action" data-prompt="Quero resolver um exercício passo a passo." type="button">✏️ Resolver um exercício</button>
+          </div>
+        </div>
+      `;
+      box.querySelectorAll("[data-prompt]").forEach(btn => btn.addEventListener("click", () => {
+        const input = $("#mentor-ai-input");
+        input.value = btn.dataset.prompt;
+        input.focus();
+      }));
+      return;
+    }
+    box.innerHTML = conv.messages.map(m => `
+      <div class="mentor-ai-msg ${m.role==="user"?"user":"ai"}">
+        <div class="bubble">${escapeHtml(m.content)}</div>
+      </div>
+    `).join("");
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendMessage(e){
+    e.preventDefault();
+    const input = $("#mentor-ai-input");
+    const msg = input.value.trim();
+    if(!msg) return;
+
+    const conv = currentConversation();
+    conv.messages.push({role:"user",content:msg,at:new Date().toISOString()});
+    if(!conv.title || conv.title === "Nova conversa"){
+      conv.title = msg.slice(0,42) + (msg.length > 42 ? "…" : "");
+    }
+    input.value = "";
+    saveHistory(state.history);
+    renderHistory();
+    renderMessages();
+
+    const box = $("#mentor-ai-messages");
+    const thinking = document.createElement("div");
+    thinking.className = "mentor-ai-msg ai mentor-ai-thinking";
+    thinking.innerHTML = `<div class="bubble">Mentor está pensando…</div>`;
+    box.appendChild(thinking);
+    box.scrollTop = box.scrollHeight;
+
+    try{
+      const res = await fetch(CFG.tutorUrl,{
+        method:"POST",
+        headers:apiHeaders(),
+        credentials:"same-origin",
+        body:JSON.stringify({mensagem:msg})
+      });
+
+      let data = {};
+      try{ data = await res.json(); }catch{}
+
+      if(!res.ok){
+        throw new Error(data?.detail || `Erro ${res.status}`);
+      }
+
+      const answer = data?.resposta || data?.response || data?.text || "Não consegui gerar uma resposta agora.";
+      conv.messages.push({
+        role:"assistant",
+        content:answer,
+        model:data?.model || null,
+        at:new Date().toISOString()
+      });
+      saveHistory(state.history);
+      renderMessages();
+    }catch(err){
+      thinking.remove();
+      conv.messages.push({
+        role:"assistant",
+        content:`Não consegui falar com a IA agora. ${err?.message || ""}`.trim(),
+        at:new Date().toISOString()
+      });
+      saveHistory(state.history);
+      renderMessages();
+    }
+  }
+
+  function syncFloatingToggle(){
+    const toggle = $("#mentor-ai-floating-toggle");
+    if(!toggle) return;
+    toggle.checked = !!state.settings.floatingEnabled;
+    toggle.onchange = () => {
+      state.settings.floatingEnabled = toggle.checked;
+      saveSettings(state.settings);
+      $("#mentor-ai-floating")?.classList.toggle("mentor-ai-hidden", !toggle.checked);
+      $("#mentor-ai-nudge")?.remove();
+    };
+  }
+
+  function flattenProfile(obj, depth=0, out=[]){
+    if(depth > 4 || obj == null) return out;
+    if(Array.isArray(obj)){
+      obj.forEach(x => flattenProfile(x, depth+1, out));
+      return out;
+    }
+    if(typeof obj === "object"){
+      const name = obj.disciplina || obj.subject || obj.nome || obj.name;
+      const score = obj.media_percentual ?? obj.percentual ?? obj.media ?? obj.score;
+      if(name && Number.isFinite(Number(score))){
+        out.push({name:String(name), score:Number(score)});
+      }
+      Object.values(obj).forEach(x => flattenProfile(x, depth+1, out));
+    }
+    return out;
+  }
+
+  async function fetchProfile(){
+    try{
+      const res = await fetch(CFG.profileUrl,{
+        headers:apiHeaders(),
+        credentials:"same-origin"
+      });
+      if(!res.ok) return;
+      const data = await res.json();
+      state.profile = data;
+      const rows = flattenProfile(data);
+      const unique = [];
+      const seen = new Set();
+      rows.forEach(r => {
+        const k = normalize(r.name);
+        if(!seen.has(k)){seen.add(k); unique.push(r)}
+      });
+      unique.sort((a,b)=>a.score-b.score);
+      if(unique.length){
+        state.lowestSubject = unique[0].name;
+        const improve = $("#mentor-ai-improve");
+        const strong = $("#mentor-ai-strong");
+        const suggestion = $("#mentor-ai-suggestion");
+        const alert = $("#mentor-ai-alert-content");
+        const recommend = $("#mentor-ai-recommend-content");
+        if(improve) improve.textContent = `${unique[0].name} merece mais atenção (${formatPct(unique[0].score)}).`;
+        if(strong && unique.length > 1){
+          const best = unique[unique.length-1];
+          strong.textContent = `${best.name} aparece como um dos seus melhores desempenhos (${formatPct(best.score)}).`;
+        }
+        if(suggestion) suggestion.textContent = `Vamos priorizar ${unique[0].name} e manter o ritmo nas disciplinas em que você já está evoluindo.`;
+        if(alert) alert.textContent = `Atenção em ${unique[0].name}: o Mentor identificou que essa disciplina pode precisar de reforço.`;
+        if(recommend) recommend.textContent = `Faça uma revisão curta de ${unique[0].name} e depois resolva exercícios guiados com o Mentor.`;
+      }
+    }catch{}
+  }
+
+  function formatPct(n){
+    const v = Number(n);
+    if(!Number.isFinite(v)) return String(n);
+    return `${String(Math.round(v*10)/10).replace(".",",")}%`;
+  }
+
+  function removeStudentAI(){
+    [
+      "#mentor-ai-home-card",
+      "#mentor-ai-floating",
+      "#mentor-ai-nudge",
+      "#mentor-ai-overlay",
+      "#mentor-ai-nav-item"
+    ].forEach(sel => document.querySelector(sel)?.remove());
+    document.body.style.overflow = "";
+  }
+
+  function refreshStudentAI(){
+    if(!shouldMount()){
+      removeStudentAI();
+      return;
+    }
+    createNavItem();
+    createFloating();
+    createOverlay();
+    createHomeCard();
+    fetchProfile();
+  }
+
+  function mount(){
+    refreshStudentAI();
+
+    window.addEventListener("hashchange", () => {
+      setTimeout(refreshStudentAI, 80);
+      setTimeout(refreshStudentAI, 350);
+    });
+
+    let timer = null;
+    const observer = new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(refreshStudentAI, 120);
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
+
+    [250,700,1500,3000].forEach(ms => setTimeout(refreshStudentAI, ms));
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", mount);
+  }else{
+    mount();
+  }
+})();

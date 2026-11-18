@@ -1,0 +1,38 @@
+.mini-button--danger {
+  color: #b42318;
+  background: #fff;
+  border: 1px solid #f1b8b3;
+}
+
+.mini-button--danger:hover:not(:disabled) {
+  color: #fff;
+  background: #d92d20;
+  border-color: #d92d20;
+}
+
+.assessment-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.question-preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.question-preview-head > strong {
+  flex: 1;
+  min-width: 0;
+}
+
+.question-preview-delete {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 10.5px;
+}

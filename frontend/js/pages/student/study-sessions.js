@@ -3,6 +3,88 @@ import { escapeHtml } from "../../core/format.js";
 import { pageHeader, surface, emptyBlock, statusPill } from "../shared/page-ui.js";
 import { showToast } from "../../components/toast.js";
 
+// MENTOR_EDU_SESSION_HANDOFF_V8
+const MENTOR_SESSION_PREFILL_KEY = "mentor_edu_session_prefill_v1";
+
+function readMentorSessionPrefill() {
+    try {
+        const raw = sessionStorage.getItem(
+            MENTOR_SESSION_PREFILL_KEY,
+        );
+
+        if (!raw) return null;
+
+        sessionStorage.removeItem(
+            MENTOR_SESSION_PREFILL_KEY,
+        );
+
+        const data = JSON.parse(raw);
+        const suggestion = String(
+            data?.suggestion || "",
+        ).trim();
+
+        return suggestion
+            ? { suggestion }
+            : null;
+    } catch {
+        try {
+            sessionStorage.removeItem(
+                MENTOR_SESSION_PREFILL_KEY,
+            );
+        } catch {
+            // Sem ação.
+        }
+
+        return null;
+    }
+}
+
+function applyMentorSessionPrefill(container) {
+    const data = readMentorSessionPrefill();
+
+    if (!data) return;
+
+    const form = container.querySelector(
+        "[data-session-form]",
+    );
+
+    if (!form) return;
+
+    const subject = form.elements?.materia;
+    const topic = form.elements?.assunto;
+    const duration = form.elements?.duracao_minutos;
+    const notes = form.elements?.observacoes;
+
+    if (topic) {
+        topic.value = data.suggestion;
+    }
+
+    if (duration && !duration.value) {
+        duration.value = "30";
+    }
+
+    if (notes) {
+        notes.value =
+            "Sessão iniciada a partir de uma sugestão do Mentor.Edu.";
+    }
+
+    form.hidden = false;
+
+    form.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+    });
+
+    setTimeout(() => {
+        subject?.focus();
+    }, 250);
+
+    showToast(
+        "Sugestão do Mentor carregada. Informe a matéria e registre a sessão.",
+        "success",
+    );
+}
+
 function sessionForm() {
     return `<form class="inline-form" data-session-form hidden><div class="form-grid"><label>Matéria<input name="materia" required></label><label>Assunto<input name="assunto" required></label><label>Duração (min)<input name="duracao_minutos" type="number" min="1" required value="30"></label><label>Dificuldade sentida<select name="dificuldade_sentida"><option value="">Não informar</option><option value="1">1 - Muito baixa</option><option value="2">2</option><option value="3">3 - Média</option><option value="4">4</option><option value="5">5 - Muito alta</option></select></label><label>Data<input name="data_sessao" type="date"></label><label class="form-span-2">Observações<textarea name="observacoes" rows="3"></textarea></label></div><div class="form-actions"><button class="mini-button" type="button" data-cancel-session>Cancelar</button><button class="mini-button mini-button--primary" type="submit">Registrar sessão</button></div></form>`;
 }
@@ -47,4 +129,5 @@ export async function renderStudentStudySessions(container) {
         }));
     };
     render([...sessions]);
+    applyMentorSessionPrefill(container);
 }

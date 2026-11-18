@@ -1,0 +1,1 @@
+export { renderStudentLibrary as renderTeacherLibrary } from "../student/library.js";

@@ -1,0 +1,83 @@
+@media (max-width: 1280px) {
+    body[data-role="administracao"] .shortcut-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body[data-role="aluno"] .shortcut-grid,
+    body[data-role="professor"] .shortcut-grid,
+    body[data-role="suporte"] .shortcut-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .topbar-center { width: min(330px, 30vw); }
+}
+
+@media (max-width: 1080px) {
+    .login-shell { grid-template-columns: 1fr; }
+    .login-brand-panel { min-height: 560px; }
+    .login-form-panel { min-height: auto; padding: 50px 20px; }
+    .topbar-center { display: none; }
+}
+
+@media (max-width: 980px) {
+    .sidebar { transform: translateX(-100%); }
+    body.sidebar-open .sidebar { transform: translateX(0); }
+    .app-main { margin-left: 0; }
+    .topbar { padding: 10px 18px; }
+    .page-content { padding: 24px 18px 42px; }
+}
+
+@media (max-width: 720px) {
+    .login-page { padding: 18px; }
+    .login-top-brand { min-height: 62px; }
+    .login-brand-panel { display: none; }
+    .login-shell { display: block; min-height: auto; }
+    .login-form-panel { min-height: calc(100vh - 100px); padding: 20px 0 40px; }
+    .login-card { width: 100%; }
+    .login-heading h2 { font-size: 34px; }
+    .social-login-grid { grid-template-columns: 1fr; }
+    .topbar-title small, .user-chip > div, .year-chip { display: none; }
+    .topbar { gap: 8px; }
+    .topbar-title h1 { font-size: 17px; }
+    .page-content { padding: 18px 12px 34px; }
+    .welcome-strip { min-height: 108px; padding: 22px; }
+    .welcome-strip h2 { font-size: 28px; }
+    .welcome-strip p { display: none; }
+    .hero-illustration { width: 125px; transform: scale(.78); transform-origin: right center; }
+    body[data-role="administracao"] .shortcut-grid,
+    body[data-role="aluno"] .shortcut-grid,
+    body[data-role="professor"] .shortcut-grid,
+    body[data-role="suporte"] .shortcut-grid { grid-template-columns: 1fr; gap: 12px; }
+    body[data-role="administracao"] .shortcut-card { min-height: 118px; grid-template-columns: auto 1fr auto; justify-items: initial; text-align: left; }
+    .shortcut-card { min-height: 112px; padding: 18px; }
+    .shortcut-card .shortcut-icon { width: 52px; height: 52px; }
+    .shortcut-card strong { font-size: 15px; }
+    .shortcut-card .shortcut-action { min-width: 66px; }
+}
+
+@media (max-width: 1120px) {
+    .entity-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .metric-grid--wide { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .detail-facts { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 760px) {
+    .content-head { align-items: flex-start; flex-direction: column; }
+    .content-head-actions { width: 100%; }
+    .content-head-actions .mini-button { width: 100%; }
+    .content-surface { padding: 15px; border-radius: 15px; }
+    .metric-grid, .metric-grid--wide, .entity-grid, .recommendation-grid, .schedule-board { grid-template-columns: 1fr; }
+    .metric-card { min-height: 92px; }
+    .assessment-card { align-items: stretch; flex-direction: column; }
+    .assessment-card > .mini-button { align-self: flex-start; }
+    .assessment-card-top { align-items: flex-start; }
+    .assessment-detail-head { flex-direction: column; }
+    .detail-facts { grid-template-columns: 1fr 1fr; }
+    .question-card { grid-template-columns: 1fr; }
+    .question-number { width: 28px; height: 28px; }
+    .compact-row, .timeline-title { align-items: flex-start; flex-direction: column; }
+    .row-actions { justify-content: flex-start; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-span-2 { grid-column: auto; }
+    .form-actions { align-items: stretch; flex-direction: column-reverse; }
+    .profile-form .form-actions { align-items: stretch; flex-direction: column; }
+    .filter-bar { justify-content: stretch; }
+    .filter-bar label, .filter-bar select { width: 100%; }
+    .schedule-class { grid-template-columns: 80px 1fr; }
+    .toast-region { left: 12px; right: 12px; bottom: 12px; }
+    .toast { max-width: none; }
+}

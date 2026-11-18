@@ -1,0 +1,40 @@
+/* Disciplinas — restauração dos filtros aprovados */
+
+.subject-filters {
+  margin-top: 18px;
+  margin-bottom: 4px;
+}
+
+body[data-role="administracao"] .subject-filters label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+body[data-role="administracao"] .subject-filters select,
+body[data-role="administracao"] .subject-filters input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  color: var(--text);
+  background: #fff;
+  outline: none;
+}
+
+body[data-role="administracao"] .subject-filters select:focus,
+body[data-role="administracao"] .subject-filters input:focus {
+  border-color: var(--role-primary);
+  box-shadow:
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--role-primary) 12%,
+      transparent
+    );
+}

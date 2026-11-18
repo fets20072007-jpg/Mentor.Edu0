@@ -1,0 +1,1 @@
+export { renderStudentSchedules as renderTeacherSchedules } from "../student/schedules.js";
