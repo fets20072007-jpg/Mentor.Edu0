@@ -977,7 +977,10 @@ def _run_student_tutor(
         "horas_estudo_dia": (
             metrics.get("horas_estudo_dia")
         ),
-    }
+            "adaptacao_sessoes": metrics.get(
+            "mentor10c_adaptive"
+        ),
+}
 
     use_smart_model = _tutor_requires_smart_model(mensagem)
 
@@ -1025,6 +1028,13 @@ def student_tutor_v1(
     metrics = build_student_metrics(
         db,
         current_user,
+    )
+
+    metrics["mentor10c_adaptive"] = (
+        _me10c_adaptive_context(
+            db,
+            current_user.id,
+        )
     )
 
     try:
@@ -1941,3 +1951,648 @@ def system_focus_push_run(
         raise HTTPException(status_code=403, detail="Token de cron inválido.")
 
     return _focus_push_process_due(db)
+
+# === MENTOR EDU ETAPA 10A V2 - API REFLEXAO DA SESSAO ===
+from datetime import datetime as _ME10ApiDatetime
+from fastapi import HTTPException as _ME10HTTPException
+from app.database.models import (
+    StudySessionReflection as _ME10StudySessionReflection,
+)
+
+
+def _me10_reflection_table(db):
+    _ME10StudySessionReflection.__table__.create(
+        bind=db.get_bind(),
+        checkfirst=True,
+    )
+
+
+def _me10_int(payload, key, minimum=None, maximum=None):
+    value = payload.get(key)
+
+    if value in (None, ""):
+        return None
+
+    try:
+        number = int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+    if minimum is not None:
+        number = max(minimum, number)
+
+    if maximum is not None:
+        number = min(maximum, number)
+
+    return number
+
+
+def _me10_reflection_json(item):
+    return {
+        "id": item.id,
+        "session_id": item.session_id,
+        "materia": item.materia,
+        "assunto": item.assunto,
+        "dificuldade_inicial": item.dificuldade_inicial,
+        "dificuldade_final": item.dificuldade_final,
+        "compreensao_final": item.compreensao_final,
+        "objetivo_status": item.objetivo_status,
+        "dificuldade_restante": item.dificuldade_restante,
+        "duracao_planejada": item.duracao_planejada,
+        "foco_minutos": item.foco_minutos,
+        "tempo_fora_minutos": item.tempo_fora_minutos,
+        "updated_at": (
+            item.updated_at.isoformat()
+            if item.updated_at
+            else None
+        ),
+    }
+
+
+@router.post("/student/session-reflection-v10a")
+def student_session_reflection_v10a(
+    payload: dict,
+    current_user=Depends(require_student),
+    db=Depends(get_db),
+):
+    _me10_reflection_table(db)
+
+    try:
+        session_id = int(payload.get("session_id"))
+    except (TypeError, ValueError):
+        raise _ME10HTTPException(
+            status_code=422,
+            detail="session_id invalido.",
+        )
+
+    if session_id <= 0:
+        raise _ME10HTTPException(
+            status_code=422,
+            detail="session_id invalido.",
+        )
+
+    objective = str(
+        payload.get("objetivo_status")
+        or "parcial"
+    ).strip().lower()
+
+    if objective not in {
+        "cumprido",
+        "parcial",
+        "nao_cumprido",
+    }:
+        objective = "parcial"
+
+    item = (
+        db.query(_ME10StudySessionReflection)
+        .filter(
+            _ME10StudySessionReflection.user_id
+            == current_user.id,
+            _ME10StudySessionReflection.session_id
+            == session_id,
+        )
+        .first()
+    )
+
+    if item is None:
+        item = _ME10StudySessionReflection(
+            user_id=current_user.id,
+            session_id=session_id,
+        )
+        db.add(item)
+
+    item.materia = (
+        str(payload.get("materia") or "").strip()[:180]
+        or None
+    )
+
+    item.assunto = (
+        str(payload.get("assunto") or "").strip()[:255]
+        or None
+    )
+
+    item.dificuldade_inicial = _me10_int(
+        payload,
+        "dificuldade_inicial",
+        1,
+        5,
+    )
+
+    item.dificuldade_final = _me10_int(
+        payload,
+        "dificuldade_final",
+        1,
+        5,
+    )
+
+    item.compreensao_final = _me10_int(
+        payload,
+        "compreensao_final",
+        1,
+        5,
+    )
+
+    item.objetivo_status = objective
+
+    item.dificuldade_restante = (
+        str(
+            payload.get("dificuldade_restante")
+            or ""
+        ).strip()[:1500]
+        or None
+    )
+
+    item.duracao_planejada = _me10_int(
+        payload,
+        "duracao_planejada",
+        0,
+        1440,
+    )
+
+    item.foco_minutos = _me10_int(
+        payload,
+        "foco_minutos",
+        0,
+        1440,
+    )
+
+    item.tempo_fora_minutos = _me10_int(
+        payload,
+        "tempo_fora_minutos",
+        0,
+        1440,
+    )
+
+    item.updated_at = _ME10ApiDatetime.utcnow()
+
+    db.commit()
+    db.refresh(item)
+
+    return {
+        "status": "saved",
+        "reflection": _me10_reflection_json(item),
+    }
+
+
+@router.get("/student/session-reflections-v10a")
+def student_session_reflections_v10a(
+    current_user=Depends(require_student),
+    db=Depends(get_db),
+):
+    _me10_reflection_table(db)
+
+    items = (
+        db.query(_ME10StudySessionReflection)
+        .filter(
+            _ME10StudySessionReflection.user_id
+            == current_user.id,
+        )
+        .order_by(
+            _ME10StudySessionReflection.updated_at.desc()
+        )
+        .all()
+    )
+
+    return {
+        "reflection_version": "10A-V2",
+        "quantidade": len(items),
+        "reflexoes": [
+            _me10_reflection_json(item)
+            for item in items
+        ],
+    }
+
+# === MENTOR EDU ETAPA 10B - API VERIFICACAO RAPIDA ===
+import json as _m10b_json
+import re as _m10b_re
+from datetime import datetime as _M10BNow
+from fastapi import HTTPException as _M10BHTTPException
+from app.database.models import StudySessionCheck as _M10BStudySessionCheck
+
+def _m10b_table(db):
+    _M10BStudySessionCheck.__table__.create(bind=db.get_bind(), checkfirst=True)
+
+def _m10b_questions(raw):
+    text = str(raw or "").strip()
+    text = _m10b_re.sub(r"^```(?:json)?\s*", "", text, flags=_m10b_re.I)
+    text = _m10b_re.sub(r"\s*```$", "", text)
+    a, b = text.find("["), text.rfind("]")
+    if a >= 0 and b > a:
+        text = text[a:b + 1]
+    try:
+        data = _m10b_json.loads(text)
+    except Exception as exc:
+        raise _M10BHTTPException(status_code=502, detail="O Mentor não conseguiu montar a verificação agora.") from exc
+    out = []
+    if not isinstance(data, list):
+        data = []
+    for idx, item in enumerate(data[:2], 1):
+        if not isinstance(item, dict):
+            continue
+        q = str(item.get("enunciado") or item.get("pergunta") or "").strip()
+        opts = item.get("alternativas") or {}
+        if isinstance(opts, list):
+            opts = {k: str(v).strip() for k, v in zip(("A", "B", "C", "D"), opts[:4])}
+        if not isinstance(opts, dict):
+            continue
+        clean = {}
+        for k in ("A", "B", "C", "D"):
+            v = str(opts.get(k) or opts.get(k.lower()) or "").strip()
+            if v:
+                clean[k] = v
+        correct = str(item.get("correta") or item.get("resposta") or "").strip().upper()[:1]
+        exp = str(item.get("explicacao") or item.get("feedback") or "").strip()[:800]
+        if q and len(clean) == 4 and correct in clean:
+            out.append({"id": idx, "enunciado": q[:600], "alternativas": clean, "correta": correct, "explicacao": exp})
+    if len(out) != 2:
+        raise _M10BHTTPException(status_code=502, detail="O Mentor não conseguiu gerar duas questões válidas. Tente novamente.")
+    return out
+
+def _m10b_public(items):
+    return [{"id": x["id"], "enunciado": x["enunciado"], "alternativas": x["alternativas"]} for x in items]
+
+@router.post("/student/session-check-v10b/start")
+def student_session_check_start_v10b(payload: dict, current_user=Depends(require_student), db=Depends(get_db)):
+    _m10b_table(db)
+    try:
+        session_id = int(payload.get("session_id"))
+    except (TypeError, ValueError):
+        raise _M10BHTTPException(status_code=422, detail="session_id inválido.")
+    materia = str(payload.get("materia") or "Conteúdo").strip()[:180]
+    assunto = str(payload.get("assunto") or "Conteúdo estudado").strip()[:255]
+    dificuldade = str(payload.get("dificuldade_final") or payload.get("dificuldade_inicial") or "não informada").strip()[:30]
+    instructions = (
+        "Você é o Mentor.Edu. Gere EXATAMENTE 2 questões objetivas curtas para verificar a compreensão de uma sessão de estudo. "
+        "Cada questão deve ter quatro alternativas A, B, C e D e somente uma correta. Não repita a mesma ideia. "
+        "Retorne SOMENTE JSON válido, sem Markdown, como um array de 2 objetos com as chaves: enunciado, alternativas, correta e explicacao."
+    )
+    user_input = f"Disciplina: {materia}\nConteúdo: {assunto}\nDificuldade: {dificuldade}/5\nCrie uma checagem curta e adequada."
+    try:
+        result = ask_text(instructions=instructions, user_input=user_input, smart=False)
+    except Exception as exc:
+        raise _M10BHTTPException(status_code=502, detail="A IA não conseguiu gerar a verificação agora. A sessão continua concluída.") from exc
+    questions = _m10b_questions(result.get("text") if isinstance(result, dict) else result)
+    item = db.query(_M10BStudySessionCheck).filter(
+        _M10BStudySessionCheck.user_id == current_user.id,
+        _M10BStudySessionCheck.session_id == session_id,
+    ).first()
+    if item is None:
+        item = _M10BStudySessionCheck(user_id=current_user.id, session_id=session_id, questions_json="[]")
+        db.add(item)
+    item.materia = materia
+    item.assunto = assunto
+    item.questions_json = _m10b_json.dumps(questions, ensure_ascii=False)
+    item.answers_json = None
+    item.score = None
+    item.total = 2
+    item.feedback = None
+    item.updated_at = _M10BNow.utcnow()
+    db.commit()
+    db.refresh(item)
+    return {"check_version": "10B", "session_id": session_id, "questions": _m10b_public(questions)}
+
+@router.post("/student/session-check-v10b/submit")
+def student_session_check_submit_v10b(payload: dict, current_user=Depends(require_student), db=Depends(get_db)):
+    _m10b_table(db)
+    try:
+        session_id = int(payload.get("session_id"))
+    except (TypeError, ValueError):
+        raise _M10BHTTPException(status_code=422, detail="session_id inválido.")
+    item = db.query(_M10BStudySessionCheck).filter(
+        _M10BStudySessionCheck.user_id == current_user.id,
+        _M10BStudySessionCheck.session_id == session_id,
+    ).first()
+    if item is None:
+        raise _M10BHTTPException(status_code=404, detail="Verificação não encontrada.")
+    questions = _m10b_json.loads(item.questions_json)
+    answers = payload.get("answers") or {}
+    if not isinstance(answers, dict):
+        raise _M10BHTTPException(status_code=422, detail="Respostas inválidas.")
+    score = 0
+    details = []
+    saved = {}
+    for q in questions:
+        key = str(q["id"])
+        ans = str(answers.get(key) or "").strip().upper()[:1]
+        saved[key] = ans
+        ok = ans == q["correta"]
+        if ok:
+            score += 1
+        details.append({"id": q["id"], "correta": ok, "resposta_aluno": ans, "resposta_correta": q["correta"], "explicacao": q.get("explicacao") or ""})
+    if score == 2:
+        feedback = "Ótimo resultado: você acertou as duas questões."
+    elif score == 1:
+        feedback = "Bom começo: você acertou uma de duas questões. Vale revisar o ponto pendente."
+    else:
+        feedback = "Este conteúdo ainda precisa de revisão antes de avançar."
+    item.answers_json = _m10b_json.dumps(saved, ensure_ascii=False)
+    item.score = score
+    item.total = 2
+    item.feedback = feedback
+    item.updated_at = _M10BNow.utcnow()
+    db.commit()
+    db.refresh(item)
+    return {"check_version": "10B", "session_id": session_id, "score": score, "total": 2, "feedback": feedback, "details": details}
+
+@router.get("/student/session-check-v10b/{session_id}")
+def student_session_check_get_v10b(session_id: int, current_user=Depends(require_student), db=Depends(get_db)):
+    _m10b_table(db)
+    item = db.query(_M10BStudySessionCheck).filter(
+        _M10BStudySessionCheck.user_id == current_user.id,
+        _M10BStudySessionCheck.session_id == session_id,
+    ).first()
+    if item is None:
+        return {"check_version": "10B", "session_id": session_id, "exists": False}
+    return {"check_version": "10B", "session_id": session_id, "exists": True, "score": item.score, "total": item.total, "feedback": item.feedback, "answered": item.score is not None}
+
+# === MENTOR EDU ETAPA 10C V2 - ADAPTACAO POS-SESSAO ===
+from app.database.models import (
+    StudySessionReflection as _ME10CReflection,
+    StudySessionCheck as _ME10CCheck,
+)
+
+
+def _me10c_priority_for(reflection, check):
+    initial = (
+        int(reflection.dificuldade_inicial)
+        if reflection.dificuldade_inicial is not None
+        else None
+    )
+
+    final = (
+        int(reflection.dificuldade_final)
+        if reflection.dificuldade_final is not None
+        else None
+    )
+
+    comprehension = (
+        int(reflection.compreensao_final)
+        if reflection.compreensao_final is not None
+        else None
+    )
+
+    objective = str(
+        reflection.objetivo_status
+        or "parcial"
+    )
+
+    score_check = (
+        int(check.score)
+        if check is not None
+        and check.score is not None
+        else None
+    )
+
+    total_check = (
+        int(check.total or 2)
+        if check is not None
+        else None
+    )
+
+    planned = int(
+        reflection.duracao_planejada
+        or 0
+    )
+
+    focus = int(
+        reflection.foco_minutos
+        or 0
+    )
+
+    weight = 0
+    reasons = []
+
+    if final is not None:
+        if final >= 4:
+            weight += 3
+            reasons.append("dificuldade final alta")
+        elif final == 3:
+            weight += 2
+            reasons.append("dificuldade final moderada")
+        elif final <= 2:
+            weight -= 1
+
+    if comprehension is not None:
+        if comprehension <= 2:
+            weight += 2
+            reasons.append("compreensão declarada baixa")
+        elif comprehension == 3:
+            weight += 1
+        elif comprehension >= 4:
+            weight -= 1
+
+    if objective == "nao_cumprido":
+        weight += 2
+        reasons.append("objetivo da sessão não cumprido")
+    elif objective == "parcial":
+        weight += 1
+
+    if score_check is not None:
+        if score_check == 0:
+            weight += 3
+            reasons.append("verificação 0/2")
+        elif score_check == 1:
+            weight += 1
+            reasons.append("verificação 1/2")
+        elif score_check >= 2:
+            weight -= 2
+
+    if (
+        planned > 0
+        and focus >= 0
+        and focus < planned * 0.6
+    ):
+        weight += 1
+        reasons.append(
+            "tempo de foco abaixo do planejado"
+        )
+
+    if (
+        initial is not None
+        and final is not None
+    ):
+        improvement = initial - final
+
+        if improvement >= 2:
+            weight -= 1
+        elif improvement < 0:
+            weight += 1
+            reasons.append(
+                "dificuldade aumentou após a sessão"
+            )
+
+    consolidated = (
+        score_check == 2
+        and final is not None
+        and final <= 2
+        and comprehension is not None
+        and comprehension >= 4
+    )
+
+    if consolidated:
+        level = "consolidado"
+        label = "Conteúdo consolidado"
+        priority = 0
+    elif weight >= 6:
+        level = "alta"
+        label = "Prioridade alta"
+        priority = 3
+    elif weight >= 3:
+        level = "media"
+        label = "Prioridade média"
+        priority = 2
+    else:
+        level = "baixa"
+        label = "Prioridade baixa"
+        priority = 1
+
+    subject = (
+        reflection.materia
+        or (
+            check.materia
+            if check is not None
+            else None
+        )
+        or "Conteúdo"
+    )
+
+    topic = (
+        reflection.assunto
+        or (
+            check.assunto
+            if check is not None
+            else None
+        )
+        or "conteúdo estudado"
+    )
+
+    if level == "consolidado":
+        recommendation = (
+            f"{topic} apresentou bom domínio. "
+            "Avance para um conteúdo relacionado e "
+            "mantenha apenas uma revisão curta depois."
+        )
+    elif level == "alta":
+        recommendation = (
+            f"Não avance ainda em {topic}. "
+            "Faça outra sessão curta de 10 a 15 minutos, "
+            "com explicação guiada e exercícios básicos."
+        )
+    elif level == "media":
+        recommendation = (
+            f"Reforce {topic} em uma nova sessão curta, "
+            "priorizando exercícios e correção dos pontos "
+            "que ainda geraram dúvida."
+        )
+    else:
+        recommendation = (
+            f"Faça uma revisão breve de {topic} antes de avançar. "
+            "Se a próxima checagem for boa, reduza a prioridade."
+        )
+
+    return {
+        "session_id": reflection.session_id,
+        "materia": subject,
+        "assunto": topic,
+        "nivel": level,
+        "rotulo": label,
+        "prioridade": priority,
+        "peso": weight,
+        "recomendacao": recommendation,
+        "motivos": reasons[:4],
+        "dados": {
+            "dificuldade_inicial": initial,
+            "dificuldade_final": final,
+            "compreensao_final": comprehension,
+            "objetivo_status": objective,
+            "foco_minutos": focus,
+            "duracao_planejada": planned,
+            "score": score_check,
+            "total": total_check,
+        },
+    }
+
+
+def _me10c_adaptive_context(db, user_id):
+    reflections = (
+        db.query(_ME10CReflection)
+        .filter(
+            _ME10CReflection.user_id
+            == user_id,
+        )
+        .order_by(
+            _ME10CReflection.updated_at.desc()
+        )
+        .limit(12)
+        .all()
+    )
+
+    if not reflections:
+        return {
+            "version": "10C-V2",
+            "has_data": False,
+            "items": [],
+            "next_action": None,
+        }
+
+    session_ids = [
+        item.session_id
+        for item in reflections
+    ]
+
+    checks = (
+        db.query(_ME10CCheck)
+        .filter(
+            _ME10CCheck.user_id
+            == user_id,
+            _ME10CCheck.session_id.in_(
+                session_ids
+            ),
+        )
+        .all()
+    )
+
+    checks_by_session = {
+        item.session_id: item
+        for item in checks
+    }
+
+    items = [
+        _me10c_priority_for(
+            reflection,
+            checks_by_session.get(
+                reflection.session_id
+            ),
+        )
+        for reflection in reflections
+    ]
+
+    ordered = sorted(
+        items,
+        key=lambda item: (
+            -int(item["prioridade"]),
+            -int(item["peso"]),
+        ),
+    )
+
+    return {
+        "version": "10C-V2",
+        "has_data": bool(items),
+        "items": items[:8],
+        "next_action": (
+            ordered[0]
+            if ordered
+            else None
+        ),
+    }
+
+
+@router.get("/student/adaptive-study-v10c")
+def student_adaptive_study_v10c(
+    current_user=Depends(require_student),
+    db=Depends(get_db),
+):
+    return _me10c_adaptive_context(
+        db,
+        current_user.id,
+    )

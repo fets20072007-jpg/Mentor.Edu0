@@ -1220,3 +1220,128 @@ class StudyFocusPushState(Base):
             name="uq_focus_push_state_user_session",
         ),
     )
+
+# === MENTOR EDU ETAPA 10A V2 - REFLEXAO DA SESSAO ===
+from sqlalchemy import (
+    Column as _ME10Column,
+    Integer as _ME10Integer,
+    String as _ME10String,
+    DateTime as _ME10DateTime,
+    Text as _ME10Text,
+    UniqueConstraint as _ME10UniqueConstraint,
+)
+from datetime import datetime as _ME10Datetime
+
+
+class StudySessionReflection(Base):
+    __tablename__ = "study_session_reflections"
+
+    id = _ME10Column(
+        _ME10Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    user_id = _ME10Column(
+        _ME10Integer,
+        nullable=False,
+        index=True,
+    )
+
+    session_id = _ME10Column(
+        _ME10Integer,
+        nullable=False,
+        index=True,
+    )
+
+    materia = _ME10Column(
+        _ME10String(180),
+        nullable=True,
+    )
+
+    assunto = _ME10Column(
+        _ME10String(255),
+        nullable=True,
+    )
+
+    dificuldade_inicial = _ME10Column(
+        _ME10Integer,
+        nullable=True,
+    )
+
+    dificuldade_final = _ME10Column(
+        _ME10Integer,
+        nullable=True,
+    )
+
+    compreensao_final = _ME10Column(
+        _ME10Integer,
+        nullable=True,
+    )
+
+    objetivo_status = _ME10Column(
+        _ME10String(24),
+        nullable=False,
+        default="parcial",
+    )
+
+    dificuldade_restante = _ME10Column(
+        _ME10Text,
+        nullable=True,
+    )
+
+    duracao_planejada = _ME10Column(
+        _ME10Integer,
+        nullable=True,
+    )
+
+    foco_minutos = _ME10Column(
+        _ME10Integer,
+        nullable=True,
+    )
+
+    tempo_fora_minutos = _ME10Column(
+        _ME10Integer,
+        nullable=True,
+    )
+
+    created_at = _ME10Column(
+        _ME10DateTime,
+        default=_ME10Datetime.utcnow,
+        nullable=False,
+    )
+
+    updated_at = _ME10Column(
+        _ME10DateTime,
+        default=_ME10Datetime.utcnow,
+        onupdate=_ME10Datetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        _ME10UniqueConstraint(
+            "user_id",
+            "session_id",
+            name="uq_study_reflection_user_session_v10a",
+        ),
+    )
+
+# === MENTOR EDU ETAPA 10B - VERIFICACAO RAPIDA ===
+from sqlalchemy import Column as _M10BC, Integer as _M10BI, String as _M10BS, DateTime as _M10BDT, Text as _M10BT, UniqueConstraint as _M10BU
+from datetime import datetime as _M10BDate
+
+class StudySessionCheck(Base):
+    __tablename__ = "study_session_checks"
+    id = _M10BC(_M10BI, primary_key=True, index=True)
+    user_id = _M10BC(_M10BI, nullable=False, index=True)
+    session_id = _M10BC(_M10BI, nullable=False, index=True)
+    materia = _M10BC(_M10BS(180), nullable=True)
+    assunto = _M10BC(_M10BS(255), nullable=True)
+    questions_json = _M10BC(_M10BT, nullable=False)
+    answers_json = _M10BC(_M10BT, nullable=True)
+    score = _M10BC(_M10BI, nullable=True)
+    total = _M10BC(_M10BI, nullable=False, default=2)
+    feedback = _M10BC(_M10BT, nullable=True)
+    created_at = _M10BC(_M10BDT, default=_M10BDate.utcnow, nullable=False)
+    updated_at = _M10BC(_M10BDT, default=_M10BDate.utcnow, onupdate=_M10BDate.utcnow, nullable=False)
+    __table_args__ = (_M10BU("user_id", "session_id", name="uq_study_check_user_session_v10b"),)

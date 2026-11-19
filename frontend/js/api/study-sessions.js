@@ -42,3 +42,37 @@ export async function removeStudyPushSubscription(endpoint) {
         { endpoint },
     );
 }
+
+// MENTOR_EDU_SESSION_REFLECTION_API_V10A_V2
+export async function saveStudySessionReflectionV10A(
+    payload,
+) {
+    return api.post(
+        "/mentor-ai/student/session-reflection-v10a",
+        payload,
+    );
+}
+
+export async function getStudySessionReflectionsV10A() {
+    return api.get(
+        "/mentor-ai/student/session-reflections-v10a",
+    );
+}
+
+// MENTOR_EDU_SESSION_CHECK_API_V10B
+export async function startStudySessionCheckV10B(payload) {
+  return api.post("/mentor-ai/student/session-check-v10b/start", payload);
+}
+export async function submitStudySessionCheckV10B(payload) {
+  return api.post("/mentor-ai/student/session-check-v10b/submit", payload);
+}
+export async function getStudySessionCheckV10B(sessionId) {
+  return api.get(`/mentor-ai/student/session-check-v10b/${sessionId}`);
+}
+
+// MENTOR_EDU_ADAPTIVE_STUDY_API_V10C_V2
+export async function getAdaptiveStudyV10C() {
+    return api.get(
+        "/mentor-ai/student/adaptive-study-v10c",
+    );
+}

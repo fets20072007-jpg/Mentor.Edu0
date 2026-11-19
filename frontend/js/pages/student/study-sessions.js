@@ -1534,6 +1534,863 @@ function sessionForm() {
     return `<form class="inline-form" data-session-form hidden><div class="form-grid"><label>Matéria<input name="materia" required></label><label>Assunto<input name="assunto" required></label><label>Duração (min)<input name="duracao_minutos" type="number" min="1" required value="30"></label><label>Dificuldade sentida<select name="dificuldade_sentida"><option value="">Não informar</option><option value="1">1 - Muito baixa</option><option value="2">2</option><option value="3">3 - Média</option><option value="4">4</option><option value="5">5 - Muito alta</option></select></label><label>Data<input name="data_sessao" type="date"></label><label class="form-span-2">Observações<textarea name="observacoes" rows="3"></textarea></label></div><div class="form-actions"><button class="mini-button" type="button" data-cancel-session>Cancelar</button><button class="mini-button mini-button--primary" type="submit">Registrar sessão</button></div></form>`;
 }
 
+// MENTOR_EDU_SESSION_REFLECTION_V10A_V2
+function mentor10ReflectionTimerData(session) {
+    let state = null;
+
+    try {
+        if (
+            typeof mentorFocusReadState
+            === "function"
+        ) {
+            state = mentorFocusReadState();
+        }
+    } catch {
+        state = null;
+    }
+
+    if (
+        !state
+        || Number(state.sessionId)
+            !== Number(session?.id)
+    ) {
+        return {
+            foco_minutos: 0,
+            tempo_fora_minutos: 0,
+        };
+    }
+
+    return {
+        foco_minutos: Math.floor(
+            Number(state.activeMs || 0)
+            / 60000,
+        ),
+
+        tempo_fora_minutos: Math.floor(
+            Number(state.awayMs || 0)
+            / 60000,
+        ),
+    };
+}
+
+
+async function mentor10SaveReflection(payload) {
+    const module = await import(
+        "../../api/study-sessions.js"
+    );
+
+    return module.saveStudySessionReflectionV10A(
+        payload,
+    );
+}
+
+
+function mentor10ReflectionMarkup(session) {
+    const initialDifficulty = Number(
+        session?.dificuldade_sentida
+        ?? session?.dificuldade
+        ?? 0,
+    );
+
+    return `
+        <div
+            class="mentor10-reflection-backdrop"
+            data-mentor10-reflection
+        >
+            <section
+                class="mentor10-reflection-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="mentor10-reflection-title"
+            >
+                <header class="mentor10-reflection-head">
+                    <div>
+                        <span>FECHAMENTO DA SESSÃO</span>
+
+                        <h3 id="mentor10-reflection-title">
+                            Como foi seu estudo?
+                        </h3>
+
+                        <p>
+                            ${escapeHtml(
+                                session?.materia
+                                || "Sessão"
+                            )}
+                            ${session?.assunto
+                                ? ` · ${escapeHtml(session.assunto)}`
+                                : ""
+                            }
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        data-mentor10-close
+                        aria-label="Fechar"
+                    >
+                        ×
+                    </button>
+                </header>
+
+                <form
+                    class="mentor10-reflection-form"
+                    data-mentor10-form
+                >
+                    <div class="mentor10-reflection-grid">
+                        <label>
+                            Dificuldade antes
+
+                            <input
+                                type="text"
+                                value="${
+                                    initialDifficulty
+                                    ? `${initialDifficulty}/5`
+                                    : "Não informada"
+                                }"
+                                disabled
+                            >
+                        </label>
+
+                        <label>
+                            Dificuldade agora
+
+                            <select
+                                name="dificuldade_final"
+                                required
+                            >
+                                <option value="">
+                                    Selecione
+                                </option>
+                                <option value="1">1 - Muito baixa</option>
+                                <option value="2">2 - Baixa</option>
+                                <option value="3">3 - Média</option>
+                                <option value="4">4 - Alta</option>
+                                <option value="5">5 - Muito alta</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Quanto você entendeu?
+
+                            <select
+                                name="compreensao_final"
+                                required
+                            >
+                                <option value="">
+                                    Selecione
+                                </option>
+                                <option value="1">1 - Muito pouco</option>
+                                <option value="2">2 - Pouco</option>
+                                <option value="3">3 - Razoavelmente</option>
+                                <option value="4">4 - Bem</option>
+                                <option value="5">5 - Muito bem</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Objetivo da sessão
+
+                            <select
+                                name="objetivo_status"
+                                required
+                            >
+                                <option value="cumprido">
+                                    Cumpri
+                                </option>
+                                <option
+                                    value="parcial"
+                                    selected
+                                >
+                                    Cumpri parcialmente
+                                </option>
+                                <option value="nao_cumprido">
+                                    Não cumpri
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="mentor10-reflection-wide">
+                            O que ainda ficou difícil?
+
+                            <textarea
+                                name="dificuldade_restante"
+                                rows="3"
+                                placeholder="Opcional. Ex.: ainda confundo os conceitos principais."
+                            ></textarea>
+                        </label>
+                    </div>
+
+                    <div class="mentor10-reflection-note">
+                        <strong>
+                            Seu fechamento ajudará o Mentor
+                            a adaptar os próximos estudos.
+                        </strong>
+                        <span>
+                            A próxima parte da Etapa 10
+                            fará uma checagem curta do conteúdo.
+                        </span>
+                    </div>
+
+                    <footer class="mentor10-reflection-actions">
+                        <button
+                            type="button"
+                            class="mini-button"
+                            data-mentor10-cancel
+                        >
+                            Voltar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="mini-button mini-button--primary"
+                        >
+                            Salvar e concluir
+                        </button>
+                    </footer>
+                </form>
+            </section>
+        </div>
+    `;
+}
+
+
+function mentor10CloseReflection(container) {
+    container
+        .querySelector(
+            "[data-mentor10-reflection]"
+        )
+        ?.remove();
+}
+
+
+function mentor10OpenReflection(
+    container,
+    session,
+    current,
+    render,
+) {
+    mentor10CloseReflection(container);
+
+    container.insertAdjacentHTML(
+        "beforeend",
+        mentor10ReflectionMarkup(session),
+    );
+
+    const modal = container.querySelector(
+        "[data-mentor10-reflection]"
+    );
+
+    const form = modal?.querySelector(
+        "[data-mentor10-form]"
+    );
+
+    const close = () => {
+        mentor10CloseReflection(container);
+    };
+
+    modal
+        ?.querySelector("[data-mentor10-close]")
+        ?.addEventListener(
+            "click",
+            close,
+        );
+
+    modal
+        ?.querySelector("[data-mentor10-cancel]")
+        ?.addEventListener(
+            "click",
+            close,
+        );
+
+    modal?.addEventListener(
+        "click",
+        event => {
+            if (event.target === modal) {
+                close();
+            }
+        },
+    );
+
+    form?.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const submit = form.querySelector(
+                'button[type="submit"]'
+            );
+
+            if (submit) {
+                submit.disabled = true;
+            }
+
+            const data = new FormData(form);
+
+            const timer = mentor10ReflectionTimerData(
+                session,
+            );
+
+            const payload = {
+                session_id: Number(session.id),
+
+                materia: String(
+                    session.materia
+                    || ""
+                ),
+
+                assunto: String(
+                    session.assunto
+                    || ""
+                ),
+
+                dificuldade_inicial: Number(
+                    session.dificuldade_sentida
+                    ?? session.dificuldade
+                    ?? 0
+                ) || null,
+
+                dificuldade_final: Number(
+                    data.get("dificuldade_final")
+                ),
+
+                compreensao_final: Number(
+                    data.get("compreensao_final")
+                ),
+
+                objetivo_status: String(
+                    data.get("objetivo_status")
+                    || "parcial"
+                ),
+
+                dificuldade_restante: String(
+                    data.get("dificuldade_restante")
+                    || ""
+                ).trim() || null,
+
+                duracao_planejada: Number(
+                    session.duracao_minutos
+                    || 0
+                ),
+
+                foco_minutos: timer.foco_minutos,
+
+                tempo_fora_minutos:
+                    timer.tempo_fora_minutos,
+            };
+
+            try {
+                await mentor10SaveReflection(
+                    payload,
+                );
+
+                const saved = await updateStudySession(
+                    Number(session.id),
+                    {
+                        concluida: true,
+                    },
+                );
+
+                try {
+                    const state =
+                        typeof mentorFocusReadState
+                        === "function"
+                            ? mentorFocusReadState()
+                            : null;
+
+                    if (
+                        state
+                        && Number(state.sessionId)
+                            === Number(session.id)
+                    ) {
+                        if (
+                            typeof mentorFocusClearState
+                            === "function"
+                        ) {
+                            mentorFocusClearState();
+                        }
+
+                        if (
+                            typeof mentorFocusClearBackend
+                            === "function"
+                        ) {
+                            mentorFocusClearBackend(
+                                session.id
+                            );
+                        }
+                    }
+                } catch {
+                    // Não impede o fechamento.
+                }
+
+                const next = current.map(
+                    item =>
+                        Number(item.id)
+                        === Number(session.id)
+                            ? saved
+                            : item,
+                );
+
+                showToast(
+                    "Sessão concluída e aprendizado registrado.",
+                    "success",
+                );
+
+                close();
+                render(next);
+
+                mentor10BOpenOffer(
+                    container,
+                    session,
+                    reflectionPayload
+                );
+
+            } catch (error) {
+                if (submit) {
+                    submit.disabled = false;
+                }
+
+                showToast(
+                    error?.message
+                    || "Não foi possível concluir a sessão.",
+                    "error",
+                );
+            }
+        },
+    );
+}
+
+
+function bindMentor10Reflection(
+    container,
+    current,
+    render,
+) {
+    container.__mentor10Current = current;
+    container.__mentor10Render = render;
+
+    if (container.__mentor10CaptureInstalled) {
+        return;
+    }
+
+    container.__mentor10CaptureInstalled = true;
+
+    container.addEventListener(
+        "click",
+        event => {
+            const button = event.target.closest(
+                "[data-toggle-session]"
+            );
+
+            if (
+                !button
+                || !container.contains(button)
+            ) {
+                return;
+            }
+
+            const id = Number(
+                button.dataset.toggleSession
+                || 0
+            );
+
+            const list = Array.isArray(
+                container.__mentor10Current
+            )
+                ? container.__mentor10Current
+                : [];
+
+            const session = list.find(
+                item =>
+                    Number(item.id) === id
+            );
+
+            if (
+                !session
+                || session.concluida
+            ) {
+                return;
+            }
+
+            // Intercepta somente "Concluir".
+            // "Reabrir" continua com o fluxo original.
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (
+                typeof event.stopImmediatePropagation
+                === "function"
+            ) {
+                event.stopImmediatePropagation();
+            }
+
+            mentor10OpenReflection(
+                container,
+                session,
+                list,
+                container.__mentor10Render,
+            );
+        },
+        true,
+    );
+}
+
+// MENTOR_EDU_SESSION_CHECK_V10B
+async function mentor10BApi() {
+  return import("../../api/study-sessions.js");
+}
+
+function mentor10BClose(container) {
+  container.querySelector("[data-mentor10b-modal]")?.remove();
+}
+
+function mentor10BOfferMarkup(session) {
+  return `
+    <div class="mentor10b-backdrop" data-mentor10b-modal>
+      <section class="mentor10b-modal mentor10b-offer" role="dialog" aria-modal="true">
+        <div class="mentor10b-icon">✦</div>
+        <span class="mentor10b-kicker">MENTOR</span>
+        <h3>Verificação rápida?</h3>
+        <p>Sua sessão foi concluída. O Mentor pode conferir agora se o conteúdo realmente ficou claro.</p>
+        <div class="mentor10b-session">
+          <strong>${escapeHtml(session?.materia || "Sessão")}</strong>
+          <span>${escapeHtml(session?.assunto || "Conteúdo estudado")}</span>
+        </div>
+        <div class="mentor10b-meta"><span>2 questões</span><span>≈ 2 minutos</span><span>Resultado salvo</span></div>
+        <div class="mentor10b-actions">
+          <button type="button" class="mini-button" data-mentor10b-skip>Agora não</button>
+          <button type="button" class="mini-button mini-button--primary" data-mentor10b-start>Verificar aprendizado</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function mentor10BQuestionsMarkup(session, questions) {
+  return `
+    <div class="mentor10b-backdrop" data-mentor10b-modal>
+      <section class="mentor10b-modal" role="dialog" aria-modal="true">
+        <header class="mentor10b-head">
+          <div>
+            <span>VERIFICAÇÃO DO MENTOR</span>
+            <h3>${escapeHtml(session?.materia || "Sessão")} · ${escapeHtml(session?.assunto || "Conteúdo")}</h3>
+            <p>Duas perguntas rápidas sobre o que você acabou de estudar.</p>
+          </div>
+          <div class="mentor10b-progress">2 questões</div>
+        </header>
+        <form class="mentor10b-form" data-mentor10b-form>
+          ${questions.map((q, i) => `
+            <article class="mentor10b-question">
+              <div class="mentor10b-number">${String(i + 1).padStart(2, "0")}</div>
+              <div class="mentor10b-question-body">
+                <h4>${escapeHtml(q.enunciado)}</h4>
+                <div class="mentor10b-options">
+                  ${Object.entries(q.alternativas).map(([letter, value]) => `
+                    <label>
+                      <input type="radio" name="q_${q.id}" value="${escapeHtml(letter)}" required>
+                      <span class="mentor10b-letter">${escapeHtml(letter)}</span>
+                      <span>${escapeHtml(value)}</span>
+                    </label>
+                  `).join("")}
+                </div>
+              </div>
+            </article>
+          `).join("")}
+          <div class="mentor10b-actions">
+            <button type="button" class="mini-button" data-mentor10b-close>Fazer depois</button>
+            <button type="submit" class="mini-button mini-button--primary">Conferir respostas</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  `;
+}
+
+function mentor10BResultMarkup(result) {
+  const score = Number(result?.score || 0);
+  const total = Number(result?.total || 2);
+  const details = Array.isArray(result?.details) ? result.details : [];
+  const title = score === total
+    ? "Conteúdo bem compreendido"
+    : score > 0
+      ? "Bom resultado, com um ponto a revisar"
+      : "Vamos reforçar um pouco";
+
+  return `
+    <div class="mentor10b-backdrop" data-mentor10b-modal>
+      <section class="mentor10b-modal mentor10b-result" role="dialog" aria-modal="true">
+        <span class="mentor10b-kicker">RESULTADO</span>
+        <div class="mentor10b-score">${score}/${total}</div>
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(result?.feedback || "")}</p>
+        <div class="mentor10b-result-list">
+          ${details.map((detail, i) => `
+            <div class="mentor10b-result-item ${detail.correta ? "is-correct" : "is-wrong"}">
+              <strong>Questão ${i + 1} · ${detail.correta ? "Correta" : "Revisar"}</strong>
+              ${detail.correta ? "" : `<span>Resposta correta: ${escapeHtml(detail.resposta_correta || "")}</span>`}
+              ${detail.explicacao ? `<small>${escapeHtml(detail.explicacao)}</small>` : ""}
+            </div>
+          `).join("")}
+        </div>
+        <div class="mentor10b-note">Este resultado será usado na Etapa 10C para melhorar suas próximas sugestões.</div>
+        <div class="mentor10b-actions">
+          <button type="button" class="mini-button mini-button--primary" data-mentor10b-finish>Concluir</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+async function mentor10BOpenOffer(container, session, reflectionPayload) {
+  mentor10BClose(container);
+  container.insertAdjacentHTML("beforeend", mentor10BOfferMarkup(session));
+  const modal = container.querySelector("[data-mentor10b-modal]");
+
+  modal?.querySelector("[data-mentor10b-skip]")?.addEventListener("click", () => mentor10BClose(container));
+  modal?.querySelector("[data-mentor10b-start]")?.addEventListener("click", async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const api = await mentor10BApi();
+      const response = await api.startStudySessionCheckV10B({
+        session_id: Number(session.id),
+        materia: String(session.materia || ""),
+        assunto: String(session.assunto || ""),
+        dificuldade_inicial: reflectionPayload?.dificuldade_inicial ?? null,
+        dificuldade_final: reflectionPayload?.dificuldade_final ?? null,
+      });
+      mentor10BClose(container);
+      mentor10BOpenQuestions(container, session, response?.questions || []);
+    } catch (error) {
+      mentor10BClose(container);
+      showToast(error?.message || "A IA não conseguiu gerar a verificação agora. A sessão continua concluída.", "error");
+    }
+  });
+}
+
+function mentor10BOpenQuestions(container, session, questions) {
+  if (!Array.isArray(questions) || questions.length !== 2) {
+    showToast("O Mentor não conseguiu montar duas questões válidas.", "error");
+    return;
+  }
+
+  container.insertAdjacentHTML("beforeend", mentor10BQuestionsMarkup(session, questions));
+  const modal = container.querySelector("[data-mentor10b-modal]");
+  const form = modal?.querySelector("[data-mentor10b-form]");
+
+  modal?.querySelector("[data-mentor10b-close]")?.addEventListener("click", () => mentor10BClose(container));
+
+  form?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const answers = {};
+    for (const question of questions) {
+      answers[String(question.id)] = String(data.get(`q_${question.id}`) || "");
+    }
+
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+
+    try {
+      const api = await mentor10BApi();
+      const result = await api.submitStudySessionCheckV10B({
+        session_id: Number(session.id),
+        answers,
+      });
+      mentor10BClose(container);
+      container.insertAdjacentHTML("beforeend", mentor10BResultMarkup(result));
+      container.querySelector("[data-mentor10b-finish]")?.addEventListener("click", () => mentor10BClose(container));
+    } catch (error) {
+      if (submit) submit.disabled = false;
+      showToast(error?.message || "Não foi possível corrigir a verificação.", "error");
+    }
+  });
+}
+
+// MENTOR_EDU_ADAPTIVE_STUDY_V10C_V2
+async function mentor10CLoadAdaptive() {
+    const module = await import(
+        "../../api/study-sessions.js"
+    );
+
+    return module.getAdaptiveStudyV10C();
+}
+
+
+function mentor10CMarkup(data) {
+    const next = data?.next_action;
+
+    if (!next) {
+        return "";
+    }
+
+    const reasons = Array.isArray(
+        next.motivos
+    )
+        ? next.motivos
+        : [];
+
+    return `
+        <section class="mentor10c-next">
+            <div class="mentor10c-badge">
+                ADAPTAÇÃO DO MENTOR
+            </div>
+
+            <div class="mentor10c-headline">
+                <div>
+                    <span>
+                        ${escapeHtml(
+                            next.rotulo
+                            || "Próximo passo"
+                        )}
+                    </span>
+
+                    <h4>
+                        ${escapeHtml(
+                            next.materia
+                            || "Conteúdo"
+                        )}
+                        ·
+                        ${escapeHtml(
+                            next.assunto
+                            || ""
+                        )}
+                    </h4>
+                </div>
+
+                <strong
+                    class="mentor10c-level mentor10c-level--${
+                        escapeHtml(
+                            next.nivel
+                            || "baixa"
+                        )
+                    }"
+                >
+                    ${
+                        next.nivel === "consolidado"
+                            ? "Consolidado"
+                            : `Prioridade ${escapeHtml(
+                                next.nivel
+                                || "baixa"
+                            )}`
+                    }
+                </strong>
+            </div>
+
+            <p>
+                ${escapeHtml(
+                    next.recomendacao
+                    || ""
+                )}
+            </p>
+
+            ${
+                reasons.length
+                    ? `
+                        <div class="mentor10c-reasons">
+                            ${reasons.map(
+                                item => `
+                                    <span>
+                                        ${escapeHtml(item)}
+                                    </span>
+                                `
+                            ).join("")}
+                        </div>
+                    `
+                    : ""
+            }
+        </section>
+    `;
+}
+
+
+async function mentor10CInject(container) {
+    const result = container.querySelector(
+        ".mentor10b-result"
+    );
+
+    if (!result) {
+        return;
+    }
+
+    let target = result.querySelector(
+        "[data-mentor10c-target]"
+    );
+
+    if (!target) {
+        target = document.createElement(
+            "div"
+        );
+
+        target.setAttribute(
+            "data-mentor10c-target",
+            ""
+        );
+
+        const actions = result.querySelector(
+            ".mentor10b-actions"
+        );
+
+        if (actions) {
+            actions.before(target);
+        } else {
+            result.appendChild(target);
+        }
+    }
+
+    if (
+        target.dataset.loaded === "1"
+        || target.dataset.loading === "1"
+    ) {
+        return;
+    }
+
+    target.dataset.loading = "1";
+
+    try {
+        const data =
+            await mentor10CLoadAdaptive();
+
+        target.innerHTML =
+            mentor10CMarkup(data);
+
+        target.dataset.loaded = "1";
+    } catch {
+        target.innerHTML = "";
+    } finally {
+        target.dataset.loading = "0";
+    }
+}
+
+
+function mentor10CInstallObserver(
+    container,
+) {
+    if (container.__mentor10CObserver) {
+        mentor10CInject(container);
+        return;
+    }
+
+    const observer = new MutationObserver(
+        () => {
+            mentor10CInject(
+                container
+            );
+        },
+    );
+
+    observer.observe(
+        container,
+        {
+            childList: true,
+            subtree: true,
+        },
+    );
+
+    container.__mentor10CObserver = observer;
+
+    mentor10CInject(container);
+}
+
 export async function renderStudentStudySessions(container) {
     const sessions = await getMyStudySessions();
     const render = current => {
@@ -1542,6 +2399,8 @@ export async function renderStudentStudySessions(container) {
     };
     const bind = current => {
         bindFocusTimer(container, current);
+        bindMentor10Reflection(container, current, render);
+        mentor10CInstallObserver(container);
         bindMentorSessionHelp(container, current);
         const form = container.querySelector("[data-session-form]");
         container.querySelector("[data-new-session]")?.addEventListener("click", () => { form.hidden = false; form.scrollIntoView({ behavior: "smooth", block: "center" }); });

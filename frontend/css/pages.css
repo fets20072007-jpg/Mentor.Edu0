@@ -743,3 +743,260 @@ body[data-role="suporte"] .content-surface { overflow: visible; }
         padding-inline: 16px;
     }
 }
+
+/* MENTOR_EDU_SESSION_REFLECTION_V10A_V2 */
+.mentor10-reflection-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10040;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(32, 20, 46, .42);
+    backdrop-filter: blur(3px);
+}
+
+.mentor10-reflection-modal {
+    width: min(100%, 720px);
+    max-height: 88vh;
+    overflow: auto;
+    border: 1px solid #e7dcf3;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 24px 72px rgba(38, 23, 54, .22);
+}
+
+.mentor10-reflection-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid #f0eaf5;
+}
+
+.mentor10-reflection-head > div > span {
+    color: #7c3aed;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.mentor10-reflection-head h3 {
+    margin: 5px 0 0;
+    color: #20162a;
+    font-size: 22px;
+}
+
+.mentor10-reflection-head p {
+    margin: 5px 0 0;
+    color: #766c7d;
+    font-size: 11px;
+}
+
+.mentor10-reflection-head > button {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 11px;
+    background: #f7f3fb;
+    color: #5f5369;
+    cursor: pointer;
+    font-size: 22px;
+}
+
+.mentor10-reflection-form {
+    padding: 20px 24px 24px;
+}
+
+.mentor10-reflection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.mentor10-reflection-grid label {
+    display: grid;
+    gap: 6px;
+    color: #55485e;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.mentor10-reflection-grid input,
+.mentor10-reflection-grid select,
+.mentor10-reflection-grid textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 1px solid #ded5e7;
+    border-radius: 11px;
+    background: #fff;
+    color: #2d2434;
+    font: inherit;
+}
+
+.mentor10-reflection-grid input:disabled {
+    background: #f8f5fa;
+    color: #796f80;
+}
+
+.mentor10-reflection-grid textarea {
+    min-height: 86px;
+    resize: vertical;
+}
+
+.mentor10-reflection-wide {
+    grid-column: 1 / -1;
+}
+
+.mentor10-reflection-note {
+    display: grid;
+    gap: 3px;
+    margin-top: 15px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f8f4ff;
+    color: #6f6477;
+    font-size: 10px;
+}
+
+.mentor10-reflection-note strong {
+    color: #5b21b6;
+}
+
+.mentor10-reflection-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 18px;
+}
+
+@media (max-width: 620px) {
+    .mentor10-reflection-backdrop {
+        padding: 10px;
+    }
+
+    .mentor10-reflection-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mentor10-reflection-wide {
+        grid-column: auto;
+    }
+
+    .mentor10-reflection-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .mentor10-reflection-actions button {
+        width: 100%;
+    }
+}
+
+/* MENTOR_EDU_SESSION_CHECK_V10B */
+.mentor10b-backdrop{position:fixed;inset:0;z-index:10060;display:grid;place-items:center;padding:20px;background:rgba(32,20,46,.44);backdrop-filter:blur(3px)}
+.mentor10b-modal{width:min(100%,760px);max-height:90vh;overflow:auto;border:1px solid #e7dcf3;border-radius:22px;background:#fff;box-shadow:0 24px 72px rgba(38,23,54,.24)}
+.mentor10b-offer,.mentor10b-result{width:min(100%,560px);padding:28px;text-align:center}.mentor10b-icon{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 12px;border-radius:16px;background:#f1e8ff;color:#6d28d9;font-size:25px;font-weight:900}.mentor10b-kicker{color:#7c3aed;font-size:10px;font-weight:900;letter-spacing:.09em}.mentor10b-offer h3,.mentor10b-result h3{margin:6px 0 7px;color:#20162a;font-size:23px}.mentor10b-offer>p,.mentor10b-result>p{margin:0 auto;max-width:440px;color:#756b7d;font-size:12px;line-height:1.55}.mentor10b-session{display:grid;gap:3px;margin:18px 0 12px;padding:13px 15px;border:1px solid #eadff4;border-radius:13px;background:#fbf9fd;text-align:left}.mentor10b-session strong{font-size:12px}.mentor10b-session span{color:#7b7083;font-size:11px}.mentor10b-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:7px}.mentor10b-meta span{padding:5px 9px;border-radius:999px;background:#f4effa;color:#6e5b7a;font-size:9px;font-weight:800}.mentor10b-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.mentor10b-offer .mentor10b-actions,.mentor10b-result .mentor10b-actions{justify-content:center}.mentor10b-head{display:flex;justify-content:space-between;gap:16px;padding:21px 24px 15px;border-bottom:1px solid #f0eaf5}.mentor10b-head span{color:#7c3aed;font-size:9px;font-weight:900}.mentor10b-head h3{margin:4px 0 0;font-size:20px}.mentor10b-head p{margin:5px 0 0;color:#786d80;font-size:10px}.mentor10b-progress{align-self:flex-start;padding:7px 10px;border-radius:999px;background:#f3edfb;color:#6d28d9;font-size:9px;font-weight:900}.mentor10b-form{padding:19px 24px 23px}.mentor10b-question{display:grid;grid-template-columns:42px 1fr;gap:13px;padding:15px 0;border-bottom:1px solid #f2edf6}.mentor10b-number{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#f1e8ff;color:#6d28d9;font-size:11px;font-weight:900}.mentor10b-question-body h4{margin:0 0 11px;font-size:13px;line-height:1.5}.mentor10b-options{display:grid;gap:7px}.mentor10b-options label{display:grid;grid-template-columns:auto 30px 1fr;align-items:center;gap:8px;padding:9px 10px;border:1px solid #e6deec;border-radius:11px;color:#5f5368;cursor:pointer;font-size:11px}.mentor10b-options label:has(input:checked){border-color:#9b6ee5;background:#faf7ff}.mentor10b-letter{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#f3eef8;color:#6d28d9;font-weight:900}.mentor10b-score{display:grid;place-items:center;width:86px;height:86px;margin:13px auto 8px;border-radius:50%;background:#f1e8ff;color:#6425c7;font-size:26px;font-weight:900}.mentor10b-result-list{display:grid;gap:8px;margin-top:17px;text-align:left}.mentor10b-result-item{display:grid;gap:3px;padding:11px 12px;border-radius:11px;background:#f8f6fa;color:#64596c;font-size:10px}.mentor10b-result-item.is-correct{background:#effaf3}.mentor10b-result-item.is-wrong{background:#fff5f1}.mentor10b-result-item small{color:#786d80;line-height:1.45}.mentor10b-note{margin-top:14px;padding:10px 12px;border-radius:10px;background:#f7f2ff;color:#6d5b78;font-size:9px}
+@media(max-width:620px){.mentor10b-backdrop{padding:10px}.mentor10b-question{grid-template-columns:1fr}.mentor10b-actions{display:grid;grid-template-columns:1fr}.mentor10b-actions button{width:100%}}
+
+/* MENTOR_EDU_ADAPTIVE_STUDY_V10C_V2 */
+.mentor10c-next {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #e6daf2;
+    border-radius: 14px;
+    background: #fbf8ff;
+    text-align: left;
+}
+
+.mentor10c-badge {
+    color: #7c3aed;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .09em;
+}
+
+.mentor10c-headline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 7px;
+}
+
+.mentor10c-headline span {
+    color: #6f6378;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.mentor10c-headline h4 {
+    margin: 3px 0 0;
+    color: #292031;
+    font-size: 12px;
+}
+
+.mentor10c-level {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #f0e8fb;
+    color: #6d28d9;
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+.mentor10c-level--alta {
+    background: #fff0eb;
+    color: #b54720;
+}
+
+.mentor10c-level--media {
+    background: #fff7dd;
+    color: #9b6500;
+}
+
+.mentor10c-level--baixa {
+    background: #eef8ff;
+    color: #176b9b;
+}
+
+.mentor10c-level--consolidado {
+    background: #ebf9ef;
+    color: #18814b;
+}
+
+.mentor10c-next > p {
+    margin: 10px 0 0;
+    color: #62566a;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.mentor10c-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.mentor10c-reasons span {
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #f1ecf6;
+    color: #72657c;
+    font-size: 8px;
+}
+
+@media (max-width: 620px) {
+    .mentor10c-headline {
+        display: grid;
+    }
+
+    .mentor10c-level {
+        justify-self: start;
+    }
+}
