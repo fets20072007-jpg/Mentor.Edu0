@@ -1,0 +1,19 @@
+name: Mentor Edu - Push Cron
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  mentor-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acionar verificador do Mentor
+        env:
+          MENTOR_PUSH_CRON_TOKEN: ${{ secrets.FOCUS_PUSH_CRON_TOKEN }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --url "https://mentor-edu0.onrender.com/mentor-ai/system/focus-push/run" \
+            --header "X-Mentor-Push-Cron: $MENTOR_PUSH_CRON_TOKEN"

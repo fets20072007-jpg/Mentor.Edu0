@@ -56,3 +56,6 @@ Thumbs.db
 uploads/
 *.db
 .env
+
+# Mentor.Edu - segredos Web Push
+_secrets_push/
