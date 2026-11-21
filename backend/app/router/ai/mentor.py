@@ -2128,6 +2128,13 @@ def student_session_reflection_v10a(
     db.commit()
     db.refresh(item)
 
+    # 11A V2: persiste somente após dado pedagógico novo.
+    _me11a_build_memory(
+        db,
+        current_user.id,
+        persist=True,
+    )
+
     return {
         "status": "saved",
         "reflection": _me10_reflection_json(item),
@@ -2292,6 +2299,13 @@ def student_session_check_submit_v10b(payload: dict, current_user=Depends(requir
     item.updated_at = _M10BNow.utcnow()
     db.commit()
     db.refresh(item)
+
+    # 11A V2: persiste somente após dado pedagógico novo.
+    _me11a_build_memory(
+        db,
+        current_user.id,
+        persist=True,
+    )
     return {"check_version": "10B", "session_id": session_id, "score": score, "total": 2, "feedback": feedback, "details": details}
 
 @router.get("/student/session-check-v10b/{session_id}")
@@ -2593,6 +2607,541 @@ def student_adaptive_study_v10c(
     db=Depends(get_db),
 ):
     return _me10c_adaptive_context(
+        db,
+        current_user.id,
+    )
+
+# === MENTOR EDU ETAPA 11A - API MEMORIA PEDAGOGICA ===
+import json as _me11a_json
+from collections import defaultdict as _me11a_defaultdict
+from datetime import datetime as _ME11ADatetime
+
+from app.database.models import (
+    StudentPedagogicalMemory as _ME11AMemory,
+)
+
+
+def _me11a_memory_table(db):
+    _ME11AMemory.__table__.create(
+        bind=db.get_bind(),
+        checkfirst=True,
+    )
+
+
+def _me11a_round(value, digits=1):
+    if value is None:
+        return None
+
+    try:
+        return round(float(value), digits)
+    except (TypeError, ValueError):
+        return None
+
+
+def _me11a_average(values):
+    clean = [
+        float(value)
+        for value in values
+        if value is not None
+    ]
+
+    if not clean:
+        return None
+
+    return sum(clean) / len(clean)
+
+
+def _me11a_build_memory(db, user_id, persist=False):
+    _me11a_memory_table(db)
+
+    reflections = (
+        db.query(_ME10CReflection)
+        .filter(
+            _ME10CReflection.user_id
+            == user_id,
+        )
+        .order_by(
+            _ME10CReflection.updated_at.desc()
+        )
+        .limit(30)
+        .all()
+    )
+
+    if not reflections:
+        snapshot = {
+            "version": "11A",
+            "has_data": False,
+            "confianca": "baixa",
+            "resumo": (
+                "Ainda não há sessões concluídas suficientes "
+                "para formar uma memória pedagógica."
+            ),
+            "sessoes_analisadas": 0,
+            "checagens_analisadas": 0,
+            "indicadores": {},
+            "padroes": [],
+            "conteudos_atencao": [],
+            "conteudos_fortes": [],
+            "updated_at": _ME11ADatetime.utcnow().isoformat(),
+        }
+
+        if persist:
+            _me11a_save_memory(
+                db,
+                user_id,
+                snapshot,
+            )
+
+        return snapshot
+
+    session_ids = [
+        item.session_id
+        for item in reflections
+    ]
+
+    checks = (
+        db.query(_ME10CCheck)
+        .filter(
+            _ME10CCheck.user_id == user_id,
+            _ME10CCheck.session_id.in_(
+                session_ids
+            ),
+            _ME10CCheck.score.isnot(None),
+        )
+        .all()
+    )
+
+    checks_by_session = {
+        item.session_id: item
+        for item in checks
+    }
+
+    initial_values = []
+    final_values = []
+    comprehension_values = []
+    focus_ratios = []
+
+    objective_counts = {
+        "cumprido": 0,
+        "parcial": 0,
+        "nao_cumprido": 0,
+    }
+
+    topic_stats = _me11a_defaultdict(
+        lambda: {
+            "materia": "",
+            "assunto": "",
+            "sessoes": 0,
+            "dificuldade_final": [],
+            "compreensao": [],
+            "check_scores": [],
+            "check_totals": [],
+        }
+    )
+
+    for reflection in reflections:
+        if reflection.dificuldade_inicial is not None:
+            initial_values.append(
+                reflection.dificuldade_inicial
+            )
+
+        if reflection.dificuldade_final is not None:
+            final_values.append(
+                reflection.dificuldade_final
+            )
+
+        if reflection.compreensao_final is not None:
+            comprehension_values.append(
+                reflection.compreensao_final
+            )
+
+        planned = int(
+            reflection.duracao_planejada
+            or 0
+        )
+
+        focus = int(
+            reflection.foco_minutos
+            or 0
+        )
+
+        if planned > 0:
+            focus_ratios.append(
+                min(
+                    max(
+                        focus / planned,
+                        0,
+                    ),
+                    1.5,
+                )
+            )
+
+        objective = str(
+            reflection.objetivo_status
+            or "parcial"
+        )
+
+        if objective not in objective_counts:
+            objective = "parcial"
+
+        objective_counts[objective] += 1
+
+        materia = str(
+            reflection.materia
+            or "Conteúdo"
+        ).strip()
+
+        assunto = str(
+            reflection.assunto
+            or "Conteúdo estudado"
+        ).strip()
+
+        key = (
+            materia.casefold(),
+            assunto.casefold(),
+        )
+
+        item = topic_stats[key]
+        item["materia"] = materia
+        item["assunto"] = assunto
+        item["sessoes"] += 1
+
+        if reflection.dificuldade_final is not None:
+            item["dificuldade_final"].append(
+                reflection.dificuldade_final
+            )
+
+        if reflection.compreensao_final is not None:
+            item["compreensao"].append(
+                reflection.compreensao_final
+            )
+
+        check = checks_by_session.get(
+            reflection.session_id
+        )
+
+        if (
+            check is not None
+            and check.score is not None
+        ):
+            item["check_scores"].append(
+                int(check.score)
+            )
+            item["check_totals"].append(
+                int(check.total or 2)
+            )
+
+    total_checks = len(checks)
+    correct_answers = sum(
+        int(item.score or 0)
+        for item in checks
+    )
+    possible_answers = sum(
+        int(item.total or 2)
+        for item in checks
+    )
+
+    accuracy = (
+        correct_answers / possible_answers
+        if possible_answers > 0
+        else None
+    )
+
+    initial_avg = _me11a_average(
+        initial_values
+    )
+
+    final_avg = _me11a_average(
+        final_values
+    )
+
+    comprehension_avg = _me11a_average(
+        comprehension_values
+    )
+
+    focus_avg = _me11a_average(
+        focus_ratios
+    )
+
+    patterns = []
+
+    if (
+        initial_avg is not None
+        and final_avg is not None
+        and initial_avg - final_avg >= 0.7
+    ):
+        patterns.append(
+            {
+                "id": "dificuldade_reduz",
+                "titulo": "Evolução após as sessões",
+                "descricao": (
+                    "A dificuldade declarada tende a diminuir "
+                    "entre o início e o fim das sessões."
+                ),
+            }
+        )
+
+    if accuracy is not None and accuracy >= 0.75:
+        patterns.append(
+            {
+                "id": "boa_checagem",
+                "titulo": "Boa retenção nas checagens",
+                "descricao": (
+                    "As verificações rápidas apresentam "
+                    "bom índice de acerto."
+                ),
+            }
+        )
+
+    if (
+        focus_avg is not None
+        and focus_avg >= 0.8
+    ):
+        patterns.append(
+            {
+                "id": "foco_consistente",
+                "titulo": "Foco consistente",
+                "descricao": (
+                    "O tempo de foco costuma ficar próximo "
+                    "do tempo planejado."
+                ),
+            }
+        )
+
+    if (
+        objective_counts["cumprido"]
+        >= max(
+            2,
+            len(reflections) // 2,
+        )
+    ):
+        patterns.append(
+            {
+                "id": "objetivos_cumpridos",
+                "titulo": "Boa conclusão de objetivos",
+                "descricao": (
+                    "Uma parte relevante das sessões termina "
+                    "com o objetivo declarado como cumprido."
+                ),
+            }
+        )
+
+    attention = []
+    strengths = []
+
+    for item in topic_stats.values():
+        diff_avg = _me11a_average(
+            item["dificuldade_final"]
+        )
+
+        comp_avg = _me11a_average(
+            item["compreensao"]
+        )
+
+        total = sum(
+            item["check_totals"]
+        )
+
+        score = sum(
+            item["check_scores"]
+        )
+
+        topic_accuracy = (
+            score / total
+            if total > 0
+            else None
+        )
+
+        common = {
+            "materia": item["materia"],
+            "assunto": item["assunto"],
+            "sessoes": item["sessoes"],
+            "dificuldade_final_media": _me11a_round(
+                diff_avg
+            ),
+            "compreensao_media": _me11a_round(
+                comp_avg
+            ),
+            "acerto_checagem_percentual": (
+                round(topic_accuracy * 100)
+                if topic_accuracy is not None
+                else None
+            ),
+        }
+
+        needs_attention = (
+            (
+                diff_avg is not None
+                and diff_avg >= 3.0
+            )
+            or (
+                comp_avg is not None
+                and comp_avg <= 3.0
+            )
+            or (
+                topic_accuracy is not None
+                and topic_accuracy < 0.6
+            )
+        )
+
+        looks_strong = (
+            diff_avg is not None
+            and diff_avg <= 2.0
+            and comp_avg is not None
+            and comp_avg >= 4.0
+            and (
+                topic_accuracy is None
+                or topic_accuracy >= 0.75
+            )
+        )
+
+        if needs_attention:
+            attention.append(
+                common
+            )
+
+        if looks_strong:
+            strengths.append(
+                common
+            )
+
+    attention.sort(
+        key=lambda item: (
+            -int(item["sessoes"]),
+            -float(
+                item["dificuldade_final_media"]
+                or 0
+            ),
+        )
+    )
+
+    strengths.sort(
+        key=lambda item: (
+            -int(item["sessoes"]),
+            -float(
+                item["compreensao_media"]
+                or 0
+            ),
+        )
+    )
+
+    sessions_count = len(reflections)
+
+    if sessions_count >= 6 and total_checks >= 3:
+        confidence = "alta"
+    elif sessions_count >= 3:
+        confidence = "media"
+    else:
+        confidence = "baixa"
+
+    if attention:
+        top = attention[0]
+
+        summary = (
+            f"A memória pedagógica analisou "
+            f"{sessions_count} sessões. "
+            f"O principal ponto de atenção atual é "
+            f"{top['materia']} — {top['assunto']}."
+        )
+    elif strengths:
+        top = strengths[0]
+
+        summary = (
+            f"A memória pedagógica analisou "
+            f"{sessions_count} sessões. "
+            f"O conteúdo com sinais mais consistentes de domínio é "
+            f"{top['materia']} — {top['assunto']}."
+        )
+    else:
+        summary = (
+            f"A memória pedagógica analisou "
+            f"{sessions_count} sessões e ainda está "
+            "construindo padrões mais consistentes."
+        )
+
+    snapshot = {
+        "version": "11A",
+        "has_data": True,
+        "confianca": confidence,
+        "resumo": summary,
+        "sessoes_analisadas": sessions_count,
+        "checagens_analisadas": total_checks,
+        "indicadores": {
+            "dificuldade_inicial_media": _me11a_round(
+                initial_avg
+            ),
+            "dificuldade_final_media": _me11a_round(
+                final_avg
+            ),
+            "compreensao_media": _me11a_round(
+                comprehension_avg
+            ),
+            "acerto_checagens_percentual": (
+                round(accuracy * 100)
+                if accuracy is not None
+                else None
+            ),
+            "foco_sobre_planejado_percentual": (
+                round(focus_avg * 100)
+                if focus_avg is not None
+                else None
+            ),
+            "objetivos": objective_counts,
+        },
+        "padroes": patterns[:5],
+        "conteudos_atencao": attention[:5],
+        "conteudos_fortes": strengths[:5],
+        "updated_at": _ME11ADatetime.utcnow().isoformat(),
+    }
+
+    _me11a_save_memory(
+        db,
+        user_id,
+        snapshot,
+    )
+
+    return snapshot
+
+
+def _me11a_save_memory(
+    db,
+    user_id,
+    snapshot,
+):
+    item = (
+        db.query(_ME11AMemory)
+        .filter(
+            _ME11AMemory.user_id
+            == user_id,
+        )
+        .first()
+    )
+
+    if item is None:
+        item = _ME11AMemory(
+            user_id=user_id,
+            version="11A",
+            snapshot_json="{}",
+        )
+        db.add(item)
+
+    item.version = "11A"
+    item.snapshot_json = _me11a_json.dumps(
+        snapshot,
+        ensure_ascii=False,
+    )
+    item.updated_at = _ME11ADatetime.utcnow()
+
+    db.commit()
+    db.refresh(item)
+
+
+@router.get("/student/pedagogical-memory-v11a")
+def student_pedagogical_memory_v11a(
+    current_user=Depends(require_student),
+    db=Depends(get_db),
+):
+    return _me11a_build_memory(
         db,
         current_user.id,
     )

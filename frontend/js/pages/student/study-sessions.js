@@ -2391,6 +2391,291 @@ function mentor10CInstallObserver(
     mentor10CInject(container);
 }
 
+// MENTOR_EDU_PEDAGOGICAL_MEMORY_V11A
+async function mentor11ALoadMemory() {
+    const module = await import(
+        "../../api/study-sessions.js"
+    );
+
+    return module.getPedagogicalMemoryV11A();
+}
+
+
+function mentor11AMemoryMarkup(memory) {
+    if (!memory?.has_data) {
+        return `
+            <section class="mentor11a-memory">
+                <div class="mentor11a-memory-head">
+                    <div>
+                        <span>MEMÓRIA PEDAGÓGICA</span>
+                        <h3>Seu perfil está começando a ser construído</h3>
+                    </div>
+
+                    <strong>11A</strong>
+                </div>
+
+                <p>
+                    Conclua algumas sessões com autoavaliação
+                    e verificação para o Mentor identificar
+                    padrões reais do seu aprendizado.
+                </p>
+            </section>
+        `;
+    }
+
+    const indicators = (
+        memory.indicadores
+        || {}
+    );
+
+    const patterns = Array.isArray(
+        memory.padroes
+    )
+        ? memory.padroes
+        : [];
+
+    const attention = Array.isArray(
+        memory.conteudos_atencao
+    )
+        ? memory.conteudos_atencao
+        : [];
+
+    const strengths = Array.isArray(
+        memory.conteudos_fortes
+    )
+        ? memory.conteudos_fortes
+        : [];
+
+    const metric = (
+        label,
+        value,
+        suffix = ""
+    ) => `
+        <div class="mentor11a-metric">
+            <span>${escapeHtml(label)}</span>
+            <strong>
+                ${
+                    value === null
+                    || value === undefined
+                        ? "—"
+                        : `${escapeHtml(value)}${suffix}`
+                }
+            </strong>
+        </div>
+    `;
+
+    return `
+        <section class="mentor11a-memory">
+            <div class="mentor11a-memory-head">
+                <div>
+                    <span>MEMÓRIA PEDAGÓGICA</span>
+                    <h3>O que o Mentor já aprendeu sobre seus estudos</h3>
+                </div>
+
+                <strong>
+                    Confiança ${escapeHtml(
+                        memory.confianca
+                        || "baixa"
+                    )}
+                </strong>
+            </div>
+
+            <p class="mentor11a-summary">
+                ${escapeHtml(
+                    memory.resumo
+                    || ""
+                )}
+            </p>
+
+            <div class="mentor11a-metrics">
+                ${metric(
+                    "Sessões",
+                    memory.sessoes_analisadas
+                )}
+
+                ${metric(
+                    "Checagens",
+                    memory.checagens_analisadas
+                )}
+
+                ${metric(
+                    "Compreensão média",
+                    indicators.compreensao_media,
+                    "/5"
+                )}
+
+                ${metric(
+                    "Acerto nas checagens",
+                    indicators.acerto_checagens_percentual,
+                    "%"
+                )}
+
+                ${metric(
+                    "Foco x planejado",
+                    indicators.foco_sobre_planejado_percentual,
+                    "%"
+                )}
+            </div>
+
+            ${
+                patterns.length
+                    ? `
+                        <div class="mentor11a-section">
+                            <h4>Padrões observados</h4>
+
+                            <div class="mentor11a-patterns">
+                                ${patterns.map(
+                                    item => `
+                                        <article>
+                                            <strong>
+                                                ${escapeHtml(
+                                                    item.titulo
+                                                    || ""
+                                                )}
+                                            </strong>
+
+                                            <span>
+                                                ${escapeHtml(
+                                                    item.descricao
+                                                    || ""
+                                                )}
+                                            </span>
+                                        </article>
+                                    `
+                                ).join("")}
+                            </div>
+                        </div>
+                    `
+                    : ""
+            }
+
+            <div class="mentor11a-columns">
+                <div class="mentor11a-section">
+                    <h4>Pontos de atenção</h4>
+
+                    ${
+                        attention.length
+                            ? attention.slice(
+                                0,
+                                3
+                            ).map(
+                                item => `
+                                    <div class="mentor11a-topic">
+                                        <strong>
+                                            ${escapeHtml(
+                                                item.materia
+                                                || ""
+                                            )}
+                                        </strong>
+
+                                        <span>
+                                            ${escapeHtml(
+                                                item.assunto
+                                                || ""
+                                            )}
+                                        </span>
+                                    </div>
+                                `
+                            ).join("")
+                            : `
+                                <span class="mentor11a-empty">
+                                    Nenhum ponto recorrente identificado ainda.
+                                </span>
+                            `
+                    }
+                </div>
+
+                <div class="mentor11a-section">
+                    <h4>Conteúdos fortes</h4>
+
+                    ${
+                        strengths.length
+                            ? strengths.slice(
+                                0,
+                                3
+                            ).map(
+                                item => `
+                                    <div class="mentor11a-topic">
+                                        <strong>
+                                            ${escapeHtml(
+                                                item.materia
+                                                || ""
+                                            )}
+                                        </strong>
+
+                                        <span>
+                                            ${escapeHtml(
+                                                item.assunto
+                                                || ""
+                                            )}
+                                        </span>
+                                    </div>
+                                `
+                            ).join("")
+                            : `
+                                <span class="mentor11a-empty">
+                                    O Mentor ainda está reunindo evidências.
+                                </span>
+                            `
+                    }
+                </div>
+            </div>
+
+            <footer class="mentor11a-foot">
+                Baseado apenas em dados pedagógicos das suas sessões.
+                Sem diagnóstico psicológico ou comportamental.
+            </footer>
+        </section>
+    `;
+}
+
+
+async function mentor11ARenderMemory(
+    container,
+) {
+    let target = container.querySelector(
+        "[data-mentor11a-memory]"
+    );
+
+    if (!target) {
+        target = document.createElement(
+            "div"
+        );
+
+        target.setAttribute(
+            "data-mentor11a-memory",
+            ""
+        );
+
+        container.prepend(
+            target
+        );
+    }
+
+    if (
+        target.dataset.loading === "1"
+    ) {
+        return;
+    }
+
+    target.dataset.loading = "1";
+
+    try {
+        const memory =
+            await mentor11ALoadMemory();
+
+        target.innerHTML =
+            mentor11AMemoryMarkup(
+                memory
+            );
+
+    } catch {
+        target.innerHTML = "";
+    } finally {
+        target.dataset.loading = "0";
+    }
+}
+
 export async function renderStudentStudySessions(container) {
     const sessions = await getMyStudySessions();
     const render = current => {

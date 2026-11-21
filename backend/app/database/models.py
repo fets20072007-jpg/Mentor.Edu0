@@ -1345,3 +1345,56 @@ class StudySessionCheck(Base):
     created_at = _M10BC(_M10BDT, default=_M10BDate.utcnow, nullable=False)
     updated_at = _M10BC(_M10BDT, default=_M10BDate.utcnow, onupdate=_M10BDate.utcnow, nullable=False)
     __table_args__ = (_M10BU("user_id", "session_id", name="uq_study_check_user_session_v10b"),)
+
+# === MENTOR EDU ETAPA 11A - MEMORIA PEDAGOGICA ===
+from sqlalchemy import (
+    Column as _ME11AColumn,
+    Integer as _ME11AInteger,
+    String as _ME11AString,
+    DateTime as _ME11ADateTime,
+    Text as _ME11AText,
+    UniqueConstraint as _ME11AUniqueConstraint,
+)
+from datetime import datetime as _ME11ADatetime
+
+
+class StudentPedagogicalMemory(Base):
+    __tablename__ = "student_pedagogical_memory"
+
+    id = _ME11AColumn(
+        _ME11AInteger,
+        primary_key=True,
+        index=True,
+    )
+
+    user_id = _ME11AColumn(
+        _ME11AInteger,
+        nullable=False,
+        index=True,
+    )
+
+    version = _ME11AColumn(
+        _ME11AString(30),
+        nullable=False,
+        default="11A",
+    )
+
+    snapshot_json = _ME11AColumn(
+        _ME11AText,
+        nullable=False,
+        default="{}",
+    )
+
+    updated_at = _ME11AColumn(
+        _ME11ADateTime,
+        default=_ME11ADatetime.utcnow,
+        onupdate=_ME11ADatetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        _ME11AUniqueConstraint(
+            "user_id",
+            name="uq_student_pedagogical_memory_user",
+        ),
+    )

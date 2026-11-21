@@ -2,6 +2,7 @@ import { FEATURES } from "./config.js";
 import { login, requestPasswordReset } from "./api/auth.js";
 import { getMe } from "./api/users.js";
 import { getUnreadCount } from "./api/notifications.js";
+import { syncStudyReminders, installStudyReminderPresence } from "./api/study-reminders.js";
 import { clearSession, hasSession, setCachedUser, setSession } from "./core/session.js";
 import { normalizeRole, ROLES } from "./core/permissions.js";
 import { currentRoute, navigate, routeTitle, syncRouteUi } from "./core/router.js";
@@ -282,6 +283,11 @@ async function bootDashboard() {
         if (![ROLES.STUDENT, ROLES.TEACHER, ROLES.ADMIN, ROLES.SUPPORT].includes(role)) throw new Error("Perfil nÃ£o reconhecido pelo Mentor.Edu.");
         setCachedUser(user);
         document.body.dataset.role = role;
+
+        if (role === ROLES.STUDENT) {
+            await syncStudyReminders();
+            installStudyReminderPresence();
+        }
 
         let unread = 0;
         try { unread = Number((await getUnreadCount())?.nao_lidas || 0); } catch { unread = 0; }

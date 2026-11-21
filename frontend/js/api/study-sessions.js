@@ -76,3 +76,10 @@ export async function getAdaptiveStudyV10C() {
         "/mentor-ai/student/adaptive-study-v10c",
     );
 }
+
+// MENTOR_EDU_PEDAGOGICAL_MEMORY_API_V11A
+export async function getPedagogicalMemoryV11A() {
+    return api.get(
+        "/mentor-ai/student/pedagogical-memory-v11a",
+    );
+}
